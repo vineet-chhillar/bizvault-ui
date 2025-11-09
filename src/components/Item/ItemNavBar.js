@@ -11,17 +11,10 @@ export default function ItemNavBar() {
           "item-nav-link" + (isActive ? " active" : "")
         }
       >
-        ➕ Create Item
+        ➕ Create Item/Inventory
       </NavLink>
 
-      <NavLink
-        to="/item/Inventory"
-        className={({ isActive }) =>
-          "item-nav-link" + (isActive ? " active" : "")
-        }
-      >
-        📦 Inventory
-      </NavLink>
+     
 
       <NavLink
         to="/item/EditItem"
@@ -29,7 +22,15 @@ export default function ItemNavBar() {
           "item-nav-link" + (isActive ? " active" : "")
         }
       >
-        ✏️ Modify Item
+        ✏️ View/Edit Item
+      </NavLink>
+       <NavLink
+        to="/item/EditInventory"
+        className={({ isActive }) =>
+          "item-nav-link" + (isActive ? " active" : "")
+        }
+      >
+        📦 View/Edit Inventory
       </NavLink>
     </div>
   );

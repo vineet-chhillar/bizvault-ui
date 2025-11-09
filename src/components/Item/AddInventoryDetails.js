@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./ItemForms.css";
 
-export default function AddInventoryDetails({ selectedItem, selectedItemName,onSave, onCancel,selectedItemForDetails }) {
+export default function AddInventoryDetails({ selectedItem, selectedItemName,onSave, onCancel,selectedItemForDetails,itemDetails }) {
  
 
   const [inventoryData, setInventoryData] = useState({
@@ -103,6 +103,33 @@ export default function AddInventoryDetails({ selectedItem, selectedItemName,onS
 console.log("✅ handleSave() called for:", e.Item_Id);
 console.log(selectedItem.id);
  const user = JSON.parse(localStorage.getItem("user"));
+
+
+// ✅ Basic validation
+  if (!inventoryData.batchNo) {
+    alert("Please enter a Batch Number");
+    return;
+  }
+
+  // ✅ Duplicate check — prevent same BatchNo for the same Item
+  const exists =
+    Array.isArray(itemDetails) &&
+    itemDetails.some(
+      (inv) =>
+        String(inv.BatchNo || inv.batchNo).trim().toLowerCase() ===
+          String(inventoryData.batchNo).trim().toLowerCase() &&
+        parseInt(inv.Item_Id || inv.item_Id || inv.item_id) ===
+          parseInt(selectedItem.id)
+    );
+
+  if (exists) {
+    alert("⚠️ This batch number already exists for the selected item!");
+    return;
+  }
+
+
+
+
     if (window.chrome?.webview) {
       const payload = {
         Item_Id: selectedItem.id, // or selectedItem.Item_Id if from DB

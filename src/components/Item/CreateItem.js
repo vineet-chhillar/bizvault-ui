@@ -499,7 +499,7 @@ console.log("📤 Sending AddItemDetails:", {
 
   return (
     <div className="form-container">
-      <h2 className="form-title">Create New Item</h2>
+      {/*<h2 className="form-title">Create New Item/Inventory</h2>*/}
       <div className="item-nav-wrapper">
       <ItemNavBar />
 </div>
@@ -824,7 +824,7 @@ console.log("📤 Sending AddItemDetails:", {
           onSave={handleInventorySave}
           onCancel={() => setSelectedItem(null)}
           selectedItemForDetails={selectedItemForDetails}
-          
+          itemDetails={itemDetails}
         />
        
       )}

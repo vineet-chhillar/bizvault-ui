@@ -290,9 +290,17 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
         "nav-tab-link" + (isActive ? " active" : "")
       }
     >
-      Create Item
+      Create Item/Inventory
     </NavLink>
-
+<NavLink
+      to="/item/EditItem"
+      onClick={() => isMobile && setMobileOpen(false)}
+      className={({ isActive }) =>
+        "nav-tab-link" + (isActive ? " active" : "")
+      }
+    >
+      View/Edit Item
+    </NavLink>
     <NavLink
       to="/item/EditInventory"
       onClick={() => isMobile && setMobileOpen(false)}
@@ -300,18 +308,10 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
         "nav-tab-link" + (isActive ? " active" : "")
       }
     >
-      Inventory
+     View/Edit Inventory
     </NavLink>
 
-    <NavLink
-      to="/item/EditItem"
-      onClick={() => isMobile && setMobileOpen(false)}
-      className={({ isActive }) =>
-        "nav-tab-link" + (isActive ? " active" : "")
-      }
-    >
-      Edit Item
-    </NavLink>
+    
   </div>
 </div>
 

@@ -556,7 +556,7 @@ h1.form-title, h2.form-title, h3.form-title {
 
 .inventory-title {
   color: #4e1d7c;
-  margin-top: 5;
+  margin-top: 0;
   margin-bottom: 0;
   font-size: 1.3rem;
   font-weight: 600;

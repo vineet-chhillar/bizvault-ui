@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
 import "./ItemForms.css";
 import "./EditInventory.css";
-
+import ItemNavBar from "./ItemNavBar";
 const EditInventory = () => {
   const [inventory, setInventory] = useState([]);
   const [selectedItemId, setSelectedItemId] = useState("");
   const [formData, setFormData] = useState(null);
   const [errors, setErrors] = useState({});
   const [items, setItems] = useState([]);
+  const [selectedItemName, setSelectedItemName] = useState("");
+  const [selectedBatchNo, setSelectedBatchno] = useState("");
 
   // ✅ Handle incoming messages from C#
   useEffect(() => {
@@ -19,27 +21,53 @@ const EditInventory = () => {
 
       // Response for inventory search
       if (data.action === "searchInventoryResponse") {
+        console.log("Inventory data from backend:", data.items); // ✅ Add this line
         setInventory(data.items || []);
       }
 
-      // Response for update
-      if (data.action === "updateInventory") {
-        alert(data.message);
-        if (data.success) {
-          setFormData(null);
-          if (selectedItemId) handleSearch(selectedItemId);
-        }
-      }
+     // ✅ Response for update
+if (data.action === "updateInventoryResponse") {
+  alert(data.message || "✅ Inventory updated successfully!");
+  if (data.success) {
+    setFormData(null);
+    if (selectedItemId) handleSearch(selectedItemId);
+  } else {
+    alert("❌ Failed to update inventory. Please try again.");
+  }
+}
 
-      // Response for item list
-      if (data.Type === "GetItemList" && data.Status === "Success") {
-        setItems(data.Data || []);
-      }
+    // ✅ Handle last inventory item
+    if (data.action === "getLastInventoryItemResponse" && data.success && data.data) {
+      const lastItem = data.data;
+      setSelectedItemId(lastItem.Item_Id);
+      setSelectedItemName(lastItem.ItemName);
+      handleSearch(lastItem.Item_Id);
+    }
+
+    // Existing responses
+    if (data.action === "searchInventoryResponse") {
+      setInventory(data.items || []);
+    }
+
+    if (data.Type === "GetItemList" && data.Status === "Success") {
+      setItems(data.Data || []);
+    }
+
+
+
+
     };
 
     // Listen for C# messages + request item list
     if (window.chrome?.webview) {
       window.chrome.webview.addEventListener("message", handleMessage);
+
+// ✅ Ask backend for last inventory item
+    window.chrome.webview.postMessage({
+      action: "getLastInventoryItem",
+      payload: {}
+    });
+
       window.chrome.webview.postMessage({
         Action: "GetItemList",
         Payload: {},
@@ -63,17 +91,20 @@ const EditInventory = () => {
   // ✅ When item selected from dropdown
   const handleItemSelect = (e) => {
     const itemId = e.target.value;
+    const itemName = e.target.options[e.target.selectedIndex].text; // 👈 get visible name
+    setSelectedItemName(itemName); // 👈 store name
     setSelectedItemId(itemId);
     setInventory([]); // Clear previous results
+    setFormData(null); // Clear previous results
     if (itemId) handleSearch(itemId);
   };
 
   // ✅ Handle input change in edit form
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    validateField(name, value);
-  };
+  const { name, value } = e.target;
+  setFormData((prev) => ({ ...prev, [name]: value }));
+  setErrors((prev) => ({ ...prev, [name]: "" })); // ✅ clear field-level error
+};
 
   // ✅ Field validation logic
   const validateField = (name, value) => {
@@ -98,22 +129,39 @@ const EditInventory = () => {
   };
 
   // ✅ Validate whole form
-  const validateForm = () => {
-    const newErrors = {};
-    if (!formData.Quantity || formData.Quantity <= 0)
-      newErrors.Quantity = "Quantity must be greater than 0.";
-    if (!formData.PurchasePrice || formData.PurchasePrice <= 0)
-      newErrors.PurchasePrice = "Purchase price must be greater than 0.";
-    if (!formData.SalesPrice || formData.SalesPrice <= 0)
-      newErrors.SalesPrice = "Sales price must be greater than 0.";
-    if (!formData.Mrp || formData.Mrp <= 0)
-      newErrors.Mrp = "MRP must be greater than 0.";
-    if (formData.MfgDate && formData.ExpDate && formData.ExpDate < formData.MfgDate)
-      newErrors.ExpDate = "Expiry cannot be before manufacturing date.";
+ const validateForm = () => {
+  const newErrors = {};
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  const qty = parseFloat(formData.quantity);
+  if (isNaN(qty) || qty <= 0)
+    newErrors.quantity = "Quantity must be greater than 0.";
+
+  const purchase = parseFloat(formData.purchasePrice);
+  if (isNaN(purchase) || purchase <= 0)
+    newErrors.purchasePrice = "Purchase price must be greater than 0.";
+
+  const sales = parseFloat(formData.salesPrice);
+  if (isNaN(sales) || sales <= 0)
+    newErrors.salesPrice = "Sales price must be greater than 0.";
+
+  const mrp = parseFloat(formData.mrp);
+  if (isNaN(mrp) || mrp <= 0)
+    newErrors.mrp = "MRP must be greater than 0.";
+
+  if (formData.mfgDate && formData.expDate) {
+    const mfg = new Date(formData.mfgDate);
+    const exp = new Date(formData.expDate);
+    if (exp < mfg)
+      newErrors.expDate = "Expiry cannot be before manufacturing date.";
+  }
+
+  setErrors(newErrors);
+  console.log("Validation Errors:", newErrors);
+  return Object.keys(newErrors).length === 0;
+};
+
+
+
 
   // ✅ Save edited record
   const handleSave = (e) => {
@@ -128,23 +176,24 @@ const EditInventory = () => {
       payload: {
         id: formData.Id,
         item_id: parseInt(formData.Item_Id || selectedItemId),
-        hsnCode: formData.HsnCode,
-        batchNo: formData.BatchNo,
-        date: formData.Date,
-        quantity: parseInt(formData.Quantity),
-        purchasePrice: parseFloat(formData.PurchasePrice),
-        salesPrice: parseFloat(formData.SalesPrice),
-        mrp: parseFloat(formData.Mrp),
-        goodsOrServices: formData.GoodsOrServices,
-        description: formData.Description,
-        mfgDate: formData.MfgDate,
-        expDate: formData.ExpDate,
-        modelNo: formData.ModelNo,
-        brand: formData.Brand,
-        size: formData.Size,
-        color: formData.Color,
-        weight: parseFloat(formData.Weight),
-        dimension: formData.Dimension,
+        hsnCode: formData.hsnCode,
+        batchNo: formData.batchNo,
+        date: formData.date,
+        quantity: parseInt(formData.quantity),
+        purchasePrice: parseFloat(formData.purchasePrice),
+        salesPrice: parseFloat(formData.salesPrice),
+        mrp: parseFloat(formData.mrp),
+        goodsOrServices: formData.goodsOrServices,
+        description: formData.description,
+        mfgdate: formData.mfgdate,
+        expdate: formData.expdate,
+        modelno: formData.modelno,
+        brand: formData.brand,
+        size: formData.size,
+        color: formData.color,
+        weight: formData.weight,
+        dimension: formData.dimension,
+        invbatchno: selectedBatchNo,
       },
     });
   };
@@ -164,6 +213,12 @@ const EditInventory = () => {
 
   return (
     <div className="inventory-form">
+      
+
+      <div className="item-nav-wrapper">
+            <ItemNavBar />
+      </div>
+
       {/* STEP 1: Item Selector */}
       <div className="dropdown-section">
 
@@ -192,7 +247,7 @@ const EditInventory = () => {
       {selectedItemId && inventory.length > 0 && (
         <div className="inventory-container">
           <div className="inventory-header">
-            <h3 className="inventory-title">📋 Inventory for Selected Item</h3>
+            <h3 className="inventory-title">📋 Inventory for {selectedItemName}</h3>
           </div>
 
           <table className="inventory-table">
@@ -200,11 +255,14 @@ const EditInventory = () => {
               <tr>
                 <th>HSN/SAC</th>
                 <th>Batch No</th>
+                <th>Date</th>
                 <th>Qty</th>
                 <th>Purchase Price</th>
                 <th>Sales Price</th>
                 <th>MRP</th>
-                <th>Date</th>
+                
+                <th>Goods/Services</th>
+                <th>Description</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -213,15 +271,42 @@ const EditInventory = () => {
                 <tr key={inv.Id || inv.id}>
                   <td>{inv.HsnCode || inv.hsnCode}</td>
                   <td>{inv.BatchNo || inv.batchNo}</td>
+                  <td>{(inv.Date || inv.date || "").split("T")[0].split(" ")[0]}</td>
                   <td>{inv.Quantity || inv.quantity}</td>
                   <td>{inv.PurchasePrice || inv.purchasePrice}</td>
                   <td>{inv.SalesPrice || inv.salesPrice}</td>
                   <td>{inv.Mrp || inv.mrp}</td>
-                  <td>{inv.Date || inv.date}</td>
+                  <td>{inv.GoodsOrServices || inv.goodsOrServices}</td>
+                  <td>{inv.Description || inv.description}</td>
+                  
                   <td>
                      <button
   className="invaction-btn invaction-modify"
-   onClick={() => setFormData(inv)}
+onClick={() => {
+  const normalized = Object.fromEntries(
+    Object.entries(inv).map(([key, value]) => {
+      const lowerKey = key.charAt(0).toLowerCase() + key.slice(1);
+
+      // ✅ Fix date format for input[type=date]
+      if (
+        ["mfgdate", "expdate","date"].includes(lowerKey) &&
+        typeof value === "string"
+      ) {
+        // Handle both "2025-11-08 00:00:00" and "2025-11-08T00:00:00"
+        if (value.includes("T")) value = value.split("T")[0];
+        else if (value.includes(" ")) value = value.split(" ")[0];
+      }
+
+      return [lowerKey, value];
+    })
+  );
+
+  console.log("Editing normalized record:", normalized);
+  setFormData(normalized); // ✅ use fixed data
+  setSelectedBatchno(inv.BatchNo || inv.batchNo);
+}}
+
+
 >
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -284,15 +369,15 @@ const EditInventory = () => {
       {/* STEP 3: Edit Form */}
       {formData && (
         <div className="inventory-body">
-          <h3 className="inventory-title">🏷️ Edit Inventory Record</h3>
+          <h3 className="inventory-title">🏷️ Edit Inventory Record For Batch : {selectedBatchNo}</h3>
 
           <div className="form-row-horizontal">
             <div className="form-group">
               <label>HSN Code</label>
               <input
                 type="text"
-                name="HsnCode"
-                value={formData.HsnCode || formData.hsnCode || ""}
+                name="hsnCode"
+                value={formData.hsnCode || formData.hsnCode || ""}
                 onChange={handleChange}
               />
             </div>
@@ -301,8 +386,18 @@ const EditInventory = () => {
               <label>Batch No</label>
               <input
                 type="text"
-                name="BatchNo"
-                value={formData.BatchNo || formData.batchNo || ""}
+                name="batchNo"
+                value={formData.batchNo || formData.batchNo || ""}
+                onChange={handleChange}
+              />
+            </div>
+
+              <div className="form-group">
+              <label>Date</label>
+              <input
+                type="date"
+                name="date"
+                value={formData.date || formData.date || ""}
                 onChange={handleChange}
               />
             </div>
@@ -311,8 +406,8 @@ const EditInventory = () => {
               <label>Quantity</label>
               <input
                 type="number"
-                name="Quantity"
-                value={formData.Quantity || formData.quantity || ""}
+                name="quantity"
+                value={formData.quantity || formData.quantity || ""}
                 onChange={handleChange}
               />
               {errors.Quantity && <p className="error-text">{errors.Quantity}</p>}
@@ -322,8 +417,8 @@ const EditInventory = () => {
               <label>Purchase Price</label>
               <input
                 type="number"
-                name="PurchasePrice"
-                value={formData.PurchasePrice || formData.purchasePrice || ""}
+                name="purchasePrice"
+                value={formData.purchasePrice || formData.purchasePrice || ""}
                 onChange={handleChange}
               />
             </div>
@@ -332,8 +427,8 @@ const EditInventory = () => {
               <label>Sales Price</label>
               <input
                 type="number"
-                name="SalesPrice"
-                value={formData.SalesPrice || formData.salesPrice || ""}
+                name="salesPrice"
+                value={formData.salesPrice || formData.salesPrice || ""}
                 onChange={handleChange}
               />
             </div>
@@ -342,8 +437,31 @@ const EditInventory = () => {
               <label>MRP</label>
               <input
                 type="number"
-                name="Mrp"
-                value={formData.Mrp || formData.mrp || ""}
+                name="mrp"
+                value={formData.mrp || formData.mrp || ""}
+                onChange={handleChange}
+              />
+            </div>
+
+<div className="form-group">
+  <label>Goods/Services</label>
+  <select
+    name="goodsOrServices"
+    value={formData.goodsOrServices}
+    onChange={handleChange}
+    required
+  >
+    <option value="Goods">Goods</option>
+    <option value="Services">Services</option>
+  </select>
+</div>
+
+<div className="form-group">
+              <label>Description</label>
+              <input
+                type="text"
+                name="description"
+                value={formData.description || formData.description || ""}
                 onChange={handleChange}
               />
             </div>
@@ -352,8 +470,8 @@ const EditInventory = () => {
               <label>Mfg Date</label>
               <input
                 type="date"
-                name="MfgDate"
-                value={formData.MfgDate || formData.mfgDate || ""}
+                name="mfgdate"
+                value={formData.mfgdate || formData.mfgdate || ""}
                 onChange={handleChange}
               />
             </div>
@@ -362,39 +480,83 @@ const EditInventory = () => {
               <label>Exp Date</label>
               <input
                 type="date"
-                name="ExpDate"
-                value={formData.ExpDate || formData.expDate || ""}
+                name="expdate"
+                value={formData.expdate || formData.expdate || ""}
                 onChange={handleChange}
               />
             </div>
 
-            <div className="form-group">
-              <label>Brand</label>
-              <input
-                type="text"
-                name="Brand"
-                value={formData.Brand || formData.brand || ""}
-                onChange={handleChange}
-              />
-            </div>
+           
 
             <div className="form-group">
               <label>Model No</label>
               <input
                 type="text"
-                name="ModelNo"
-                value={formData.ModelNo || formData.modelNo || ""}
+                name="modelno"
+                value={formData.modelno || formData.modelno || ""}
                 onChange={handleChange}
               />
             </div>
+             <div className="form-group">
+              <label>Brand</label>
+              <input
+                type="text"
+                name="brand"
+                value={formData.brand || formData.brand || ""}
+                onChange={handleChange}
+              />
+            </div>
+
+             <div className="form-group">
+              <label>Size</label>
+              <input
+                type="text"
+                name="size"
+                value={formData.size || formData.size || ""}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="form-group">
+              <label>Color</label>
+              <input
+                type="text"
+                name="color"
+                value={formData.color || formData.color || ""}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Weight</label>
+              <input
+                type="text"
+                name="weight"
+                value={formData.weight || formData.weight || ""}
+                onChange={handleChange}
+              />
+            </div>
+
+             <div className="form-group">
+              <label>Dimension</label>
+              <input
+                type="text"
+                name="dimension"
+                value={formData.dimension || formData.dimension || ""}
+                onChange={handleChange}
+              />
+            </div>
+
+
+
           </div>
 
           <div className="form-actions">
             <div className="inventory-btns">
               <button
+              type="button"
                 className="btn-submit small"
                 onClick={handleSave}
-                disabled={!formData || !isFormValid}
+                
               >
                 💾 Save Changes
               </button>

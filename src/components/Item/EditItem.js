@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./ItemForms.css";
-
+import ItemNavBar from "./ItemNavBar";
 
 const EditItem = () => {
   const [items, setItems] = useState([]);
@@ -160,7 +160,14 @@ console.log("📩 item id is:", formData.Id +","+formData.CategoryName+""+formDa
 
 
   return (
-    <div className="inventory-form">
+<div className="inventory-form">
+
+
+      <div className="item-nav-wrapper">
+                  <ItemNavBar />
+            </div>
+     
+
       {/* 🔍 Search + Item Table */}
       <div className="table-container">
         <div className="table-header">
