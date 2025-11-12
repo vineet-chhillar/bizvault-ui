@@ -8,16 +8,25 @@ export default function AddInventoryDetails({ selectedItem, selectedItemName,onS
     item_id: "",
     hsnCode: "",
     batchNo: "",
+    refno:"",
    date: new Date().toISOString().split("T")[0],
     quantity: "",
     purchasePrice: "",
+
+    discountPercent: "",
+    netPurchasePrice: "",
+    amount: "",
+
+
     salesPrice: "",
     mrp: "",
     goodsOrServices: "Goods",
     description: "",
     
-    mfgdate:  new Date().toISOString().split("T")[0],
-    expdate:  new Date().toISOString().split("T")[0],
+    //mfgdate:  new Date().toISOString().split("T")[0],
+    mfgdate:"",
+    //expdate:  new Date().toISOString().split("T")[0],
+    expdate:"",
     modelno: "",
     brand: "",
     size: "",
@@ -61,6 +70,9 @@ export default function AddInventoryDetails({ selectedItem, selectedItemName,onS
         }
       }
 
+
+      
+
       // ✅ Handle AddItemDetails response
       if (msg.Type === "AddItemDetails") {
         if (msg.Status === "Success") {
@@ -69,16 +81,8 @@ export default function AddInventoryDetails({ selectedItem, selectedItemName,onS
         } else {
           alert("❌ " + msg.Message);
         }
-      }
-
-
-
-      
-    };
-
-
- 
-    
+      }      
+    };   
 
 
     window.chrome.webview.addEventListener("message", handler);
@@ -88,10 +92,33 @@ export default function AddInventoryDetails({ selectedItem, selectedItemName,onS
 
 
 
+const handleChange = (e) => {
+  const { name, value } = e.target;
+  
+  // Copy current state
+  let updatedData = { ...inventoryData, [name]: value };
 
-  const handleChange = (e) => {
+  // Parse numeric fields safely
+  const purchasePrice = parseFloat(updatedData.purchasePrice) || 0;
+  const discountPercent = parseFloat(updatedData.discountPercent) || 0;
+  const quantity = parseFloat(updatedData.quantity) || 0;
+
+  // Calculate new values if relevant fields change
+  const netPurchasePrice = purchasePrice - (purchasePrice * discountPercent) / 100;
+  const amount = quantity * netPurchasePrice;
+
+  // Always keep computed fields updated
+  updatedData.netPurchasePrice = netPurchasePrice.toFixed(2);
+  updatedData.amount = amount.toFixed(2);
+
+  // Set the final updated state
+  setInventoryData(updatedData);
+};
+
+  {/*const handleChange = (e) => {
     setInventoryData({ ...inventoryData, [e.target.name]: e.target.value });
-  };
+    
+  };*/}
 
   const handleToggleOptional = (field) => {
     setShowOptional({ ...showOptional, [field]: !showOptional[field] });
@@ -135,10 +162,16 @@ console.log(selectedItem.id);
         Item_Id: selectedItem.id, // or selectedItem.Item_Id if from DB
         HsnCode: inventoryData.hsnCode,
         BatchNo: inventoryData.batchNo,
+        refno: inventoryData.refno,
         Date: new Date().toISOString().split("T")[0], // "2024-10-25"
         
         Quantity: parseFloat(inventoryData.quantity) || 0,
         PurchasePrice: parseFloat(inventoryData.purchasePrice) || 0,
+
+        DiscountPercent: parseFloat(inventoryData.discountPercent) || 0,
+        NetPurchasePrice: parseFloat(inventoryData.netPurchasePrice) || 0,
+        Amount: parseFloat(inventoryData.amount) || 0,
+
         SalesPrice: parseFloat(inventoryData.salesPrice) || 0,
         Mrp: parseFloat(inventoryData.mrp) || 0,
         GoodsOrServices: inventoryData.goodsOrServices,
@@ -196,6 +229,16 @@ console.log(selectedItem.id);
             />
           </div>
 
+           <div className="form-group">
+            <label>Ref/Invoice No</label>
+            <input
+              name="refno"
+              value={inventoryData.refno}
+              onChange={handleChange}
+              placeholder="Enter Invoice Number"
+            />
+          </div>
+
           <div className="form-group">
             <label>Date</label>
             <input
@@ -230,6 +273,43 @@ console.log(selectedItem.id);
               placeholder="Enter Purchase Price"
             />
           </div>
+
+
+            <div className="form-group">
+            <label>Discount Percent</label>
+            <input
+              name="discountPercent"
+              type="number"
+              value={inventoryData.discountPercent}
+              onChange={handleChange}
+              placeholder="Enter Discount percent"
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Net Purchase Price</label>
+            <input
+              name="netPurchasePrice"
+              type="number"
+              value={inventoryData.netPurchasePrice}
+              onChange={handleChange}
+              placeholder="Net Purchase Price"
+              readonly={true}
+            />
+          </div>
+
+<div className="form-group">
+            <label>Amount</label>
+            <input
+              name="amount"
+              type="number"
+              value={inventoryData.amount}
+              onChange={handleChange}
+              placeholder="Total Amount"
+              readonly={true}
+            />
+          </div>
+
 
           <div className="form-group">
             <label>Sales Price</label>

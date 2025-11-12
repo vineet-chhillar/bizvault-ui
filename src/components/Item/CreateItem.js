@@ -783,12 +783,19 @@ console.log("📤 Sending AddItemDetails:", {
     <table className="item-table">
       <thead>
         <tr>
-          <th>Item ID</th>
+          <th>Item Name</th>
           <th>HSN/SAC Code</th>
           <th>Batch No</th>
+          <th>Ref/Invoice No</th>
           <th>Date</th>
           <th>Quantity</th>
           <th>Purchase Price</th>
+
+          <th>Discount Percent</th>
+          <th>Net Purchase Price</th>
+          <th>Amount</th>
+
+
           <th>Sales Price</th>
           <th>MRP</th>
           <th>Goods/Services</th>
@@ -802,9 +809,15 @@ console.log("📤 Sending AddItemDetails:", {
             <td>{selectedItemName}</td>
     <td>{d.HsnCode}</td>
     <td>{d.BatchNo}</td>
+    <td>{d.refno}</td>
     <td>{d.Date}</td>
     <td>{d.Quantity}</td>
     <td>{d.PurchasePrice}</td>
+
+    <td>{d.DiscountPercent}</td>
+    <td>{d.NetPurchasePrice}</td>
+    <td>{d.Amount}</td>
+
     <td>{d.SalesPrice}</td>
     <td>{d.Mrp}</td>
     <td>{d.GoodsOrServices}</td>

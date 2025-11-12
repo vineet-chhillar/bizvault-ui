@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./ItemForms.css";
 import "./EditInventory.css";
 import ItemNavBar from "./ItemNavBar";
@@ -10,6 +10,9 @@ const EditInventory = () => {
   const [items, setItems] = useState([]);
   const [selectedItemName, setSelectedItemName] = useState("");
   const [selectedBatchNo, setSelectedBatchno] = useState("");
+  const selectedItemIdRef = useRef();
+
+
 
   // ✅ Handle incoming messages from C#
   useEffect(() => {
@@ -27,13 +30,18 @@ const EditInventory = () => {
 
      // ✅ Response for update
 if (data.action === "updateInventoryResponse") {
-  alert(data.message || "✅ Inventory updated successfully!");
-  if (data.success) {
-    setFormData(null);
-    if (selectedItemId) handleSearch(selectedItemId);
+    if (data.success) {
+       alert(data.message || "✅ Inventory updated successfully!");
+        const itemToRefresh = selectedItemIdRef.current;
+    console.log("🔁 Refreshing inventory for item:", itemToRefresh);
+       if (itemToRefresh){
+           handleSearch(itemToRefresh);
+    }
   } else {
     alert("❌ Failed to update inventory. Please try again.");
   }
+  setFormData(null);
+  
 }
 
     // ✅ Handle last inventory item
@@ -77,7 +85,7 @@ if (data.action === "updateInventoryResponse") {
     return () => {
       window.chrome?.webview?.removeEventListener("message", handleMessage);
     };
-  }, [selectedItemId]);
+  }, []);
 
   // ✅ Search inventory for selected item
   const handleSearch = (itemId) => {
@@ -94,6 +102,7 @@ if (data.action === "updateInventoryResponse") {
     const itemName = e.target.options[e.target.selectedIndex].text; // 👈 get visible name
     setSelectedItemName(itemName); // 👈 store name
     setSelectedItemId(itemId);
+    selectedItemIdRef.current = itemId; // ✅ persist it
     setInventory([]); // Clear previous results
     setFormData(null); // Clear previous results
     if (itemId) handleSearch(itemId);
@@ -102,6 +111,26 @@ if (data.action === "updateInventoryResponse") {
   // ✅ Handle input change in edit form
   const handleChange = (e) => {
   const { name, value } = e.target;
+
+// Copy current state
+  let updatedData = { ...formData, [name]: value };
+
+  // Parse numeric fields safely
+  const purchasePrice = parseFloat(updatedData.purchasePrice) || 0;
+  const discountPercent = parseFloat(updatedData.discountPercent) || 0;
+  const quantity = parseFloat(updatedData.quantity) || 0;
+
+  // Calculate new values if relevant fields change
+  const netpurchasePrice = purchasePrice - (purchasePrice * discountPercent) / 100;
+  const amount = quantity * netpurchasePrice;
+
+  // Always keep computed fields updated
+  updatedData.netpurchasePrice = netpurchasePrice.toFixed(2);
+  updatedData.amount = amount.toFixed(2);
+
+  // Set the final updated state
+  setFormData(updatedData);
+
   setFormData((prev) => ({ ...prev, [name]: value }));
   setErrors((prev) => ({ ...prev, [name]: "" })); // ✅ clear field-level error
 };
@@ -178,9 +207,15 @@ if (data.action === "updateInventoryResponse") {
         item_id: parseInt(formData.Item_Id || selectedItemId),
         hsnCode: formData.hsnCode,
         batchNo: formData.batchNo,
+        refno: formData.refno,
         date: formData.date,
         quantity: parseInt(formData.quantity),
         purchasePrice: parseFloat(formData.purchasePrice),
+
+        discountPercent: parseFloat(formData.discountPercent),
+        netpurchasePrice: parseFloat(formData.netpurchasePrice),
+        amount: parseFloat(formData.amount),
+
         salesPrice: parseFloat(formData.salesPrice),
         mrp: parseFloat(formData.mrp),
         goodsOrServices: formData.goodsOrServices,
@@ -255,9 +290,15 @@ if (data.action === "updateInventoryResponse") {
               <tr>
                 <th>HSN/SAC</th>
                 <th>Batch No</th>
+                <th>Ref/Invoice No</th>
                 <th>Date</th>
                 <th>Qty</th>
                 <th>Purchase Price</th>
+
+                <th>Discount Percent</th>
+                <th>Net Purchase Price</th>
+                <th>Amount</th>
+
                 <th>Sales Price</th>
                 <th>MRP</th>
                 
@@ -271,9 +312,15 @@ if (data.action === "updateInventoryResponse") {
                 <tr key={inv.Id || inv.id}>
                   <td>{inv.HsnCode || inv.hsnCode}</td>
                   <td>{inv.BatchNo || inv.batchNo}</td>
+                  <td>{inv.refno || inv.refno}</td>
                   <td>{(inv.Date || inv.date || "").split("T")[0].split(" ")[0]}</td>
                   <td>{inv.Quantity || inv.quantity}</td>
-                  <td>{inv.PurchasePrice || inv.purchasePrice}</td>
+                  <td>{inv.purchasePrice || inv.purchasePrice}</td>
+
+                  <td>{inv.DiscountPercent || inv.discountPercent}</td>
+                  <td>{inv.netpurchasePrice || inv.NetPurchasePrice}</td>
+                  <td>{inv.Amount || inv.amount}</td>
+
                   <td>{inv.SalesPrice || inv.salesPrice}</td>
                   <td>{inv.Mrp || inv.mrp}</td>
                   <td>{inv.GoodsOrServices || inv.goodsOrServices}</td>
@@ -392,6 +439,19 @@ onClick={() => {
               />
             </div>
 
+
+            <div className="form-group">
+              <label>Ref/Invoice No</label>
+              <input
+                type="text"
+                name="refno"
+                value={formData.refno || formData.refno || ""}
+                onChange={handleChange}
+              />
+            </div>
+
+
+
               <div className="form-group">
               <label>Date</label>
               <input
@@ -422,6 +482,39 @@ onClick={() => {
                 onChange={handleChange}
               />
             </div>
+
+            <div className="form-group">
+              <label>Discount Percent</label>
+              <input
+                type="number"
+                name="discountPercent"
+                value={formData.discountPercent || formData.discountPercent || ""}
+                onChange={handleChange}
+              />
+            </div>
+
+             <div className="form-group">
+              <label> Net Purchase Price</label>
+              <input
+                type="number"
+                name="netPurchasePrice"
+                value={formData.netpurchasePrice || formData.netpurchasePrice || ""}
+                onChange={handleChange}
+                readonly={true}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Amount</label>
+              <input
+                type="number"
+                name="amount"
+                value={formData.amount || formData.amount || ""}
+                onChange={handleChange}
+                readonly={true}
+              />
+            </div>
+
 
             <div className="form-group">
               <label>Sales Price</label>
@@ -471,7 +564,7 @@ onClick={() => {
               <input
                 type="date"
                 name="mfgdate"
-                value={formData.mfgdate || formData.mfgdate || ""}
+                value={formData.mfgdate || ""}
                 onChange={handleChange}
               />
             </div>
@@ -481,7 +574,7 @@ onClick={() => {
               <input
                 type="date"
                 name="expdate"
-                value={formData.expdate || formData.expdate || ""}
+                value={formData.expdate || ""}
                 onChange={handleChange}
               />
             </div>
