@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import CreateItem from "./components/Item/CreateItem";
 import EditInventory from "./components/Item/EditInventory";
 import EditItem from "./components/Item/EditItem";
+import CompanySetup from "./components/Item/CompanySetup";
+import InvoiceEditor from "./components/Item/InvoiceEditor";
+
 
 import {
   BrowserRouter as Router,
@@ -236,7 +239,7 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
             </NavLink>
 
             <NavLink
-              to="/invoice"
+              to="Item/InvoiceEditor"
               onClick={() => isMobile && setMobileOpen(false)}
               className={({ isActive }) =>
                 "nav-link" + (isActive ? " active" : "")
@@ -255,6 +258,17 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
             >
               <span className="icon"><FaBoxes /></span>
               <span className="label">Inventory</span>
+            </NavLink>
+
+            <NavLink
+              to="Item/CompanySetup"
+              onClick={() => isMobile && setMobileOpen(false)}
+              className={({ isActive }) =>
+                "nav-link" + (isActive ? " active" : "")
+              }
+            >
+              <span className="icon"><FaBoxes /></span>
+              <span className="label">Company Profile</span>
             </NavLink>
 
             {/*<NavLink
@@ -336,6 +350,8 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
   <Route path="/Item/CreateItem" element={<CreateItem />}/>
   <Route path="/Item/EditInventory" element={<EditInventory />} />
   <Route path="/Item/EditItem" element={<EditItem />} />
+  <Route path="/item/CompanySetup" element={<CompanySetup user={user} />} />
+  <Route path="/item/InvoiceEditor" element={<InvoiceEditor user={user} />} />
 </Routes>
           {/*<main className="main-content">
           

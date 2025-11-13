@@ -96,31 +96,17 @@ const [units, setUnits] = useState([]);
     }
   };
 
- const handleChange = (e) => {
+const handleChange = (e) => {
   const { name, value } = e.target;
-  const key = name.toLowerCase();
 
-  setFormData((prev) => {
-    const updated = { ...prev };
-
-    switch (key) {
-      case "categoryid":
-        updated.CategoryId = parseInt(value);
-        break;
-      case "unitid":
-        updated.UnitId = parseInt(value);
-        break;
-      case "gstid":
-        updated.GstId = parseInt(value);
-        break;
-      default:
-        updated[name] = value;
-        break;
-    }
-
-    return updated;
-  });
+  setFormData((prev) => ({
+    ...prev,
+    [name]: value   // KEEP AS STRING
+  }));
 };
+
+
+
 
 
   // ✅ Save updated item
@@ -214,12 +200,15 @@ console.log("📩 item id is:", formData.Id +","+formData.CategoryName+""+formDa
 
             <button
   className="invaction-btn invaction-modify"
-   onClick={() => setFormData({
-  ...i,
-  CategoryId: i.CategoryId,
-  UnitId: i.UnitId,
-  GstId: i.GstId
-})}
+  onClick={() => {
+  console.log("DEBUG: Item clicked:", i);
+  setFormData({
+    ...i,
+    CategoryId: String(i.CategoryId),
+    UnitId: String(i.UnitId),
+    GstId: String(i.GstId),
+  });
+}}
 >
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -319,20 +308,22 @@ console.log("📩 item id is:", formData.Id +","+formData.CategoryName+""+formDa
       {/* Category */}
       <div className="form-group">
         <label>Category</label>
-        <select
-          name="CategoryId"
-          value={formData.CategoryId || ""}
-          onChange={handleChange}
-          required
-        >
-          <option value="">{formData.CategoryName ? `Current: ${formData.CategoryName}` : "-- Select Category --"}</option>
-          {categories.map((cat) => (
-            <option key={cat.Id} value={String(cat.Id)}>
-              {cat.CategoryName}
-            </option>
-          ))}
-        </select>
-      </div>
+      <select
+  name="CategoryId"
+  value={formData.CategoryId ? String(formData.CategoryId) : ""}
+  onChange={handleChange}
+  required
+>
+  <option value="">-- Select Category --</option>
+
+  {categories.map((cat) => (
+    <option key={cat.Id} value={String(cat.Id)}>
+      {cat.CategoryName}
+    </option>
+  ))}
+</select>
+
+</div>
 
       {/* Date */}
       <div className="form-group">
@@ -359,37 +350,42 @@ console.log("📩 item id is:", formData.Id +","+formData.CategoryName+""+formDa
       {/* Unit */}
       <div className="form-group">
         <label>Unit</label>
-        <select
-          name="UnitId"
-          value={formData.UnitId}
-          onChange={handleChange}
-          required
-        >
-          <option value="">{formData.UnitName ? `Current: ${formData.UnitName}` : "-- Select Unit --"}</option>
-          {units.map((u) => (
-            <option key={u.Id} value={String(u.Id)}>
-              {u.UnitName}
-            </option>
-          ))}
-        </select>
-      </div>
+     <select
+  name="UnitId"
+  value={formData.UnitId ? String(formData.UnitId) : ""}
+  onChange={handleChange}
+  required
+>
+  <option value="">-- Select Unit --</option>
+
+  {units.map((u) => (
+    <option key={u.Id} value={String(u.Id)}>
+      {u.UnitName}
+    </option>
+  ))}
+</select>
+
+</div>
 
       {/* GST */}
       <div className="form-group">
         <label>GST (%)</label>
         <select
-          name="GstId"
-          value={formData.GstId}
-          onChange={handleChange}
-          required
-        >
-          <option value="">{formData.GstPercent ? `Current: ${formData.GstPercent}%` : "-- Select GST --"}</option>
-          {gstRates.map((g) => (
-            <option key={g.Id} value={String(g.Id)}>
-              {g.GstPercent}%
-            </option>
-          ))}
-        </select>
+  name="GstId"
+  value={formData.GstId ? String(formData.GstId) : ""}
+  onChange={handleChange}
+  required
+>
+  <option value="">-- Select GST --</option>
+
+  {gstRates.map((g) => (
+    <option key={g.Id} value={String(g.Id)}>
+      {g.GstPercent}%
+    </option>
+  ))}
+</select>
+
+
       </div>
     </div>
 

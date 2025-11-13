@@ -1,0 +1,168 @@
+/* ============= MAIN WRAPPER (Matches item forms) ============= */
+.company-setup-container {
+  width: 100%;
+  background: #fff;
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+  border: 1px solid #d8d6e5;
+  margin-top: 5px;
+  box-sizing: border-box;
+}
+
+/* Title same as item/inventory titles */
+.company-setup-title {
+  color: #4e1d7c;
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+/* ============= TABS (Dhansutra Style) ============= */
+.company-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  border-bottom: 2px solid #eee;
+}
+
+.company-tab-btn {
+  padding: 8px 15px;
+  border: none;
+  border-radius: 6px 6px 0 0;
+  cursor: pointer;
+  background: #ede8fa;
+  color: #4e1d7c;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.company-tab-btn:hover {
+  background: #d8c9f5;
+}
+
+.company-tab-btn.active {
+  background: #4e1d7c;
+  color: white;
+  box-shadow: 0 2px 4px rgba(78,29,124,0.25);
+}
+
+/* ============= TAB CONTENT AREA ============= */
+.company-section {
+  background: #fafafa;
+  padding: 15px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  margin-bottom: 15px;
+}
+
+/* Two column layout with responsive wrap */
+.company-form-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.company-form-group {
+  flex: 1;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+}
+
+.company-form-group label {
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #333;
+}
+
+.company-form-group input,
+.company-form-group select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  outline: none;
+  transition: 0.2s ease;
+}
+
+.company-form-group input:focus,
+.company-form-group select:focus {
+  border-color: #4e1d7c;
+  box-shadow: 0 0 3px rgba(78,29,124,0.2);
+}
+
+/* ============= LOGO UPLOAD BOX ============= */
+.company-logo-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.company-logo-preview {
+  margin-top: 10px;
+  width: 140px;
+  height: auto;
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 8px;
+  padding: 6px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+}
+
+.remove-logo-btn {
+  background: #644e79;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  margin-top: 8px;
+  cursor: pointer;
+}
+
+.remove-logo-btn:hover {
+  background: #7a22cc;
+}
+
+/* ============= BUTTONS (Same as Save/Cancel) ============= */
+.company-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #ddd;
+}
+
+.company-btn {
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background-color: #4e1d7c;
+  color: #fff;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.company-btn:hover {
+  background-color: #62349c;
+  transform: scale(1.03);
+}
+
+.company-btn.cancel {
+  background: #ccc;
+  color: #4e1d7c;
+}
+
+.company-btn.cancel:hover {
+  background: #b3b3b3;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .company-form-group {
+    min-width: 100%;
+  }
+}
