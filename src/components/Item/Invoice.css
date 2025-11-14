@@ -1,0 +1,49 @@
+.customer-section {
+  margin-bottom: 20px;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fafafa;
+}
+
+.customer-section label {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.customer-section input {
+  width: 100%;
+  padding: 7px 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* Suggestions dropdown */
+.suggestions-box {
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  position: absolute;
+  width: 98%;
+  max-height: 180px;
+  overflow-y: auto;
+  z-index: 999;
+  margin-top: -8px;
+}
+
+.suggestion-row {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+}
+
+.suggestion-row:hover {
+  background: #f0f0f0;
+}
+
+/* Customer fields container */
+.customer-fields input {
+  margin-bottom: 8px;
+}
