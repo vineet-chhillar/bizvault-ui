@@ -1,49 +1,361 @@
 .customer-section {
-  margin-bottom: 20px;
-  padding: 15px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  background: #fafafa;
+  margin: 10px auto 18px auto;      /* smaller outside spacing */
+  padding: 12px 16px;               /* less padding */
+
+  background: #f8f5ff;              /* lighter and softer */
+  border: 1px solid #e5defa;        /* very soft border */
+  border-radius: 10px;
+
+  box-shadow: 0 1px 3px rgba(110, 80, 200, 0.06);  /* smaller shadow */
+
+  max-width: 360px;                 /* narrower = less screen impact */
+  width: 100%;
+  text-align: left;
 }
 
+/* Labels */
 .customer-section label {
   font-weight: 600;
-  display: block;
-  margin-bottom: 6px;
+  font-size: 13px;                  /* smaller text */
+  color: #4e3ca3;
+  margin-bottom: 4px;
 }
 
-.customer-section input {
+/* Inputs + Selects */
+.customer-section input,
+.customer-section select {
   width: 100%;
-  padding: 7px 10px;
+  max-width: 240px;                 /* smaller width */
+  height: 34px;                     /* smaller height */
+
+  padding: 4px 8px;                 /* less padding */
   margin-bottom: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+
+  border: 1px solid #d3c7f7;
+  border-radius: 5px;
+
+  background: #ffffff;
+  color: #333;
+  font-size: 13px;
+
+  transition: 0.2s border, 0.2s box-shadow;
 }
+
+.customer-section input:focus,
+.customer-section select:focus {
+  border-color: #8a76f7;
+  box-shadow: 0 0 3px rgba(138, 118, 247, 0.4);
+  outline: none;
+}
+
+/* Inner fields spacing */
+.customer-fields {
+  margin-top: 6px;                 /* smaller spacing */
+}
+
+
 
 /* Suggestions dropdown */
 .suggestions-box {
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  background: #ffffff;  
+  border: 1px solid #d8d0f3;            /* soft lavender border */
+  border-radius: 10px;                  /* smoother corners */
   position: absolute;
-  width: 98%;
-  max-height: 180px;
+
+  width: 100%;
+  max-height: 500px;                    /* ↑ increased height */
   overflow-y: auto;
+
+  box-shadow: 0 4px 12px rgba(120, 80, 200, 0.18); /* elegant glow */
   z-index: 999;
-  margin-top: -8px;
+
+  margin-top: 2px;
+  padding: 4px 0;                       /* better spacing inside */
 }
 
+/* Scrollbar styling (beautiful slim lavender) */
+.suggestions-box::-webkit-scrollbar {
+  width: 6px;
+}
+.suggestions-box::-webkit-scrollbar-thumb {
+  background: #c8b7ff;
+  border-radius: 8px;
+}
+.suggestions-box::-webkit-scrollbar-thumb:hover {
+  background: #b59eff;
+}
+
+/* Suggestion row styling */
 .suggestion-row {
-  padding: 8px 12px;
+  padding: 10px 14px;
   cursor: pointer;
-  border-bottom: 1px solid #eee;
+
+  font-size: 14px;
+  color: #3f2d8f;                       /* soft purple text */
+
+  transition: 0.2s background, 0.2s padding-left;
 }
 
+/* Elegant hover animation */
 .suggestion-row:hover {
-  background: #f0f0f0;
+  background: #f4efff;                  /* subtle lavender hover */
+  padding-left: 18px;                   /* small slide animation */
 }
+
 
 /* Customer fields container */
 .customer-fields input {
   margin-bottom: 8px;
+}
+.data-table input {
+  width: 95%;
+  padding: 4px;
+  box-sizing: border-box;
+  
+}
+
+.data-table th,
+.data-table td {
+  padding: 4px;
+  text-align: left;
+  vertical-align: top;
+   
+}
+
+.data-table th:nth-child(1) { width: 10%; } /* Item */
+.data-table th:nth-child(2) { width: 10%; } /* Batch */
+.data-table th:nth-child(3) { width: 8%; } /* HSN */
+.data-table th:nth-child(4) { width: 7%; }  /* Qty */
+.data-table th:nth-child(5) { width: 7%; } /* Rate */
+.data-table th:nth-child(6) { width: 7%; } /* discount */
+.data-table th:nth-child(7) { width: 7%; }  /* GST% */
+.data-table th:nth-child(8) { width: 7%; }  /* GST% */
+.data-table th:nth-child(9) { width: 7%; }  /* SGST */
+.data-table th:nth-child(10) { width: 7%; }  /* CGST */
+.data-table th:nth-child(11) { width: 7%; }  /* IGST */
+.data-table th:nth-child(12) { width: 7%; } /* Amount */
+.data-table th:nth-child(13) { width: 7%; }  /* Delete */
+.data-table th:nth-child(14) { width: 7%; }  /* IGST */
+.data-table th:nth-child(15) { width: 7%; } /* Amount */
+.data-table th:nth-child(16) { width: 7%; }  /* Delete */
+
+.data-table tbody tr:nth-child(even) {
+  background: #f9f9f9;
+}
+/* Ensure buttons do not have extra margin */
+.inventory-btns button,
+.inventory-btns .btn-submit.small {
+  margin: 0 !important;              /* ✅ removes external button margins */
+  padding: 8px 18px !important;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Primary Save button */
+.inventory-btns .btn-submit.small[type="submit"] {
+  background-color: #4e1d7c;
+  color: #fff;
+}
+
+.inventory-btns .btn-submit.small[type="submit"]:hover {
+  background-color: #62349c;
+}
+
+/* Secondary Cancel button */
+.inventory-btns .btn-submit.small[type="button"] {
+  background-color: #4e1d7c;
+  color: #fff;
+  border: 1px solid #d9d3f3;
+}
+
+.inventory-btns .btn-submit.small[type="button"]:hover {
+  background-color: #62349c;
+}
+.cell-box {
+  display: flex;
+  align-items: center;
+
+  background: #faf8ff;                  /* very soft lavender behind cell */
+  border: 1px solid #e4ddff;            /* elegant thin border */
+  border-radius: 6px;
+
+  padding: 2px 4px;
+  margin: 2px;
+
+  box-shadow: 0 1px 2px rgba(120, 80, 200, 0.08);  
+}
+
+/* Input stays normal white & clean */
+.cell-box input {
+  width: 100%;
+  background: #ffffff;       /* normal input background */
+  border: none;              /* no double borders */
+  outline: none;
+  padding: 5px 6px;
+  border-radius: 4px;        /* small round inside */
+  font-size: 14px;
+  color: #333;
+  font-size: medium;
+  
+}
+
+/* Purple focus glow only on input */
+.cell-box input:focus {
+  box-shadow: 0 0 4px rgba(122, 110, 232, 0.4);
+  border: 1px solid #b8a0ff;
+}
+
+
+.button-row-wrapper {
+  text-align: center;   /* centers inline-flex child */
+  width: 100%;
+}
+
+.button-row {
+  display: inline-flex; /* shrink to content width */
+  gap: 6px;             /* spacing between buttons */
+  margin-top: 12px;
+}
+
+
+.btn-submit.small {
+  padding: 4px 12px;      /* compact buttons */
+  font-size: 14px;
+}
+
+
+.button-row .btn-submit {
+  white-space: nowrap;     /* prevents wrapping inside button */
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
+  
+  margin-bottom: 10px;
+}
+
+
+
+/* optional responsive breakpoints */
+@media (max-width: 900px) {
+  .form-row > * {
+    flex: 0 0 47%;          /* 2 per row on tablets */
+    max-width: 47%;
+  }
+}
+
+@media (max-width: 600px) {
+  .form-row > * {
+    flex: 0 0 100%;         /* 1 per row on phones */
+    max-width: 100%;
+  }
+}
+
+
+.form-group {
+  flex: 0;                     /* ✅ equal width for all six */
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+  
+}
+.invoice-totals {
+  margin-top: 25px;
+  padding: 20px 24px;
+
+  background: #f5f1ff;
+  border: 1px solid #d8d0f3;
+  border-radius: 14px;
+
+  box-shadow: 0 2px 6px rgba(110, 80, 200, 0.12);
+
+  width: 280px;
+
+  margin-left: auto;
+  margin-right: 25px;
+  text-align: center;
+}
+
+/* Regular rows */
+.total-row {
+  font-size: 16px;          /* ↑ increased */
+  font-weight: 500;
+  color: #4e3ca3;
+  margin-bottom: 10px;
+}
+
+/* Highlighted total */
+.total-final {
+  font-size: 20px;          /* ↑ bigger & bold */
+  font-weight: 700;
+  padding-top: 10px;
+  border-top: 1px solid #d6c8ff;
+  color: #3b1f91;
+  margin-top: 10px;
+}
+.invoice-date-section {
+  margin: 0px 0;
+  max-width: 260px;
+}
+
+.invoice-date-section label {
+  font-weight: 700;
+  font-size: 16px;
+  color: #4e3ca3;                   /* elegant lavender purple */
+  display: block;
+  margin-bottom: 2px;
+}
+
+.invoice-date-section input[type="date"] {
+  width: 100%;
+  padding: 8px 12px;
+
+  background: #ffffff;
+  border: 1px solid #c9c2ea;        /* soft lavender border */
+  border-radius: 8px;
+
+  font-size: 14px;
+  color: #333;
+
+  transition: 0.25s border, 0.25s box-shadow;
+}
+
+/* Purple glow on focus */
+.invoice-date-section input[type="date"]:focus {
+  border-color: #7a6ee8;
+  box-shadow: 0 0 5px rgba(122, 110, 232, 0.45);
+  outline: none;
+}
+.suggestion-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  white-space: nowrap;         /* keep everything on one line */
+  overflow: hidden;
+  text-overflow: ellipsis;     /* prevent overflow mess */
+}
+
+.suggestion-line .item-name {
+  font-weight: 600;
+  color: #3f2d8f;              /* elegant purple */
+}
+
+.suggestion-line .item-batch {
+  font-size: 13px;
+  color: #6b5bb5;
+}
+
+.suggestion-line .item-price {
+  font-size: 13px;
+  color: #8a7dd8;
 }

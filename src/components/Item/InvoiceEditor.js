@@ -1,14 +1,42 @@
 // InvoiceEditor.js (simplified)
 import React, { useState, useEffect } from "react";
+import "./Invoice.css";
+import "./ItemForms.css";
+const blankLine = () => ({
+  ItemId: 0,
+  ItemName: "",
+  HsnCode: "",
+  BatchNo: "",
+  Qty: 1,
+  Unit: "pcs",
+  Rate: 0,
+  Discount: 0,
 
-const blankLine = () => ({ ItemId:0, ItemName:"", HsnCode:"", BatchNo:"", Qty:1, Unit:"pcs", Rate:0, Amount:0, GstPercent:0, TaxAmount:0, Cgst:0, Sgst:0, Igst:0, Discount:0 });
+  GstPercent: 0,
+  GstValue: 0,
 
-export default function InvoiceEditor({ companyProfile, user }) {
+  CgstPercent: 0,
+  SgstPercent: 0,
+  IgstPercent: 0,
+
+  CgstValue: 0,
+  SgstValue: 0,
+  IgstValue: 0,
+
+  Amount: 0,
+  TaxAmount: 0
+});
+
+
+export default function InvoiceEditor({ user }) {
+const [invoiceId, setInvoiceId] = useState(0);
+  const [company, setCompany] = useState(null);
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().slice(0,10));
   const [customer, setCustomer] = useState({
   Id: 0,
   Name: "",
   Phone: "",
+  State: "",
   Address: ""
 });
 const [customerSearch, setCustomerSearch] = useState("");
@@ -17,10 +45,39 @@ const [showSuggestions, setShowSuggestions] = useState(false);
 const [itemList, setItemList] = useState([]);       // will hold ItemForInvoice[]
 const [itemSearchIndex, setItemSearchIndex] = useState(null); // which row is showing suggestions
 
+const INDIAN_STATES = [
+  "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh",
+  "Goa","Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka",
+  "Kerala","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram",
+  "Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana",
+  "Tripura","Uttar Pradesh","Uttarakhand","West Bengal","Delhi","Jammu & Kashmir",
+  "Ladakh","Puducherry","Andaman & Nicobar","Chandigarh","Dadra & Nagar Haveli",
+  "Daman & Diu","Lakshadweep"
+];
+const isInterState = () => {
+  const seller = company?.State?.toLowerCase().trim();
+  const buyer = customer?.State?.toLowerCase().trim();
+
+  // If buyer has selected a state manually (new customer)
+  if (buyer) {
+    return seller !== buyer;
+  }
+
+  // If buyer state missing → default to intrastate
+  return false;
+};
+
 
   const [lines, setLines] = useState([ blankLine() ]);
   const [invoiceNo, setInvoiceNo] = useState(""); // fetched from server when saving
   const [totals, setTotals] = useState({ subTotal:0, totalTax:0, total:0, roundOff:0 });
+  
+
+useEffect(() => {
+  if (window.chrome?.webview) {
+    window.chrome.webview.postMessage({ Action: "GetCompanyProfile" });
+  }
+}, []);
 useEffect(() => {
   if (window.chrome?.webview) {
     window.chrome.webview.postMessage({ Action: "GetCustomers" });
@@ -47,49 +104,198 @@ useEffect(() => {
     setTotals({ subTotal: sub, totalTax: tax, total: total + roundOff, roundOff });
   };
 
-  const updateLine = (idx, key, val) => {
-    const copy = [...lines];
-    copy[idx][key] = val;
-    // auto-calc amount + tax
-    copy[idx].Amount = (Number(copy[idx].Qty)||0) * (Number(copy[idx].Rate)||0);
-    copy[idx].TaxAmount = copy[idx].Amount * (Number(copy[idx].GstPercent)||0) / 100;
-    const gst = Number(copy[idx].GstPercent)||0;
-    if (gst > 0) {
-      // simple split CGST/SGST if intrastate (example: equal halves)
-      copy[idx].Cgst = copy[idx].TaxAmount/2;
-      copy[idx].Sgst = copy[idx].TaxAmount/2;
-      copy[idx].Igst = 0;
+ // helper to recompute one line given seller & buyer states
+const recomputeLineForState = (line, sellerState, buyerState) => {
+  console.log("📤 states are:", sellerState,buyerState);
+  const qty = Number(line.Qty) || 0;
+  const rate = Number(line.Rate) || 0;
+  const discountPct = Number(line.Discount) || 0;
+  const gstPct = Number(line.GstPercent) || 0;
+
+  const base = qty * rate;
+  const discountAmt = (base * discountPct) / 100;
+  const amount = Math.max(0, +(base - discountAmt).toFixed(2));
+
+  const gstValue = +(amount * gstPct / 100).toFixed(2);
+
+  const seller = (sellerState || "").toString().trim().toLowerCase();
+  const buyer = (buyerState || "").toString().trim().toLowerCase();
+  const inter = seller && buyer ? (seller !== buyer) : false;
+
+  const updated = { ...line };
+  updated.Amount = amount;
+  updated.GstValue = gstValue;
+  updated.TaxAmount = gstValue;
+
+  if (gstPct > 0) {
+    if (inter) {
+      // IGST only
+      updated.IgstPercent = gstPct;
+      updated.IgstValue = gstValue;
+
+      updated.CgstPercent = 0;
+      updated.SgstPercent = 0;
+      updated.CgstValue = 0;
+      updated.SgstValue = 0;
     } else {
-      copy[idx].Cgst = copy[idx].Sgst = copy[idx].Igst = 0;
+      // CGST + SGST
+      const halfPct = gstPct / 2;
+      const halfVal = +(gstValue / 2).toFixed(2);
+      const remainder = +(gstValue - (halfVal * 2)).toFixed(2);
+
+      updated.CgstPercent = halfPct;
+      updated.SgstPercent = halfPct;
+      updated.IgstPercent = 0;
+
+      updated.CgstValue = +(halfVal + remainder).toFixed(2);
+      updated.SgstValue = halfVal;
+      updated.IgstValue = 0;
     }
-    setLines(copy);
-  };
+  } else {
+    // no GST
+    updated.GstValue = 0;
+    updated.CgstPercent = 0; updated.SgstPercent = 0; updated.IgstPercent = 0;
+    updated.CgstValue = 0;   updated.SgstValue = 0;   updated.IgstValue = 0;
+  }
+
+  return updated;
+};
+
+
+
+
+  const updateLine = (idx, key, val) => {
+  const copy = [...lines];
+  copy[idx][key] = val;
+
+  const qty = Number(copy[idx].Qty) || 0;
+  const rate = Number(copy[idx].Rate) || 0;
+  const discountPct = Number(copy[idx].Discount) || 0; // percentage
+  const gstPct = Number(copy[idx].GstPercent) || 0;
+
+  // 1️⃣ Base Value
+  const base = qty * rate;
+
+  // 2️⃣ Discount value (percentage)
+  const discountAmt = (base * discountPct) / 100;
+
+  // 3️⃣ Amount after discount
+  const amount = Math.max(0, base - discountAmt);
+  copy[idx].Amount = amount;
+
+  // 4️⃣ GST Amount (Value)
+  const gstValue = +(amount * gstPct / 100).toFixed(2);
+  copy[idx].GstValue = gstValue;   // NEW FIELD
+  copy[idx].TaxAmount = gstValue;  // for totals
+
+  // 5️⃣ GST Split based on INTERSTATE or INTRASTATE
+  if (gstPct > 0) {
+    if (isInterState()) {
+      // IGST ONLY
+      copy[idx].IgstPercent = gstPct;
+      copy[idx].IgstValue   = gstValue;
+
+      copy[idx].CgstPercent = 0;
+      copy[idx].SgstPercent = 0;
+      copy[idx].CgstValue   = 0;
+      copy[idx].SgstValue   = 0;
+
+    } else {
+      // CGST + SGST
+      const halfPct = gstPct / 2;
+      const halfVal = +(gstValue / 2).toFixed(2);
+
+      // rounding adjust → add remainder to CGST
+      const remainder = +(gstValue - (halfVal * 2)).toFixed(2);
+
+      copy[idx].CgstPercent = halfPct;
+      copy[idx].SgstPercent = halfPct;
+      copy[idx].IgstPercent = 0;
+
+      copy[idx].CgstValue = +(halfVal + remainder).toFixed(2);
+      copy[idx].SgstValue = halfVal;
+      copy[idx].IgstValue = 0;
+    }
+  }
+
+  // 6️⃣ If no GST at all
+  else {
+    copy[idx].GstValue = 0;
+
+    copy[idx].CgstPercent = 0;
+    copy[idx].SgstPercent = 0;
+    copy[idx].IgstPercent = 0;
+
+    copy[idx].CgstValue = 0;
+    copy[idx].SgstValue = 0;
+    copy[idx].IgstValue = 0;
+  }
+
+  setLines(copy);
+};
+
+
+
 
   const addLine = () => setLines(prev => [...prev, blankLine()]);
   const removeLine = (i) => setLines(prev => prev.filter((_,j)=>j!==i));
 
   const handleSave = async () => {
 
-  // customer object to save
+  if (!customer.State || customer.State.trim() === "") {
+    alert("Please select a State for the customer.");
+    return;
+  }
+
+  // Fix bug: Customer object
   const Customer = {
     Id: customer.Id || 0,
     Name: customer.Name?.trim() || "",
     Phone: customer.Phone?.trim() || "",
+    State: customer.State?.trim() || "",
     Address: customer.Address?.trim() || ""
   };
+
+  // Prepare clean line items payload
+const Items = lines.map(l => ({
+    ItemId: l.ItemId,
+    BatchNo: l.BatchNo,
+    HsnCode: l.HsnCode,
+    Qty: Number(l.Qty) || 0,
+    Rate: Number(l.Rate) || 0,
+    DiscountPercent: Number(l.Discount) || 0,
+
+    GstPercent: Number(l.GstPercent) || 0,
+    GstValue: Number(l.GstValue) || 0,
+
+    CgstPercent: Number(l.CgstPercent) || 0,
+    CgstValue: Number(l.CgstValue) || 0,
+
+    SgstPercent: Number(l.SgstPercent) || 0,
+    SgstValue: Number(l.SgstValue) || 0,
+
+    IgstPercent: Number(l.IgstPercent) || 0,
+    IgstValue: Number(l.IgstValue) || 0,
+
+    LineSubTotal: Number(l.Amount) || 0,          // BEFORE TAX
+    LineTotal: Number(l.Amount) + Number(l.GstValue) || 0  // AFTER TAX
+}));
+
 
   const payload = {
     Action: "CreateInvoice",
     Payload: {
       InvoiceDate: invoiceDate,
-      CompanyProfileId: companyProfile?.Id ?? 1,
-      Customer: Customer,   // <-- send whole customer object
+      Customer: Customer,
+      CompanyId: company?.Id ?? 1,
+
       SubTotal: totals.subTotal,
       TotalTax: totals.totalTax,
       TotalAmount: totals.total,
-      RoundOff: totals.roundOff,
-      CreatedBy: user?.email,
-      Items: lines
+      RoundOff: totals.roundOff,  
+
+      Items: Items,
+      CreatedBy: user?.email
     }
   };
 
@@ -99,17 +305,66 @@ useEffect(() => {
 };
 
 
+useEffect(() => {
+  // if companyProfile does not exist yet, stop
+  if (!company) return;
+
+  // if companyProfile.State is still loading or empty, stop
+  if (!company.State) return;
+
+  const seller = company.State;
+  const buyer  = customer.State || "";
+
+  setLines(prev =>
+    prev.map(l => recomputeLineForState(l, seller, buyer))
+  );
+
+}, [company, company?.State, customer.State]);
+
   // listen feedback
   useEffect(() => {
     const handler = (evt) => {
       let msg = evt.data;
       try { if (typeof msg === 'string') msg = JSON.parse(msg); } catch {}
-      if (msg.action === "CreateInvoiceResponse") {
-        if (msg.success) alert("Saved: " + msg.message);
-        else alert("Save failed");
-      }
+    if (msg.action === "CreateInvoiceResponse") {
+  if (msg.success) {
+
+    // Show nice message
+    alert(
+      "Invoice Saved Successfully!\n" +
+      "Invoice No: " + msg.invoiceNo + "\n"
+      
+    );setInvoiceId(msg.invoiceId);  // <-- ADD THIS
+    resetInvoiceForm();
+    // OPTIONAL → reset invoice form after save
+    // resetInvoiceForm();
+
+  } else {
+    alert("Save failed: " + msg.message);
+  }
+}
+
       if (msg.action === "GetCustomersResponse") {
   setCustomerList(msg.customers || []);
+}
+ if (msg.action === "PrintInvoiceResponse") {
+  if (msg.success) {
+
+    alert("PDF Saved at:\n" + msg.pdfPath);
+
+    // OPTIONAL → open PDF automatically:
+    window.chrome.webview.postMessage({
+      Action: "OpenPdf",
+      Path: msg.pdfPath
+    });
+
+  } else {
+    alert("Print failed: " + msg.message);
+  }
+}
+
+if (msg.action === "GetCompanyProfileResponse") {
+  setCompany(msg.profile);
 }
 if (msg?.Type === "GetItemsForInvoice") {
       if (msg.Status === "Success") {
@@ -125,9 +380,30 @@ if (msg?.Type === "GetItemsForInvoice") {
     }
   }, []);
 
+const resetInvoiceForm = () => {
+  setCustomer({
+    Id: 0,
+    Name: "",
+    Phone: "",
+    State: "",
+    Address: ""
+  });
+
+  setCustomerSearch("");
+
+  setLines([ blankLine() ]);
+  
+  setTotals({ subTotal:0, totalTax:0, total:0, roundOff:0 });
+
+  setInvoiceNo(""); // you have invoiceNo state if needed
+};
+
+
+
+
   return (
     <div className="invoice-editor">
-      
+       
       <div className="customer-section">
   <label>Customer</label>
 
@@ -159,6 +435,7 @@ if (msg?.Type === "GetItemsForInvoice") {
                 Id: c.Id,
                 Name: c.Name,
                 Phone: c.Phone,
+                State: c.State,
                 Address: c.Address
               });
 
@@ -191,6 +468,8 @@ if (msg?.Type === "GetItemsForInvoice") {
       }
       placeholder="Phone (optional)"
     />
+
+
     <input
       type="text"
       value={customer.Address}
@@ -199,23 +478,93 @@ if (msg?.Type === "GetItemsForInvoice") {
       }
       placeholder="Address (optional)"
     />
+
+ <div className="form-group">
+   <select
+  value={customer.State || ""}
+  onChange={(e) => {
+    const newState = e.target.value;
+    // update customer state immediately for UI
+    setCustomer(prev => ({ ...prev, State: newState }));
+// allow setCustomer to proceed, then recompute lines:
+setLines(prev => prev.map(l => recomputeLineForState(l, company?.State, newState)));
+
+
+    // get seller state from companyProfile (ensure it's present)
+    const sellerState = company?.State || "";
+
+    // batch recompute all lines in one go using the helper
+    setLines(prevLines => prevLines.map(l => recomputeLineForState(l, sellerState, newState)));
+  }}
+  required
+  style={{
+    borderColor: !customer.State ? "red" : "#ccc",
+    marginTop: "6px"
+  }}
+>
+  <option value="">-- Select State (required) --</option>
+  {INDIAN_STATES.map(s => (
+    <option key={s} value={s}>{s}</option>
+  ))}
+</select>
+
+</div>
+
   </div>
 </div>
 
 
-      <div>
-        <label>Invoice Date</label>
-        <input type="date" value={invoiceDate} onChange={e=>setInvoiceDate(e.target.value)} />
+      <div className="form-row">
+        <div className="form-group">
+
+        <div className="invoice-date-section">
+  <label>Invoice Date</label>
+  <input 
+    type="date" 
+    value={invoiceDate} 
+    onChange={(e) => setInvoiceDate(e.target.value)} 
+  />
+</div>
+
+      </div>
       </div>
 
       <table className="data-table">
-        <thead><tr><th>Item</th><th>Batch</th><th>Qty</th><th>Rate</th><th>GST%</th><th>Amount</th><th></th></tr></thead>
+       <thead>
+  <tr>
+    <th>Item</th>
+    <th>Batch</th>
+    <th>HSN</th>
+    <th>Qty</th>
+    <th>Rate</th>
+    <th>Disc %</th>
+
+    <th>GST %</th>
+    <th>GST Amt</th>
+
+    <th>CGST %</th>
+    <th>CGST Amt</th>
+
+    <th>SGST %</th>
+    <th>SGST Amt</th>
+
+    <th>IGST %</th>
+    <th>IGST Amt</th>
+
+    <th>Total</th>
+    <th></th>
+  </tr>
+</thead>
+
+
         <tbody>
           {lines.map((l,i)=>(
             <tr key={i}>
 
               <td style={{ position: "relative" }}>
-  <input
+  <div className="cell-box">
+  <input 
+  
     value={l.ItemName}
     onChange={(e) => {
       updateLine(i, "ItemName", e.target.value);
@@ -223,7 +572,7 @@ if (msg?.Type === "GetItemsForInvoice") {
     }}
     onFocus={() => setItemSearchIndex(i)}
     placeholder="Search item by name or code"
-  />
+  /></div>
 
   {itemSearchIndex === i && l.ItemName.trim() !== "" && (
     <div className="suggestions-box" style={{ width: "320px" }}>
@@ -250,42 +599,153 @@ if (msg?.Type === "GetItemsForInvoice") {
               setItemSearchIndex(null); // close dropdown
             }}
           >
-            <div style={{ fontWeight: 600 }}>{it.Name}</div>
-            <div style={{ fontSize: "12px", color: "#666" }}>
-              {it.SalesPrice ? ` • ₹${Number(it.SalesPrice).toFixed(2)}` : ""}
-              {it.ItemCode ? `Code: ${it.ItemCode}` : ""}
-              {it.BatchNo ? ` • ${it.BatchNo}` : ""}
-              {it.UnitName ? ` • ${it.UnitName}` : ""}
-              
-            </div>
+            <div className="suggestion-line">
+  <span className="item-name">{it.Name}</span>
+  {it.BatchNo && <span className="item-batch"> Batch No :  {it.BatchNo}</span>}
+  {it.SalesPrice && <span className="item-price"> Sales Price : ₹{Number(it.SalesPrice).toFixed(2)}</span>}
+</div>
+
           </div>
         ))}
     </div>
   )}
 </td>
 
-              <td><input value={l.BatchNo} onChange={e=>updateLine(i,'BatchNo',e.target.value)} /></td>
-              <td><input value={l.Qty} onChange={e=>updateLine(i,'Qty',e.target.value)} /></td>
-              <td><input value={l.Rate} onChange={e=>updateLine(i,'Rate',e.target.value)} /></td>
-              <td><input value={l.GstPercent} onChange={e=>updateLine(i,'GstPercent',e.target.value)} /></td>
-              <td>{Number(l.Amount||0).toFixed(2)}</td>
-              <td><button onClick={()=>removeLine(i)}>Del</button></td>
+              <td> <div className="cell-box"><input value={l.BatchNo} onChange={e=>updateLine(i,'BatchNo',e.target.value)} /></div></td>
+              <td> <div className="cell-box"><input value={l.HsnCode} onChange={e=>updateLine(i,'HSNCode',e.target.value)} /></div></td>
+              <td> <div className="cell-box"><input value={l.Qty} onChange={e=>updateLine(i,'Qty',e.target.value)} /></div></td>
+              <td> <div className="cell-box"><input value={l.Rate} onChange={e=>updateLine(i,'Rate',e.target.value)} /></div></td>
+              {/* DISCOUNT */}
+<td>
+  <div className="cell-box">
+    <input
+      value={l.Discount}
+      onChange={(e) => updateLine(i, "Discount", e.target.value)}
+      placeholder="Disc"
+    />
+  </div>
+</td>
+
+              <td> <div className="cell-box"><input
+    value={l.GstPercent}
+    onChange={(e) => updateLine(i, "GstPercent", e.target.value)}
+    style={{ width: "60px" }}
+  /></div></td>
+            <td> <div className="cell-box"> <input
+    value={Number(l.GstValue || 0).toFixed(2)}
+    readOnly
+    style={{ width: "80px", background: "#eee" }}
+  /></div></td>
+
+
+              <td> <div className="cell-box">
+                <input
+    value={l.SgstPercent}
+    readOnly
+    style={{ width: "60px", background: "#eee" }}
+  />
+                </div></td>
+                <td> <div className="cell-box">
+               <input
+    value={Number(l.SgstValue || 0).toFixed(2)}
+    readOnly
+    style={{ width: "80px", background: "#eee" }}
+  />
+                </div></td>
+
+              <td> <div className="cell-box">
+               <input
+    value={l.CgstPercent}
+    readOnly
+    style={{ width: "60px", background: "#eee" }}
+  />
+                </div></td>
+                <td> <div className="cell-box">
+              <input
+    value={Number(l.CgstValue || 0).toFixed(2)}
+    readOnly
+    style={{ width: "80px", background: "#eee" }}
+  />
+                </div></td>
+              <td> <div className="cell-box">
+                <input
+    value={l.IgstPercent}
+    readOnly
+    style={{ width: "60px", background: "#eee" }}
+  />
+                
+                </div></td>
+                <td> <div className="cell-box">
+               <input
+    value={Number(l.IgstValue || 0).toFixed(2)}
+    readOnly
+    style={{ width: "80px", background: "#eee" }}
+  />
+                
+                </div></td>
+
+              <td> <div className="cell-box">{Number(l.Amount||0).toFixed(2)}</div></td>
+                 
+                  <td>
+                  
+                     <button
+  className="invaction-btn invaction-modify"
+ onClick={() => {
+    if (window.confirm("Are you sure you want to remove this row?")) {
+      removeLine(i);
+    }
+  }}
+>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="invaction-icon small-icon"
+  >
+    {/* Pencil/Edit Icon */}
+    <path d="M12 20h9" />
+    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+  </svg>
+
+  {/* Modify Inventory */}
+</button>
+                  </td>
+
             </tr>
           ))}
         </tbody>
       </table>
+<div className="button-row-wrapper">
+     <div className="button-row">
+      <div className="inventory-btns">
+  <button className="btn-submit small" onClick={addLine}>Add Item</button>
+  <button className="btn-submit small" onClick={handleSave}>Save Invoice</button>
+  <button 
+    className="btn-submit small"
+    onClick={() => {
+      window.chrome.webview.postMessage({
+        Action: "PrintInvoice",
+        Payload: { InvoiceId: invoiceId }
+      });
+    }}
+  >
+    Print Invoice
+  </button>
+</div>
+</div>
+</div>
 
-      <div>
-        <button onClick={addLine}>Add Item</button>
-        <button onClick={handleSave}>Save Invoice</button>
-      </div>
+     <div className="invoice-totals">
+  <div className="total-row">Subtotal: {totals.subTotal.toFixed(2)}</div>
+  <div className="total-row">Total Tax: {totals.totalTax.toFixed(2)}</div>
+  <div className="total-row">Round Off: {totals.roundOff.toFixed(2)}</div>
+  <div className="total-row total-final">Total: {totals.total.toFixed(2)}</div>
+</div>
 
-      <div>
-        <div>Subtotal: {totals.subTotal.toFixed(2)}</div>
-        <div>Total Tax: {totals.totalTax.toFixed(2)}</div>
-        <div>Round Off: {totals.roundOff.toFixed(2)}</div>
-        <div>Total: {totals.total.toFixed(2)}</div>
-      </div>
     </div>
   );
 }

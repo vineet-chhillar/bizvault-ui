@@ -155,6 +155,7 @@ if (user?.email) {
     }
     if (name === "CompanyName" && !value.trim()) e = "Company name required";
     // you can add more validations here
+    if (name === "State" && !value.trim()) e = "State is required For IGST calculations";
     setErrors(prev => ({ ...prev, [name]: e }));
     return e === "";
   };
@@ -191,10 +192,13 @@ if (user?.email) {
   /* ================= SAVE ================= */
   const handleSave = () => {
     // simple validation
-    const ok = validateField("CompanyName", profile.CompanyName)
-      && (!profile.GSTIN || isValidGSTIN(profile.GSTIN))
-      && (!profile.PAN || isValidPAN(profile.PAN));
+    const ok =
+  validateField("CompanyName", profile.CompanyName) &&
+  validateField("State", profile.State) &&                // <-- ADD THIS
+  (!profile.GSTIN || isValidGSTIN(profile.GSTIN)) &&
+  (!profile.PAN || isValidPAN(profile.PAN));
 
+      
     if (!ok) {
       pushToast("Please fix validation errors before saving", "error");
       return;
@@ -288,16 +292,35 @@ if (user?.email) {
             </div>
 
             <div className="company-form-group">
-              <label>State</label>
-              {profile.Country === "India" ? (
-                <select name="State" value={profile.State} onChange={handleChange}>
-                  <option value="">-- Select State --</option>
-                  {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-              ) : (
-                <input name="State" value={profile.State} onChange={handleChange} />
-              )}
-            </div>
+  <label>
+    State <span style={{ color: "red" }}>*</span>
+  </label>
+
+  {profile.Country === "India" ? (
+    <select
+      name="State"
+      value={profile.State}
+      onChange={handleChange}
+      required    // ← mandatory
+      style={{
+        borderColor: !profile.State ? "red" : "#ccc"  // highlight when empty
+      }}
+    >
+      <option value="">-- Select State --</option>
+      {INDIAN_STATES.map(s => (
+        <option key={s} value={s}>{s}</option>
+      ))}
+    </select>
+  ) : (
+    <input
+      name="State"
+      value={profile.State}
+      onChange={handleChange}
+      required     // mandatory even for non-India
+    />
+  )}
+</div>
+
 
             <div className="company-form-group">
               <label>City</label>
