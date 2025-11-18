@@ -24,7 +24,9 @@ const blankLine = () => ({
   IgstValue: 0,
 
   Amount: 0,
-  TaxAmount: 0
+  TaxAmount: 0,
+  Balance: null,
+  BalanceBatchWise:null
 });
 
 
@@ -44,7 +46,8 @@ const [customerList, setCustomerList] = useState([]);
 const [showSuggestions, setShowSuggestions] = useState(false);
 const [itemList, setItemList] = useState([]);       // will hold ItemForInvoice[]
 const [itemSearchIndex, setItemSearchIndex] = useState(null); // which row is showing suggestions
-
+const [selectedItemBalance, setSelectedItemBalance] = useState(null);
+const [selectedBatchBalance, setSelectedBatchBalance] = useState(null);
 const INDIAN_STATES = [
   "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh",
   "Goa","Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka",
@@ -366,6 +369,30 @@ useEffect(() => {
 if (msg.action === "GetCompanyProfileResponse") {
   setCompany(msg.profile);
 }
+if (msg.action === "GetItemBalanceResponse") {
+  const idx = msg.lineIndex;
+  const bal = msg.balance;
+setSelectedItemBalance(msg.balance);
+
+  setLines(prev => {
+    const copy = [...prev];
+    if (copy[idx]) copy[idx].Balance = bal;
+    return copy;
+  });
+}
+
+if (msg.action === "GetItemBalanceBatchWiseResponse") {
+  const idx = msg.lineIndex;
+  const balbatchwise = msg.balance;
+setSelectedBatchBalance(msg.balance);
+console.log("📥 Batch-wise balance for line", idx, "is", balbatchwise);
+  setLines(prev => {
+    const copy = [...prev];
+    if (copy[idx]) copy[idx].BalanceBatchWise = balbatchwise;
+    return copy;
+  });
+}
+
 if (msg?.Type === "GetItemsForInvoice") {
       if (msg.Status === "Success") {
         setItemList(msg.Data || []);
@@ -517,14 +544,31 @@ setLines(prev => prev.map(l => recomputeLineForState(l, company?.State, newState
       <div className="form-row">
         <div className="form-group">
 
-        <div className="invoice-date-section">
-  <label>Invoice Date</label>
-  <input 
-    type="date" 
-    value={invoiceDate} 
-    onChange={(e) => setInvoiceDate(e.target.value)} 
-  />
+        <div className="invoice-date-row">
+  <div className="invoice-date-section">
+    <label>Invoice Date</label>
+    <input 
+      type="date" 
+      value={invoiceDate} 
+      onChange={(e) => setInvoiceDate(e.target.value)} 
+    />
+  </div>
+
+  <div className="item-stock-display">
+    {selectedItemBalance !== null && (
+      <div className="stock-line">
+        Total Available Stock: <b>{selectedItemBalance}</b>
+      </div>
+    )}
+
+    {selectedBatchBalance !== null && (
+      <div className="stock-line">
+        Batch Stock: <b>{selectedBatchBalance}</b>
+      </div>
+    )}
+  </div>
 </div>
+
 
       </div>
       </div>
@@ -597,6 +641,26 @@ setLines(prev => prev.map(l => recomputeLineForState(l, company?.State, newState
               updateLine(i, "Unit", it.UnitName || "pcs");
 
               setItemSearchIndex(null); // close dropdown
+               // 🔥 NEW — Fetch item balance
+ 
+window.chrome.webview.postMessage({
+  Action: "GetItemBalance",
+  Payload: {
+    ItemId: it.Id,
+    LineIndex: i
+  }
+});
+
+  // 🔥 NEW — Fetch item balance (correct payload format)
+window.chrome.webview.postMessage({
+  Action: "GetItemBalanceBatchWise",
+  Payload: {
+    ItemId: it.Id,
+    BatchNo: it.BatchNo || "",
+    LineIndex: i
+  }
+});
+
             }}
           >
             <div className="suggestion-line">
@@ -613,7 +677,17 @@ setLines(prev => prev.map(l => recomputeLineForState(l, company?.State, newState
 
               <td> <div className="cell-box"><input value={l.BatchNo} onChange={e=>updateLine(i,'BatchNo',e.target.value)} /></div></td>
               <td> <div className="cell-box"><input value={l.HsnCode} onChange={e=>updateLine(i,'HSNCode',e.target.value)} /></div></td>
-              <td> <div className="cell-box"><input value={l.Qty} onChange={e=>updateLine(i,'Qty',e.target.value)} /></div></td>
+              <td>
+  <div className="cell-box">
+    <input
+      value={l.Qty}
+      onChange={e => updateLine(i, "Qty", e.target.value)}
+    />
+
+    
+  </div>
+</td>
+
               <td> <div className="cell-box"><input value={l.Rate} onChange={e=>updateLine(i,'Rate',e.target.value)} /></div></td>
               {/* DISCOUNT */}
 <td>

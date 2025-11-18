@@ -339,7 +339,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 14px;
+  font-size: 16px;
   white-space: nowrap;         /* keep everything on one line */
   overflow: hidden;
   text-overflow: ellipsis;     /* prevent overflow mess */
@@ -351,11 +351,33 @@
 }
 
 .suggestion-line .item-batch {
-  font-size: 13px;
+  font-size: 15px;
   color: #6b5bb5;
 }
 
 .suggestion-line .item-price {
-  font-size: 13px;
+  font-size: 15px;
   color: #8a7dd8;
+}
+.invoice-date-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 25px;               /* spacing between date and stock */
+  margin-bottom: 10px;
+}
+
+.item-stock-display {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 10px;
+  background: #f3f2ff;     /* soft light-purple background */
+  border: 1px solid #d7d4ff;
+  border-radius: 8px;
+  min-width: 200px;
+}
+
+.stock-line {
+  font-size: 15px;
+  color: #5c47a8;
+  margin: 2px 0;
 }
