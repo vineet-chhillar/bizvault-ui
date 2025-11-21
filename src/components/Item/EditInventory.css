@@ -208,3 +208,7 @@
 }
 
 
+.inv-error {
+  border: 2px solid red !important;
+  background: #ffecec !important;
+}

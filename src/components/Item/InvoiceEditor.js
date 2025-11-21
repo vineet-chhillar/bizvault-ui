@@ -2,6 +2,12 @@
 import React, { useState, useEffect } from "react";
 import "./Invoice.css";
 import "./ItemForms.css";
+import validateInvoiceForm from "../../utils/validateInvoiceForm";
+
+
+
+import { validateString, validateDecimal, validatePositiveDecimal, validateInteger,validateDropdown,isValidInvoiceDate} from "../../utils/validators";
+
 const blankLine = () => ({
   ItemId: 0,
   ItemName: "",
@@ -41,6 +47,18 @@ const [invoiceId, setInvoiceId] = useState(0);
   State: "",
   Address: ""
 });
+const [validationErrors, setValidationErrors] = useState({});
+
+const [modalMessage, setModalMessage] = useState("");
+const [showErrorModal, setShowErrorModal] = useState(false);
+const [downloadPath, setDownloadPath] = useState("");
+const [pdfPath, setPdfPath] = useState("");
+const [showPdfModal, setShowPdfModal] = useState(false);
+const [invoiceShowDate, setInvoiceShowDate] = useState("");
+const [invoiceNumbers, setInvoiceNumbers] = useState([]);
+const [selectedInvoiceNo, setSelectedInvoiceNo] = useState("");
+const [selectedInvoiceId, setSelectedInvoiceId] = useState("");
+
 const [customerSearch, setCustomerSearch] = useState("");
 const [customerList, setCustomerList] = useState([]);
 const [showSuggestions, setShowSuggestions] = useState(false);
@@ -57,6 +75,18 @@ const INDIAN_STATES = [
   "Ladakh","Puducherry","Andaman & Nicobar","Chandigarh","Dadra & Nagar Haveli",
   "Daman & Diu","Lakshadweep"
 ];
+
+const blockInvalidNumberKeys = (e) => {
+  const allowed = ["Backspace", "Tab", "ArrowLeft", "ArrowRight", "Delete", "."];
+  if (!allowed.includes(e.key) && !/^[0-9]$/.test(e.key)) {
+    e.preventDefault();
+  }
+};
+
+
+
+
+
 const isInterState = () => {
   const seller = company?.State?.toLowerCase().trim();
   const buyer = customer?.State?.toLowerCase().trim();
@@ -74,13 +104,43 @@ const isInterState = () => {
   const [lines, setLines] = useState([ blankLine() ]);
   const [invoiceNo, setInvoiceNo] = useState(""); // fetched from server when saving
   const [totals, setTotals] = useState({ subTotal:0, totalTax:0, total:0, roundOff:0 });
-  
+
+  function fetchInvoiceNumbers(date) {
+    window.chrome.webview.postMessage({
+        action: "getInvoiceNumbersByDate",
+        payload : {
+        date: date
+        }
+    });
+  }
+  function handlePrint(invoiceNo) {
+    window.chrome.webview.postMessage({
+        action: "PrintInvoice",
+        Payload: {
+            InvoiceNo: selectedInvoiceId
+        }
+    });
+}
+
+  {/*function fetchInvoiceDetails(id) {
+    window.chrome.webview.postMessage({
+        action: "getInvoiceDetails",
+        Payload : {
+        invoiceId: id
+        }
+    });
+}*/}
+
 
 useEffect(() => {
   if (window.chrome?.webview) {
     window.chrome.webview.postMessage({ Action: "GetCompanyProfile" });
   }
+
 }, []);
+
+
+
 useEffect(() => {
   if (window.chrome?.webview) {
     window.chrome.webview.postMessage({ Action: "GetCustomers" });
@@ -233,6 +293,31 @@ const recomputeLineForState = (line, sellerState, buyerState) => {
     copy[idx].SgstValue = 0;
     copy[idx].IgstValue = 0;
   }
+if (copy[idx].AvailableStock != null && Number(val) > Number(copy[idx].AvailableStock)) {
+    setValidationErrors(prev => ({
+        ...prev,
+        [`AvailableStock_${idx}`]: `Line ${idx+1}: Qty exceeds total stock (${copy[idx].AvailableStock})`
+    }));
+} else {
+    setValidationErrors(prev => {
+        const p = { ...prev };
+        delete p[`AvailableStock_${idx}`];
+        return p;
+    });
+}
+
+if (copy[idx].BalanceBatchWise != null && Number(val) > Number(copy[idx].BalanceBatchWise)) {
+    setValidationErrors(prev => ({
+        ...prev,
+        [`BatchStock_${idx}`]: `Line ${idx+1}: Qty exceeds batch stock (${copy[idx].BalanceBatchWise})`
+    }));
+} else {
+    setValidationErrors(prev => {
+        const p = { ...prev };
+        delete p[`BatchStock_${idx}`];
+        return p;
+    });
+}
 
   setLines(copy);
 };
@@ -245,11 +330,37 @@ const recomputeLineForState = (line, sellerState, buyerState) => {
 
   const handleSave = async () => {
 
-  if (!customer.State || customer.State.trim() === "") {
-    alert("Please select a State for the customer.");
+  const errors = validateInvoiceForm(lines, customer, invoiceDate, totals);
+
+  if (errors.length > 0) {
+    // Convert array → object for quick lookup
+    const errObj = {};
+    errors.forEach(e => {
+      errObj[e.field] = e.message;
+    });
+
+    setValidationErrors(errObj);
+
+    // Scroll to first invalid field
+    const firstField = Object.keys(errObj)[0];
+    if (firstField) {
+      const el = document.getElementById(firstField);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.focus();
+      }
+    }
+
+    // Show modal
+    setModalMessage(errors.map(e => e.message).join("\n"));
+    setShowErrorModal(true);
+
     return;
   }
 
+  // Clear old errors
+  setValidationErrors({});
+  
   // Fix bug: Customer object
   const Customer = {
     Id: customer.Id || 0,
@@ -262,6 +373,7 @@ const recomputeLineForState = (line, sellerState, buyerState) => {
   // Prepare clean line items payload
 const Items = lines.map(l => ({
     ItemId: l.ItemId,
+    ItemName: l.ItemName,
     BatchNo: l.BatchNo,
     HsnCode: l.HsnCode,
     Qty: Number(l.Qty) || 0,
@@ -281,7 +393,11 @@ const Items = lines.map(l => ({
     IgstValue: Number(l.IgstValue) || 0,
 
     LineSubTotal: Number(l.Amount) || 0,          // BEFORE TAX
-    LineTotal: Number(l.Amount) + Number(l.GstValue) || 0  // AFTER TAX
+    LineTotal: Number(l.Amount) + Number(l.GstValue) || 0 , // AFTER TAX
+
+    AvailableStock: Number(selectedItemBalance) || 0,
+    BalanceBatchWise: Number(selectedBatchBalance) || 0,
+
 }));
 
 
@@ -296,15 +412,21 @@ const Items = lines.map(l => ({
       TotalTax: totals.totalTax,
       TotalAmount: totals.total,
       RoundOff: totals.roundOff,  
-
+//AvailableStock:selectedItemBalance,
+//BalanceBatchWise:selectedBatchBalance,
+ItemName:Items.ItemName,
       Items: Items,
       CreatedBy: user?.email
     }
   };
 
+
+
   if (window.chrome?.webview) {
     window.chrome.webview.postMessage(payload);
   }
+  setSelectedItemBalance(null);
+  setSelectedBatchBalance(null);
 };
 
 
@@ -347,28 +469,51 @@ useEffect(() => {
   }
 }
 
+
+
       if (msg.action === "GetCustomersResponse") {
   setCustomerList(msg.customers || []);
 }
- if (msg.action === "PrintInvoiceResponse") {
+if (msg.action === "SaveInvoiceResponse") {
+
+  if (!msg.success) {
+    setModalMessage(msg.errors.join("\n"));
+    setShowErrorModal(true);
+    return;
+  }
+
+  // SUCCESS
+  alert("Invoice saved successfully!");
+}
+
+
+if (msg.action === "PrintInvoiceResponse") {
   if (msg.success) {
 
-    alert("PDF Saved at:\n" + msg.pdfPath);
+    // 1) Hide the old alert + OpenPdf call
+    // alert("PDF Saved at:\n" + msg.pdfPath);
 
-    // OPTIONAL → open PDF automatically:
-    window.chrome.webview.postMessage({
-      Action: "OpenPdf",
-      Path: msg.pdfPath
-    });
+    // 2) Open PDF modal
+  // Convert Windows path -> file:/// URL
+      const fileName = msg.pdfPath.split("\\").pop(); // extract 'invoice-INV-24.pdf'
+    const url = "https://invoices.local/" + fileName;
+
+    setPdfPath(url);
+     setDownloadPath(msg.pdfPath);  // <-- store original Windows path
+    setShowPdfModal(true);
 
   } else {
     alert("Print failed: " + msg.message);
   }
 }
 
+
 if (msg.action === "GetCompanyProfileResponse") {
   setCompany(msg.profile);
 }
+
+
+
 if (msg.action === "GetItemBalanceResponse") {
   const idx = msg.lineIndex;
   const bal = msg.balance;
@@ -392,6 +537,7 @@ console.log("📥 Batch-wise balance for line", idx, "is", balbatchwise);
     return copy;
   });
 }
+ 
 
 if (msg?.Type === "GetItemsForInvoice") {
       if (msg.Status === "Success") {
@@ -400,12 +546,33 @@ if (msg?.Type === "GetItemsForInvoice") {
         console.warn("GetItemsForInvoice failed:", msg.Message);
       }
     }
+    if (msg.action === "invoiceNumbersByDateResult") {
+        setInvoiceNumbers(msg.data); 
+    }
+
+    {/*if (msg.action === "invoiceDetailsResult") {
+        // display the invoice
+        setSelectedInvoiceNo(msg.data);
+    }*/}
+
     };
     if (window.chrome?.webview) {
       window.chrome.webview.addEventListener("message", handler);
       return () => window.chrome.webview.removeEventListener("message", handler);
     }
   }, []);
+  useEffect(() => {
+  if (company?.State && !customer.State) {
+    setCustomer(prev => ({ ...prev, State: company.State }));
+
+    // recompute lines using default buyer + seller state
+    setLines(prevLines =>
+      prevLines.map(l => recomputeLineForState(l, company.State, company.State))
+    );
+  }
+}, [company, customer.State]);
+
+
 
 const resetInvoiceForm = () => {
   setCustomer({
@@ -430,7 +597,52 @@ const resetInvoiceForm = () => {
 
   return (
     <div className="invoice-editor">
-       
+      <div class="top-sections">
+    <div class="print-section">
+      
+<input 
+    type="date"
+    value={invoiceShowDate}
+    onChange={(e) => {
+        setInvoiceShowDate(e.target.value);
+        fetchInvoiceNumbers(e.target.value);
+    }}
+/>
+<select
+    value={selectedInvoiceNo}
+    onChange={(e) => {
+       setSelectedInvoiceNo(e.target.value);
+       setSelectedInvoiceId(e.target.value);
+        //fetchInvoiceDetails(e.target.value);
+    }}
+>
+    <option value="">Select Invoice No</option>
+    {invoiceNumbers.map(inv => (
+        <option key={inv.Id} value={inv.Id}>
+            {inv.InvoiceNo}
+        </option>
+    ))}
+</select>
+
+
+     
+      <div className="inventory-btns">
+<button 
+    className="btn-submit small"
+    onClick={() => {
+      window.chrome.webview.postMessage({
+        Action: "PrintInvoice",
+        Payload: { InvoiceId: selectedInvoiceId }
+      });
+    }}
+  >
+    View/Print Invoice
+  </button>
+  
+  
+  </div>
+</div>
+
       <div className="customer-section">
   <label>Customer</label>
 
@@ -507,25 +719,25 @@ const resetInvoiceForm = () => {
     />
 
  <div className="form-group">
-   <select
+  <select
   value={customer.State || ""}
   onChange={(e) => {
     const newState = e.target.value;
-    // update customer state immediately for UI
+
+    // Update customer state
     setCustomer(prev => ({ ...prev, State: newState }));
-// allow setCustomer to proceed, then recompute lines:
-setLines(prev => prev.map(l => recomputeLineForState(l, company?.State, newState)));
 
-
-    // get seller state from companyProfile (ensure it's present)
+    // seller state = company state
     const sellerState = company?.State || "";
 
-    // batch recompute all lines in one go using the helper
-    setLines(prevLines => prevLines.map(l => recomputeLineForState(l, sellerState, newState)));
+    // Recompute lines once only
+    setLines(prevLines =>
+      prevLines.map(l => recomputeLineForState(l, sellerState, newState))
+    );
   }}
   required
   style={{
-    borderColor: !customer.State ? "red" : "#ccc",
+    borderColor: !customer.State ? "purple" : "#ccc",
     marginTop: "6px"
   }}
 >
@@ -535,8 +747,9 @@ setLines(prev => prev.map(l => recomputeLineForState(l, company?.State, newState
   ))}
 </select>
 
-</div>
 
+</div>
+</div>
   </div>
 </div>
 
@@ -608,7 +821,8 @@ setLines(prev => prev.map(l => recomputeLineForState(l, company?.State, newState
               <td style={{ position: "relative" }}>
   <div className="cell-box">
   <input 
-  
+  id={`ItemName_${i}`}
+  className={validationErrors[`ItemName_${i}`] ? "inv-error" : ""}
     value={l.ItemName}
     onChange={(e) => {
       updateLine(i, "ItemName", e.target.value);
@@ -675,11 +889,21 @@ window.chrome.webview.postMessage({
   )}
 </td>
 
-              <td> <div className="cell-box"><input value={l.BatchNo} onChange={e=>updateLine(i,'BatchNo',e.target.value)} /></div></td>
-              <td> <div className="cell-box"><input value={l.HsnCode} onChange={e=>updateLine(i,'HSNCode',e.target.value)} /></div></td>
+              <td> <div className="cell-box" ><input
+               id={`BatchNo_${i}`}
+  className={validationErrors[`BatchNo_${i}`] ? "inv-error" : ""}
+              value={l.BatchNo} readOnly 
+              style={{ width: "100%", background: "#eee" }}
+              onChange={e=>updateLine(i,'BatchNo',e.target.value)} /></div></td>
+              <td> <div className="cell-box"><input value={l.HsnCode} readOnly
+              style={{ width: "100%", background: "#eee" }}
+              onChange={e=>updateLine(i,'HSNCode',e.target.value)} /></div></td>
               <td>
   <div className="cell-box">
     <input
+    id={`Qty_${i}`}
+  className={validationErrors[`Qty_${i}`] ? "inv-error" : ""}
+  onKeyDown={(e) => blockInvalidNumberKeys(e)}
       value={l.Qty}
       onChange={e => updateLine(i, "Qty", e.target.value)}
     />
@@ -688,11 +912,18 @@ window.chrome.webview.postMessage({
   </div>
 </td>
 
-              <td> <div className="cell-box"><input value={l.Rate} onChange={e=>updateLine(i,'Rate',e.target.value)} /></div></td>
+              <td> <div className="cell-box"><input
+              id={`Rate_${i}`}
+  className={validationErrors[`Rate_${i}`] ? "inv-error" : ""}
+  onKeyDown={(e) => blockInvalidNumberKeys(e)}
+              value={l.Rate} onChange={e=>updateLine(i,'Rate',e.target.value)} /></div></td>
               {/* DISCOUNT */}
 <td>
   <div className="cell-box">
     <input
+    id={`Discount_${i}`}
+  className={validationErrors[`Discount_${i}`] ? "inv-error" : ""}
+  onKeyDown={(e) => blockInvalidNumberKeys(e)}
       value={l.Discount}
       onChange={(e) => updateLine(i, "Discount", e.target.value)}
       placeholder="Disc"
@@ -701,14 +932,18 @@ window.chrome.webview.postMessage({
 </td>
 
               <td> <div className="cell-box"><input
+               id={`GstPercent_${i}`}
+  className={validationErrors[`GstPercent_${i}`] ? "inv-error" : ""}
     value={l.GstPercent}
     onChange={(e) => updateLine(i, "GstPercent", e.target.value)}
-    style={{ width: "60px" }}
+     readOnly
+    style={{ width: "100%", background: "#eee" }}
+    
   /></div></td>
             <td> <div className="cell-box"> <input
     value={Number(l.GstValue || 0).toFixed(2)}
     readOnly
-    style={{ width: "80px", background: "#eee" }}
+    style={{ width: "100%", background: "#eee" }}
   /></div></td>
 
 
@@ -716,14 +951,14 @@ window.chrome.webview.postMessage({
                 <input
     value={l.SgstPercent}
     readOnly
-    style={{ width: "60px", background: "#eee" }}
+    style={{ width: "100%", background: "#eee" }}
   />
                 </div></td>
                 <td> <div className="cell-box">
                <input
     value={Number(l.SgstValue || 0).toFixed(2)}
     readOnly
-    style={{ width: "80px", background: "#eee" }}
+    style={{ width: "100%", background: "#eee" }}
   />
                 </div></td>
 
@@ -731,21 +966,21 @@ window.chrome.webview.postMessage({
                <input
     value={l.CgstPercent}
     readOnly
-    style={{ width: "60px", background: "#eee" }}
+    style={{ width: "100%", background: "#eee" }}
   />
                 </div></td>
                 <td> <div className="cell-box">
               <input
     value={Number(l.CgstValue || 0).toFixed(2)}
     readOnly
-    style={{ width: "80px", background: "#eee" }}
+    style={{ width: "100%", background: "#eee" }}
   />
                 </div></td>
               <td> <div className="cell-box">
                 <input
     value={l.IgstPercent}
     readOnly
-    style={{ width: "60px", background: "#eee" }}
+    style={{ width: "100%", background: "#eee" }}
   />
                 
                 </div></td>
@@ -753,12 +988,14 @@ window.chrome.webview.postMessage({
                <input
     value={Number(l.IgstValue || 0).toFixed(2)}
     readOnly
-    style={{ width: "80px", background: "#eee" }}
+    style={{ width: "100%", background: "#eee" }}
   />
                 
                 </div></td>
 
-              <td> <div className="cell-box">{Number(l.Amount||0).toFixed(2)}</div></td>
+              <td> <div className="cell-box" style={{ width: "100%", background: "#eee" }}>{Number(l.Amount||0).toFixed(2)}
+                
+                </div></td>
                  
                   <td>
                   
@@ -819,7 +1056,55 @@ window.chrome.webview.postMessage({
   <div className="total-row">Round Off: {totals.roundOff.toFixed(2)}</div>
   <div className="total-row total-final">Total: {totals.total.toFixed(2)}</div>
 </div>
+{showPdfModal && (
+  <div className="pdf-modal-overlay">
+    <div className="pdf-modal-box">
+
+      <div className="pdf-modal-header">
+        <h3>Invoice PDF Preview</h3>
+
+       <p>Saved to: <b>{downloadPath}</b></p>
+        <button onClick={() => setShowPdfModal(false)}>X</button>
+      </div>
+
+      <iframe
+        src={pdfPath}   // Must be file:///...
+        style={{ width: "100%", height: "80vh", border: "none" }}
+      ></iframe>
+
+      <button
+        className="pdf-print-btn"
+        onClick={() =>
+          document
+            .querySelector(".pdf-modal-box iframe")
+            .contentWindow.print()
+        }
+      >
+        Print
+      </button>
 
     </div>
+  </div>
+)}
+{showErrorModal && (
+  <div className="error-modal-overlay">
+    <div className="error-modal-box">
+      <h3>Validation Errors</h3>
+
+      <pre style={{ whiteSpace: "pre-wrap", color: "#a00" }}>
+        {modalMessage}
+      </pre>
+
+      <button onClick={() => setShowErrorModal(false)}>
+        OK
+      </button>
+    </div>
+  </div>
+)}
+
+
+</div>
+    
+    
   );
 }

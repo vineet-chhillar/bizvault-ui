@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./ItemForms.css";
+import  validateInventoryForm  from "../../utils/validateInvoiceForm";
+
 
 export default function AddInventoryDetails({ selectedItem, selectedItemName,onSave, onCancel,selectedItemForDetails,itemDetails }) {
  
@@ -50,7 +52,7 @@ export default function AddInventoryDetails({ selectedItem, selectedItemName,onS
     
   });
 
-
+const [errors, setErrors] = useState({});
 
 
 // ✅ Listen for confirmation messages from C#
@@ -127,16 +129,29 @@ const handleChange = (e) => {
   // ✅ Save inventory — send to C# instead of local state
   const handleSave = (e) => {
     e.preventDefault();
+
+
+
+    console.log("validateInventoryForm:", validateInventoryForm);
+  const validationErrors = validateInventoryForm(inventoryData, showOptional);
+
+  if (validationErrors.length > 0) {
+    const errorMap = {};
+    validationErrors.forEach(err => {
+      errorMap[err.field] = err.message;
+    });
+    setErrors(errorMap);
+    return;
+  }
+
+  setErrors({});
+
 console.log("✅ handleSave() called for:", e.Item_Id);
 console.log(selectedItem.id);
  const user = JSON.parse(localStorage.getItem("user"));
 
 
-// ✅ Basic validation
-  if (!inventoryData.batchNo) {
-    alert("Please enter a Batch Number");
-    return;
-  }
+
 
   // ✅ Duplicate check — prevent same BatchNo for the same Item
   const exists =
@@ -189,6 +204,10 @@ console.log(selectedItem.id);
       };
 
       console.log("📤 Sending Inventory to C#:", payload);
+
+
+
+
       window.chrome.webview.postMessage({
         Action: "AddItemDetails",
         Payload: payload,
@@ -209,159 +228,195 @@ console.log(selectedItem.id);
 
       <form className="inventory-body" onSubmit={handleSave}>
         <div className="form-row">
-          <div className="form-group">
-            <label>HSN/SAC Code</label>
-            <input
-              name="hsnCode"
-              value={inventoryData.hsnCode}
-              onChange={handleChange}
-              placeholder="Enter HSN/SAC code"
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Batch No</label>
-            <input
-              name="batchNo"
-              value={inventoryData.batchNo}
-              onChange={handleChange}
-              placeholder="Enter Batch Number"
-            />
-          </div>
-
-           <div className="form-group">
-            <label>Ref/Invoice No</label>
-            <input
-              name="refno"
-              value={inventoryData.refno}
-              onChange={handleChange}
-              placeholder="Enter Invoice Number"
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Date</label>
-            <input
-            type="date"
-              name="date"
-              value={inventoryData.date}
-              onChange={handleChange}
-              placeholder="Enter Date"
-              required
-            />
-          </div>
-
-
-          <div className="form-group">
-            <label>Quantity</label>
-            <input
-              name="quantity"
-              type="number"
-              value={inventoryData.quantity}
-              onChange={handleChange}
-              placeholder="Enter Quantity"
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Purchase Price</label>
-            <input
-              name="purchasePrice"
-              type="number"
-              value={inventoryData.purchasePrice}
-              onChange={handleChange}
-              placeholder="Enter Purchase Price"
-            />
-          </div>
-
-
-            <div className="form-group">
-            <label>Discount Percent</label>
-            <input
-              name="discountPercent"
-              type="number"
-              value={inventoryData.discountPercent}
-              onChange={handleChange}
-              placeholder="Enter Discount percent"
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Net Purchase Price</label>
-            <input
-              name="netPurchasePrice"
-              type="number"
-              value={inventoryData.netPurchasePrice}
-              onChange={handleChange}
-              placeholder="Net Purchase Price"
-              readonly={true}
-            />
-          </div>
-
-<div className="form-group">
-            <label>Amount</label>
-            <input
-              name="amount"
-              type="number"
-              value={inventoryData.amount}
-              onChange={handleChange}
-              placeholder="Total Amount"
-              readonly={true}
-            />
-          </div>
-
-
-          <div className="form-group">
-            <label>Sales Price</label>
-            <input
-              name="salesPrice"
-              type="number"
-              value={inventoryData.salesPrice}
-              onChange={handleChange}
-              placeholder="Enter Sales Price"
-            />
-          </div>
-
-          <div className="form-group">
-            <label>MRP</label>
-            <input
-              name="mrp"
-              type="number"
-              value={inventoryData.mrp}
-              onChange={handleChange}
-              placeholder="Enter MRP"
-            />
-          </div>
-
           
+          {/* HSN/SAC Code */}
+<div className="form-group">
+  <label>HSN/SAC Code</label>
+  <input
+    name="hsnCode"
+    value={inventoryData.hsnCode}
+    onChange={handleChange}
+    placeholder="Enter HSN/SAC code"
+    className={errors.hsnCode ? "error-input" : ""}
+  />
+  {errors.hsnCode && <div className="error">{errors.hsnCode}</div>}
+</div>
 
+{/* Batch No */}
+<div className="form-group">
+  <label>Batch No</label>
+  <input
+    name="batchNo"
+    value={inventoryData.batchNo}
+    onChange={handleChange}
+    placeholder="Enter Batch Number"
+    className={errors.batchNo ? "error-input" : ""}
+  />
+  {errors.batchNo && <div className="error">{errors.batchNo}</div>}
+</div>
 
+{/* Ref/Invoice No */}
+<div className="form-group">
+  <label>Ref/Invoice No</label>
+  <input
+    name="refno"
+    value={inventoryData.refno}
+    onChange={handleChange}
+    placeholder="Enter Invoice Number"
+    className={errors.refno ? "error-input" : ""}
+  />
+  {errors.refno && <div className="error">{errors.refno}</div>}
+</div>
+
+{/* Date */}
+<div className="form-group">
+  <label>Date</label>
+  <input
+    type="date"
+    name="date"
+    value={inventoryData.date}
+    onChange={handleChange}
+    placeholder="Enter Date"
+    className={errors.date ? "error-input" : ""}
+  />
+  {errors.date && <div className="error">{errors.date}</div>}
+</div>
+
+{/* Quantity */}
+<div className="form-group">
+  <label>Quantity</label>
+  <input
+    name="quantity"
+    type="number"
+    value={inventoryData.quantity}
+    onChange={handleChange}
+    placeholder="Enter Quantity"
+    className={errors.quantity ? "error-input" : ""}
+  />
+  {errors.quantity && <div className="error">{errors.quantity}</div>}
+</div>
+
+{/* Purchase Price */}
+<div className="form-group">
+  <label>Purchase Price</label>
+  <input
+    name="purchasePrice"
+    type="number"
+    value={inventoryData.purchasePrice}
+    onChange={handleChange}
+    placeholder="Enter Purchase Price"
+    className={errors.purchasePrice ? "error-input" : ""}
+  />
+  {errors.purchasePrice && <div className="error">{errors.purchasePrice}</div>}
+</div>
+
+{/* Discount Percent */}
+<div className="form-group">
+  <label>Discount Percent</label>
+  <input
+    name="discountPercent"
+    type="number"
+    value={inventoryData.discountPercent}
+    onChange={handleChange}
+    placeholder="Enter Discount %"
+    className={errors.discountPercent ? "error-input" : ""}
+  />
+  {errors.discountPercent && (
+    <div className="error">{errors.discountPercent}</div>
+  )}
+</div>
+
+{/* Net Purchase Price (readonly) */}
+<div className="form-group">
+  <label>Net Purchase Price</label>
+  <input
+    name="netPurchasePrice"
+    type="number"
+    value={inventoryData.netPurchasePrice}
+    onChange={handleChange}
+    placeholder="Net Purchase Price"
+    readOnly
+    className={errors.netPurchasePrice ? "error-input" : ""}
+  />
+  {errors.netPurchasePrice && (
+    <div className="error">{errors.netPurchasePrice}</div>
+  )}
+</div>
+
+{/* Amount (readonly) */}
+<div className="form-group">
+  <label>Amount</label>
+  <input
+    name="amount"
+    type="number"
+    value={inventoryData.amount}
+    onChange={handleChange}
+    placeholder="Total Amount"
+    readOnly
+    className={errors.amount ? "error-input" : ""}
+  />
+  {errors.amount && <div className="error">{errors.amount}</div>}
+</div>
+
+{/* Sales Price */}
+<div className="form-group">
+  <label>Sales Price</label>
+  <input
+    name="salesPrice"
+    type="number"
+    value={inventoryData.salesPrice}
+    onChange={handleChange}
+    placeholder="Enter Sales Price"
+    className={errors.salesPrice ? "error-input" : ""}
+  />
+  {errors.salesPrice && <div className="error">{errors.salesPrice}</div>}
+</div>
+
+{/* MRP */}
+<div className="form-group">
+  <label>MRP</label>
+  <input
+    name="mrp"
+    type="number"
+    value={inventoryData.mrp}
+    onChange={handleChange}
+    placeholder="Enter MRP"
+    className={errors.mrp ? "error-input" : ""}
+  />
+  {errors.mrp && <div className="error">{errors.mrp}</div>}
+</div>
+
+{/* Goods/Services */}
 <div className="form-group">
   <label>Goods/Services</label>
   <select
     name="goodsOrServices"
     value={inventoryData.goodsOrServices}
     onChange={handleChange}
-    required
+    className={errors.goodsOrServices ? "error-input" : ""}
   >
+    <option value="">-- Select --</option>
     <option value="Goods">Goods</option>
     <option value="Services">Services</option>
   </select>
+  {errors.goodsOrServices && (
+    <div className="error">{errors.goodsOrServices}</div>
+  )}
 </div>
 
+{/* Description */}
+<div className="form-group">
+  <label>Description</label>
+  <input
+    name="description"
+    value={inventoryData.description}
+    onChange={handleChange}
+    placeholder="Enter Description"
+    className={errors.description ? "error-input" : ""}
+  />
+  {errors.description && <div className="error">{errors.description}</div>}
+</div>
 
-
-
-
-          <div className="form-group">
-            <label>Description</label>
-            <input
-              name="description"
-              value={inventoryData.description}
-              onChange={handleChange}
-              placeholder="Enter Description"
-            />
-          </div>
         </div>
 
         {/* ✅ Optional Fields Section */}

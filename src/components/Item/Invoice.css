@@ -1,5 +1,5 @@
 .customer-section {
-  margin: 10px auto 18px auto;      /* smaller outside spacing */
+  margin: 10px 700px 18px auto;      /* smaller outside spacing */
   padding: 12px 16px;               /* less padding */
 
   background: #f8f5ff;              /* lighter and softer */
@@ -9,7 +9,7 @@
   box-shadow: 0 1px 3px rgba(110, 80, 200, 0.06);  /* smaller shadow */
 
   max-width: 360px;                 /* narrower = less screen impact */
-  width: 100%;
+  width: 360px;
   text-align: left;
 }
 
@@ -149,7 +149,7 @@
   padding: 8px 18px !important;
   border-radius: 6px;
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 6000;
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -380,4 +380,137 @@
   font-size: 15px;
   color: #5c47a8;
   margin: 2px 0;
+}
+.pdf-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.pdf-modal-box {
+  background: white;
+  width: 80%;
+  height: 90%;
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.pdf-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pdf-print-btn {
+  margin-top: 10px;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  background: #473b88;
+  color: white;
+  cursor: pointer;
+}
+.print-section {
+  margin: 10px auto 18px 0;          /* aligned left */
+  padding: 12px 16px;
+
+  background: #f8f5ff;               /* same soft background */
+  border: 1px solid #e5defa;         /* same border */
+  border-radius: 10px;
+
+  box-shadow: 0 1px 3px rgba(110, 80, 200, 0.06);
+
+  max-width: 260px;                  /* slightly narrower than customer-section */
+  width: 260px;
+  text-align: left;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;                           /* spacing between elements */
+}
+
+/* Title */
+.print-section h3 {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0 0 6px 0;
+  color: #4e3ca3;
+}
+
+/* Labels */
+.print-section label {
+  font-weight: 600;
+  font-size: 13px;
+  color: #4e3ca3;
+  margin-bottom: 4px;
+}
+
+/* Inputs + selects */
+.print-section input,
+.print-section select {
+  width: 100%;
+  height: 34px;
+
+  padding: 4px 8px;
+  margin-bottom: 8px;
+
+  border: 1px solid #d3c7f7;
+  border-radius: 5px;
+
+  background: #fff;
+  color: #333;
+  font-size: 13px;
+
+  transition: 0.2s border, 0.2s box-shadow;
+}
+
+.print-section input:focus,
+.print-section select:focus {
+  border-color: #8a76f7;
+  box-shadow: 0 0 3px rgba(138, 118, 247, 0.4);
+  outline: none;
+}
+
+/* Print button */
+.print-section button {
+  margin-top: 4px;
+  background: #6d5af9;
+  color: white;
+
+  border: none;
+  border-radius: 6px;
+
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+
+  transition: 0.2s background;
+}
+
+.print-section button:hover {
+  background: #5846e6;
+}
+.invoice-top-sections {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+.top-sections {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;                /* spacing between the two sections */
+  align-items: flex-start;  /* align to top */
+  width: 100%;
+  flex-wrap: nowrap;        /* prevents print section pushing customer section down */
+}
+.inv-error {
+  border: 2px solid red !important;
+  background: #ffe6e6 !important;
 }

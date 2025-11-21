@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import "./ItemForms.css";
 import "./EditInventory.css";
 import ItemNavBar from "./ItemNavBar";
+import validateInventoryEditForm from "../../utils/validateInventoryEditForm";
+
+
 const EditInventory = () => {
   const [inventory, setInventory] = useState([]);
   const [selectedItemId, setSelectedItemId] = useState("");
@@ -11,6 +14,7 @@ const EditInventory = () => {
   const [selectedItemName, setSelectedItemName] = useState("");
   const [selectedBatchNo, setSelectedBatchno] = useState("");
   const selectedItemIdRef = useRef();
+const [validationErrors, setValidationErrors] = useState({});
 
 
 
@@ -135,59 +139,9 @@ if (data.action === "updateInventoryResponse") {
   setErrors((prev) => ({ ...prev, [name]: "" })); // ✅ clear field-level error
 };
 
-  // ✅ Field validation logic
-  const validateField = (name, value) => {
-    let message = "";
-    switch (name) {
-      case "Quantity":
-        if (!value || value <= 0) message = "Quantity must be greater than 0.";
-        break;
-      case "PurchasePrice":
-      case "SalesPrice":
-      case "Mrp":
-        if (!value || value <= 0) message = "Price must be greater than 0.";
-        break;
-      case "ExpDate":
-        if (formData?.MfgDate && value < formData.MfgDate)
-          message = "Expiry date cannot be before manufacturing date.";
-        break;
-      default:
-        break;
-    }
-    setErrors((prev) => ({ ...prev, [name]: message }));
-  };
+  
 
-  // ✅ Validate whole form
- const validateForm = () => {
-  const newErrors = {};
-
-  const qty = parseFloat(formData.quantity);
-  if (isNaN(qty) || qty <= 0)
-    newErrors.quantity = "Quantity must be greater than 0.";
-
-  const purchase = parseFloat(formData.purchasePrice);
-  if (isNaN(purchase) || purchase <= 0)
-    newErrors.purchasePrice = "Purchase price must be greater than 0.";
-
-  const sales = parseFloat(formData.salesPrice);
-  if (isNaN(sales) || sales <= 0)
-    newErrors.salesPrice = "Sales price must be greater than 0.";
-
-  const mrp = parseFloat(formData.mrp);
-  if (isNaN(mrp) || mrp <= 0)
-    newErrors.mrp = "MRP must be greater than 0.";
-
-  if (formData.mfgDate && formData.expDate) {
-    const mfg = new Date(formData.mfgDate);
-    const exp = new Date(formData.expDate);
-    if (exp < mfg)
-      newErrors.expDate = "Expiry cannot be before manufacturing date.";
-  }
-
-  setErrors(newErrors);
-  console.log("Validation Errors:", newErrors);
-  return Object.keys(newErrors).length === 0;
-};
+ 
 
 
 
@@ -195,11 +149,29 @@ if (data.action === "updateInventoryResponse") {
   // ✅ Save edited record
   const handleSave = (e) => {
     e.preventDefault();
-    if (!validateForm()) {
-      alert("Please correct validation errors before saving.");
-      return;
+    
+
+  const errorsArray = validateInventoryEditForm(formData);
+
+  if (errorsArray.length > 0) {
+    const errObj = {};
+    errorsArray.forEach(e => errObj[e.field] = e.message);
+    setValidationErrors(errObj);
+
+    const first = Object.keys(errObj)[0];
+    if (first) {
+      const el = document.getElementById(first);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.focus();
+      }
     }
 
+    alert("Please correct the highlighted errors.");
+    return;
+  }
+
+  setValidationErrors({});
     window.chrome?.webview?.postMessage({
       action: "updateInventory",
       payload: {
@@ -422,6 +394,8 @@ onClick={() => {
             <div className="form-group">
               <label>HSN Code</label>
               <input
+              id="hsnCode"
+className={validationErrors.hsnCode ? "inv-error" : ""}
                 type="text"
                 name="hsnCode"
                 value={formData.hsnCode || formData.hsnCode || ""}
@@ -432,6 +406,8 @@ onClick={() => {
             <div className="form-group">
               <label>Batch No</label>
               <input
+               id="batchNo"
+className={validationErrors.batchNo ? "inv-error" : ""}
                 type="text"
                 name="batchNo"
                 value={formData.batchNo || formData.batchNo || ""}
@@ -443,6 +419,8 @@ onClick={() => {
             <div className="form-group">
               <label>Ref/Invoice No</label>
               <input
+               id="refno"
+className={validationErrors.refno ? "inv-error" : ""}
                 type="text"
                 name="refno"
                 value={formData.refno || formData.refno || ""}
@@ -455,6 +433,8 @@ onClick={() => {
               <div className="form-group">
               <label>Date</label>
               <input
+              id="date"
+className={validationErrors.date ? "inv-error" : ""}
                 type="date"
                 name="date"
                 value={formData.date || formData.date || ""}
@@ -465,6 +445,8 @@ onClick={() => {
             <div className="form-group">
               <label>Quantity</label>
               <input
+               id="quantity"
+className={validationErrors.quantity ? "inv-error" : ""}
                 type="number"
                 name="quantity"
                 value={formData.quantity || formData.quantity || ""}
@@ -476,6 +458,8 @@ onClick={() => {
             <div className="form-group">
               <label>Purchase Price</label>
               <input
+              id="purchasePrice"
+className={validationErrors.purchasePrice ? "inv-error" : ""}
                 type="number"
                 name="purchasePrice"
                 value={formData.purchasePrice || formData.purchasePrice || ""}
@@ -486,6 +470,8 @@ onClick={() => {
             <div className="form-group">
               <label>Discount Percent</label>
               <input
+              id="discountPercent"
+className={validationErrors.discountPercent ? "inv-error" : ""}
                 type="number"
                 name="discountPercent"
                 value={formData.discountPercent || formData.discountPercent || ""}
@@ -496,6 +482,8 @@ onClick={() => {
              <div className="form-group">
               <label> Net Purchase Price</label>
               <input
+              id="netPurchasePrice"
+className={validationErrors.netPurchasePrice ? "inv-error" : ""}
                 type="number"
                 name="netPurchasePrice"
                 value={formData.netpurchasePrice || formData.netpurchasePrice || ""}
@@ -507,6 +495,8 @@ onClick={() => {
             <div className="form-group">
               <label>Amount</label>
               <input
+                  id="amount"
+className={validationErrors.amount ? "inv-error" : ""}
                 type="number"
                 name="amount"
                 value={formData.amount || formData.amount || ""}
@@ -519,6 +509,8 @@ onClick={() => {
             <div className="form-group">
               <label>Sales Price</label>
               <input
+               id="salesPrice"
+className={validationErrors.salesPrice ? "inv-error" : ""}
                 type="number"
                 name="salesPrice"
                 value={formData.salesPrice || formData.salesPrice || ""}
@@ -529,6 +521,8 @@ onClick={() => {
             <div className="form-group">
               <label>MRP</label>
               <input
+               id="mrp"
+className={validationErrors.mrp ? "inv-error" : ""}
                 type="number"
                 name="mrp"
                 value={formData.mrp || formData.mrp || ""}
@@ -539,6 +533,8 @@ onClick={() => {
 <div className="form-group">
   <label>Goods/Services</label>
   <select
+   id="goodsOrServices"
+className={validationErrors.goodsOrServices ? "inv-error" : ""}
     name="goodsOrServices"
     value={formData.goodsOrServices}
     onChange={handleChange}
@@ -552,6 +548,8 @@ onClick={() => {
 <div className="form-group">
               <label>Description</label>
               <input
+                 id="description"
+className={validationErrors.description ? "inv-error" : ""}
                 type="text"
                 name="description"
                 value={formData.description || formData.description || ""}
@@ -562,6 +560,8 @@ onClick={() => {
             <div className="form-group">
               <label>Mfg Date</label>
               <input
+              id="mfgdate"
+className={validationErrors.mfgdate ? "inv-error" : ""}
                 type="date"
                 name="mfgdate"
                 value={formData.mfgdate || ""}
@@ -572,6 +572,8 @@ onClick={() => {
             <div className="form-group">
               <label>Exp Date</label>
               <input
+              id="expdate"
+className={validationErrors.expdate ? "inv-error" : ""}
                 type="date"
                 name="expdate"
                 value={formData.expdate || ""}

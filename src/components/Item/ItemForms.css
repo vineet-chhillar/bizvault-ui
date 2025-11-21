@@ -972,3 +972,13 @@ h1.form-title, h2.form-title, h3.form-title {
   font-size: 0.8rem;
   margin-top: 2px;
 }
+.error {
+  color: red;
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+.error-input {
+  border: 1px solid red !important;
+  background: #ffeaea;
+}

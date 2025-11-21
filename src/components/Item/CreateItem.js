@@ -5,6 +5,8 @@ import AddInventoryDetails from "./AddInventoryDetails";
 import BillingAppLayout from "../../BillingAppLayout";
 import { User } from "lucide-react";
 import EditItem from "./EditItem";
+import { validateItemForm } from "../../utils/validateItemForm";
+
 
 
 export default function CreateItem() {
@@ -23,6 +25,7 @@ export default function CreateItem() {
     createdat: "",
   });
 
+  const [errors, setErrors] = useState({});
   const [items, setItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
 
@@ -190,14 +193,19 @@ const handleChange = (e) => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
+     const itemErrors = validateItemForm(itemData);
+
+if (itemErrors.length > 0) {
+  const map = {};
+  itemErrors.forEach(e => (map[e.field] = e.message));
+  setErrors(map);
+  return;
+}
+
     console.log(itemData.name,itemData.itemcode,itemData.categoryname,
       itemData.description,itemData.gstpercent,itemData.unitname,itemData.date);
 
-    if (!itemData.name||!itemData.itemcode||!itemData.categoryid
-      ||!itemData.description||!itemData.gstid||!itemData.unitid||!itemData.date) {
-      alert("⚠️ Please fill in all required fields.");
-      return;
-    }
+  
 
     const user = JSON.parse(localStorage.getItem("user"));
     {/*console.log("Logged in user:", user.email);*/}
@@ -507,82 +515,87 @@ console.log("📤 Sending AddItemDetails:", {
       <div className="form-inner">
       <form className="form-body" onSubmit={handleSubmit}>
         <div className="form-row">
-        <div className="form-group">
-          <label>Item Name</label>
-          <input
-            name="name"
-            value={itemData.name}
-            onChange={handleChange}
-            placeholder="Enter item name"
-            required
-          />
-        </div>
+        
+        {/* ITEM NAME */}
+<div className="form-group">
+  <label>Item Name</label>
+  <input
+    name="name"
+    value={itemData.name}
+    onChange={handleChange}
+    placeholder="Enter item name"
+    className={errors.name ? "error-input" : ""}
+  />
+  {errors.name && <div className="error">{errors.name}</div>}
+</div>
 
-        <div className="form-group">
-          <label>Item Code</label>
-          <input
-            name="itemcode"
-            value={itemData.itemcode}
-            onChange={handleChange}
-            placeholder="Enter item code"
-            required
-          />
-        </div>
+{/* ITEM CODE */}
+<div className="form-group">
+  <label>Item Code</label>
+  <input
+    name="itemcode"
+    value={itemData.itemcode}
+    onChange={handleChange}
+    placeholder="Enter item code"
+    className={errors.itemcode ? "error-input" : ""}
+  />
+  {errors.itemcode && <div className="error">{errors.itemcode}</div>}
+</div>
 
+{/* CATEGORY */}
+<div className="form-group">
+  <label>Category</label>
+  <select
+    name="categoryid"
+    value={itemData.categoryid}
+    onChange={handleChange}
+    className={errors.categoryid ? "error-input" : ""}
+  >
+    <option value="">-- Select Category --</option>
+    {categories.map((cat) => (
+      <option key={cat.Id} value={String(cat.Id)}>
+        {cat.CategoryName}
+      </option>
+    ))}
+  </select>
+  {errors.categoryid && <div className="error">{errors.categoryid}</div>}
+</div>
 
+{/* DATE */}
+<div className="form-group">
+  <label>Date</label>
+  <input
+    type="date"
+    name="date"
+    value={itemData.date}
+    onChange={handleChange}
+    placeholder="Enter Date"
+    className={errors.date ? "error-input" : ""}
+  />
+  {errors.date && <div className="error">{errors.date}</div>}
+</div>
 
-        <div className="form-group">
-          <label>Category</label>
-          <select
-  name="categoryid"
-  value={itemData.categoryid}
-  onChange={handleChange}
-  required
-    >
+{/* DESCRIPTION */}
+<div className="form-group">
+  <label>Description</label>
+  <input
+    name="description"
+    value={itemData.description}
+    onChange={handleChange}
+    placeholder="Enter description"
+    className={errors.description ? "error-input" : ""}
+  />
+  {errors.description && <div className="error">{errors.description}</div>}
+</div>
 
-  <option value="">-- Select Category --</option>
-  {categories.map((cat) => (
-    <option key={cat.Id} value={String(cat.Id)}>
-  {cat.CategoryName}
-</option>
-  ))}
-
-</select>
-
-        </div>
-
-
-
-          
-          <div className="form-group">
-          <label>Date</label>
-          <input
-          type="date"
-            name="date"
-            value={itemData.date}
-            onChange={handleChange}
-            placeholder="Enter Date"
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Description</label>
-          <input
-            name="description"
-            value={itemData.description}
-            onChange={handleChange}
-            placeholder="Enter description"
-          />
-        </div>
-
-        <div className="form-group">
+{/* UNIT */}
+<div className="form-group">
   <label>Unit</label>
   <select
     name="unitid"
     value={itemData.unitid}
     onChange={handleChange}
-    required
+    className={errors.unitid ? "error-input" : ""}
   >
     <option value="">-- Select Unit --</option>
     {units.map((u) => (
@@ -591,15 +604,17 @@ console.log("📤 Sending AddItemDetails:", {
       </option>
     ))}
   </select>
+  {errors.unitid && <div className="error">{errors.unitid}</div>}
 </div>
 
-        <div className="form-group">
+{/* GST */}
+<div className="form-group">
   <label>GST (%)</label>
   <select
     name="gstid"
     value={itemData.gstid}
     onChange={handleChange}
-    required
+    className={errors.gstid ? "error-input" : ""}
   >
     <option value="">-- Select GST --</option>
     {gstRates.map((g) => (
@@ -608,7 +623,9 @@ console.log("📤 Sending AddItemDetails:", {
       </option>
     ))}
   </select>
+  {errors.gstid && <div className="error">{errors.gstid}</div>}
 </div>
+
 
 
 

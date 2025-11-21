@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./ItemForms.css";
 import ItemNavBar from "./ItemNavBar";
+import { validateItemForm } from "../../utils/validateItemForm";
 
 const EditItem = () => {
   const [items, setItems] = useState([]);
@@ -16,6 +17,19 @@ const [gstRates, setGstRates] = useState([]);
   const [unit, setUnit] = useState(null);
 const [units, setUnits] = useState([]);
 
+ const [errors, setErrors] = useState({});
+
+
+ // 🟢 Add this at the top of AddInventoryDetails.js or CreateItem.js
+function formatDateForInput(dateStr) {
+  if (!dateStr) return "";
+
+  const d = new Date(dateStr);
+  if (isNaN(d)) return "";
+
+  return d.toISOString().split("T")[0]; // yyyy-mm-dd
+}
+
 
  // ✅ Handle incoming messages from C#
   useEffect(() => {
@@ -30,6 +44,8 @@ const [units, setUnits] = useState([]);
       if (data.action === "searchItemsResponse") {
         setItems(data.items);
       }
+
+  
 
       if (data.action === "updateItem") {
         alert(data.message);
@@ -99,11 +115,12 @@ const [units, setUnits] = useState([]);
 const handleChange = (e) => {
   const { name, value } = e.target;
 
-  setFormData((prev) => ({
+  setFormData(prev => ({
     ...prev,
-    [name]: value   // KEEP AS STRING
+    [name]: name === "Date" ? formatDateForInput(value) : value
   }));
 };
+
 
 
 
@@ -113,11 +130,17 @@ const handleChange = (e) => {
   const handleSave = (e) => {
      e.preventDefault(); // prevents accidental page reload
     if (!formData) return;
-// Optional simple validation
-  if (!formData.Name?.trim() || !formData.ItemCode?.trim()) {
-    alert("Please fill in Item Name and Item Code before saving.");
-    return;
-  }
+
+    console.log(formData.CategoryName);
+    const itemErrors = validateItemForm(formData);
+
+if (itemErrors.length > 0) {
+  const map = {};
+  itemErrors.forEach(e => (map[e.field] = e.message));
+  setErrors(map);
+  return;
+}
+ 
 console.log("📩 item id is:", formData.Id +","+formData.CategoryName+""+formData.categoryId);
     if (window.chrome && window.chrome.webview) {
       window.chrome.webview.postMessage({
@@ -207,6 +230,7 @@ console.log("📩 item id is:", formData.Id +","+formData.CategoryName+""+formDa
     CategoryId: String(i.CategoryId),
     UnitId: String(i.UnitId),
     GstId: String(i.GstId),
+    Date: formatDateForInput(i.Date),
   });
 }}
 >
@@ -279,7 +303,7 @@ console.log("📩 item id is:", formData.Id +","+formData.CategoryName+""+formDa
       {formData && (
   <div className="inventory-body">
     <h3 className="inventory-title">
-      🏷️ Edit Inventory Details For Item : <span>{formData.Name}</span>
+      🏷️ Edit Item Details : <span>{formData.Name}</span>
     </h3>
 
     <div className="form-row-horizontal">
@@ -291,7 +315,9 @@ console.log("📩 item id is:", formData.Id +","+formData.CategoryName+""+formDa
           name="Name"
           value={formData.Name || ""}
           onChange={handleChange}
+          className={errors.name ? "error-input" : ""}
         />
+        {errors.Name && <div className="error">{errors.Name}</div>}
       </div>
 
       {/* Item Code */}
@@ -302,7 +328,9 @@ console.log("📩 item id is:", formData.Id +","+formData.CategoryName+""+formDa
           name="ItemCode"
           value={formData.ItemCode || ""}
           onChange={handleChange}
+           className={errors.itemcode ? "error-input" : ""}
         />
+        {errors.ItemCode && <div className="error">{errors.ItemCode}</div>}
       </div>
 
       {/* Category */}
@@ -312,7 +340,7 @@ console.log("📩 item id is:", formData.Id +","+formData.CategoryName+""+formDa
   name="CategoryId"
   value={formData.CategoryId ? String(formData.CategoryId) : ""}
   onChange={handleChange}
-  required
+  
 >
   <option value="">-- Select Category --</option>
 
@@ -322,18 +350,20 @@ console.log("📩 item id is:", formData.Id +","+formData.CategoryName+""+formDa
     </option>
   ))}
 </select>
-
+{errors.CategoryId && <div className="error">{errors.CategoryId}</div>}
 </div>
 
       {/* Date */}
       <div className="form-group">
         <label>Date</label>
         <input
-          type="datetime-local"
+          type="date"
           name="Date"
           value={formData.Date || ""}
           onChange={handleChange}
+          className={errors.date ? "error-input" : ""}
         />
+        {errors.Date && <div className="error">{errors.Date}</div>}
       </div>
 
       {/* Description */}
@@ -344,7 +374,9 @@ console.log("📩 item id is:", formData.Id +","+formData.CategoryName+""+formDa
           name="Description"
           value={formData.Description || ""}
           onChange={handleChange}
+          className={errors.description ? "error-input" : ""}
         />
+        {errors.Description && <div className="error">{errors.Description}</div>}
       </div>
 
       {/* Unit */}
@@ -354,7 +386,7 @@ console.log("📩 item id is:", formData.Id +","+formData.CategoryName+""+formDa
   name="UnitId"
   value={formData.UnitId ? String(formData.UnitId) : ""}
   onChange={handleChange}
-  required
+  
 >
   <option value="">-- Select Unit --</option>
 
@@ -364,7 +396,7 @@ console.log("📩 item id is:", formData.Id +","+formData.CategoryName+""+formDa
     </option>
   ))}
 </select>
-
+{errors.UnitId && <div className="error">{errors.UnitId}</div>}
 </div>
 
       {/* GST */}
@@ -374,7 +406,7 @@ console.log("📩 item id is:", formData.Id +","+formData.CategoryName+""+formDa
   name="GstId"
   value={formData.GstId ? String(formData.GstId) : ""}
   onChange={handleChange}
-  required
+  
 >
   <option value="">-- Select GST --</option>
 
@@ -384,7 +416,7 @@ console.log("📩 item id is:", formData.Id +","+formData.CategoryName+""+formDa
     </option>
   ))}
 </select>
-
+{errors.GstId && <div className="error">{errors.GstId}</div>}
 
       </div>
     </div>
