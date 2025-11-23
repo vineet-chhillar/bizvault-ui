@@ -32,6 +32,7 @@ import {
   FaBoxes,
   FaCubes
 } from "react-icons/fa";
+import SalesReturn from "./components/Item/SalesReturn";
 
 
 /* Hook: derive title from route */
@@ -249,7 +250,61 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
               <span className="label">Invoice</span>
             </NavLink>
 
-            <NavLink
+
+
+
+{/* --- Invoice MENU (Grouped Tab Style) --- */}
+<div className="nav-section">
+  {/* Parent Link */}
+  <div
+    className="nav-link item-parent"
+    onClick={() => setIsItemOpen(!isItemOpen)}
+    style={{ cursor: "pointer" }}
+  >
+    <span className="icon"><FaCubes /></span>
+    <span className="label">Invoice</span>
+    <span className="arrow">{isItemOpen ? "▲" : "▼"}</span>
+  </div>
+
+  {/* Collapsible Children */}
+  <div className={`nav-children-tabs ${isItemOpen ? "open" : ""}`}>
+    <NavLink
+      to="/item/InvoiceEditor"
+      onClick={() => isMobile && setMobileOpen(false)}
+      className={({ isActive }) =>
+        "nav-tab-link" + (isActive ? " active" : "")
+      }
+    >
+      Create/View/Print Invoice
+    </NavLink>
+<NavLink
+      to="/item/SalesReturn"
+      onClick={() => isMobile && setMobileOpen(false)}
+      className={({ isActive }) =>
+        "nav-tab-link" + (isActive ? " active" : "")
+      }
+    >
+      Sales Return
+    </NavLink>
+    <NavLink
+      to="/item/PurchaseReturnEditor"
+      onClick={() => isMobile && setMobileOpen(false)}
+      className={({ isActive }) =>
+        "nav-tab-link" + (isActive ? " active" : "")
+      }
+    >
+     Purchase Return
+    </NavLink>
+
+    
+  </div>
+</div>
+
+
+
+
+
+            {/*<NavLink
               to="/inventory"
               onClick={() => isMobile && setMobileOpen(false)}
               className={({ isActive }) =>
@@ -258,7 +313,7 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
             >
               <span className="icon"><FaBoxes /></span>
               <span className="label">Inventory</span>
-            </NavLink>
+            </NavLink>*/}
 
             <NavLink
               to="Item/CompanySetup"
@@ -352,6 +407,7 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
   <Route path="/Item/EditItem" element={<EditItem />} />
   <Route path="/item/CompanySetup" element={<CompanySetup user={user} />} />
   <Route path="/item/InvoiceEditor" element={<InvoiceEditor user={user} />} />
+  <Route path="/item/SalesReturn" element={<SalesReturn user={user} />} />
 </Routes>
           {/*<main className="main-content">
           

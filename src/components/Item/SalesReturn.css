@@ -1,0 +1,155 @@
+.sales-return {
+  padding: 15px;
+  font-family: Arial, sans-serif;
+}
+
+.sales-return h2 {
+  margin-bottom: 12px;
+  color: #003366;
+  font-size: 22px;
+}
+
+/* Tabs */
+.sr-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.sr-tabs button {
+  background: #e7f1ff;
+  border: 1px solid #3f7dc1;
+  color: #003366;
+  padding: 7px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.sr-tabs button.active {
+  background: #3f7dc1;
+  color: white;
+}
+
+/* Blocks */
+.sr-search-block {
+  border: 1px solid #c5d7ea;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  background: #f7fbff;
+}
+
+.sr-search-block h3 {
+  margin: 0 0 10px 0;
+  font-size: 17px;
+  color: #003366;
+}
+
+.sr-filters {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 12px;
+}
+
+.sr-filters label {
+  font-size: 14px;
+}
+
+.sr-filters input[type="date"] {
+  padding: 3px 4px;
+  border: 1px solid #aaa;
+}
+
+/* Tables */
+.sr-list-container,
+.sr-items-section {
+  max-height: 230px;
+  overflow-y: auto;
+  border: 1px solid #d2e1f0;
+}
+
+.sr-list-table,
+.sr-items-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.sr-list-table thead,
+.sr-items-table thead {
+  background: #3f7dc1;
+  color: white;
+}
+
+.sr-list-table th,
+.sr-list-table td,
+.sr-items-table th,
+.sr-items-table td {
+  border: 1px solid #c5d7ea;
+  padding: 6px;
+  font-size: 14px;
+}
+
+.sr-list-table tbody tr:hover,
+.sr-items-table tbody tr:hover {
+  background: #d7ebff;
+  cursor: pointer;
+}
+
+/* Header row */
+.sr-header-row {
+  display: flex;
+  justify-content: space-between;
+  margin: 15px 0;
+  font-size: 15px;
+}
+
+.sr-header-row input[type="date"] {
+  padding: 3px;
+  border: 1px solid #aaa;
+}
+
+/* Footer totals + buttons */
+.sr-footer-row {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.sr-notes textarea {
+  width: 250px;
+  height: 75px;
+  border: 1px solid #c5d7ea;
+  padding: 6px;
+}
+
+.sr-totals div {
+  font-size: 15px;
+  margin: 2px 0;
+}
+
+.sr-totals strong {
+  font-size: 18px;
+}
+
+.sr-actions button {
+  background: #3f7dc1;
+  border: none;
+  padding: 10px 22px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.sr-actions button:hover {
+  background: #225899;
+}
+
+/* Error */
+.error {
+  color: red;
+  margin-top: 6px;
+  font-weight: bold;
+}
