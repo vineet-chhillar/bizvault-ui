@@ -168,7 +168,9 @@
 /* Secondary Cancel button */
 .inventory-btns .btn-submit.small[type="button"] {
   background-color: #4e1d7c;
+  
   color: #fff;
+  
   border: 1px solid #d9d3f3;
 }
 

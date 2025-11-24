@@ -50,7 +50,7 @@ function usePageTitle() {
       "/customer": "Customer",
       "/sales": "Sales",
       "/purchase": "Purchase",
-      "/invoice": "Invoice",
+      //"/invoice": "Invoice",
       "/inventory": "Inventory",
       "/item": "Item",
     };
@@ -107,7 +107,7 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
  export default function BillingAppLayout({ user, onLogout }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [isItemOpen, setIsItemOpen] = useState(false);
+  const [isItemOpen, setIsItemOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(
     typeof window !== "undefined" ? window.innerWidth <= 768 : false
   );
@@ -161,7 +161,16 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
   <span className="icon"><FaHome /></span>
   <span className="label">Home</span>
 </NavLink>
-
+<NavLink
+              to="Item/CompanySetup"
+              onClick={() => isMobile && setMobileOpen(false)}
+              className={({ isActive }) =>
+                "nav-link" + (isActive ? " active" : "")
+              }
+            >
+              <span className="icon"><FaBoxes /></span>
+              <span className="label">Company Profile</span>
+            </NavLink>
             <NavLink
               to="/dashboard"
               onClick={() => isMobile && setMobileOpen(false)}
@@ -239,7 +248,7 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
               <span className="label">Purchase</span>
             </NavLink>
 
-            <NavLink
+            {/*<NavLink
               to="Item/InvoiceEditor"
               onClick={() => isMobile && setMobileOpen(false)}
               className={({ isActive }) =>
@@ -248,7 +257,7 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
             >
               <span className="icon"><FaFileInvoice /></span>
               <span className="label">Invoice</span>
-            </NavLink>
+            </NavLink>*/}
 
 
 
@@ -315,16 +324,7 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
               <span className="label">Inventory</span>
             </NavLink>*/}
 
-            <NavLink
-              to="Item/CompanySetup"
-              onClick={() => isMobile && setMobileOpen(false)}
-              className={({ isActive }) =>
-                "nav-link" + (isActive ? " active" : "")
-              }
-            >
-              <span className="icon"><FaBoxes /></span>
-              <span className="label">Company Profile</span>
-            </NavLink>
+            
 
             {/*<NavLink
               to="/item"

@@ -625,9 +625,10 @@ const resetInvoiceForm = () => {
 </select>
 
 
-     
+      
       <div className="inventory-btns">
 <button 
+type="button"
     className="btn-submit small"
     onClick={() => {
       window.chrome.webview.postMessage({
@@ -638,9 +639,9 @@ const resetInvoiceForm = () => {
   >
     View/Print Invoice
   </button>
-  
-  
   </div>
+
+
 </div>
 
       <div className="customer-section">

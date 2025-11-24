@@ -4,6 +4,10 @@ import "./SalesReturn.css";
 export default function SalesReturn({user}) {
   const [activeTab, setActiveTab] = useState("CREATE");
 
+const [showPdfModal, setShowPdfModal] = useState(false);
+const [downloadPath, setDownloadPath] = useState("");
+const [pdfPath, setPdfPath] = useState("");
+
   // ---------------- CREATE TAB ----------------
   const [invoiceDate, setInvoiceDate] = useState("");
   const [invoiceResults, setInvoiceResults] = useState([]);
@@ -67,8 +71,16 @@ export default function SalesReturn({user}) {
           break;
 
         case "PrintSalesReturnResponse":
-          if (msg.success) alert("PDF generated:\n" + msg.pdfPath);
-          else alert("Failed to print.");
+          if (msg.success) {
+    const fileName = msg.pdfPath.split("\\").pop();
+    const url = "https://invoices.local/" + fileName;
+
+    setPdfPath(url);
+    setDownloadPath(msg.pdfPath);
+    setShowPdfModal(true);
+  } else {
+    alert("Print failed: " + msg.message);
+  }
           break;
 
         default:
@@ -296,6 +308,8 @@ export default function SalesReturn({user}) {
       Payload: { ReturnId: currentReturnId },
     });
 
+
+
   // ==========================================================
   // ======================== UI ==============================
   // ==========================================================
@@ -306,17 +320,19 @@ export default function SalesReturn({user}) {
 
       <div className="sr-tabs">
         <button
-          className={activeTab === "CREATE" ? "active" : ""}
-          onClick={() => setActiveTab("CREATE")}
-        >
-          Create Sales Return
-        </button>
-        <button
-          className={activeTab === "VIEW" ? "active" : ""}
-          onClick={() => setActiveTab("VIEW")}
-        >
-          View / Print Sales Return
-        </button>
+  className={`btn-submit small ${activeTab === "CREATE" ? "active" : ""}`}
+  onClick={() => setActiveTab("CREATE")}
+>
+  Create Sales Return
+</button>
+
+<button
+  className={`btn-submit small ${activeTab === "VIEW" ? "active" : ""}`}
+  onClick={() => setActiveTab("VIEW")}
+>
+  View / Print Sales Return
+</button>
+
       </div>
 
       {/* CREATE TAB */}
@@ -326,16 +342,20 @@ export default function SalesReturn({user}) {
           <div className="sr-search-block">
             <h3>Select Invoice (by Date)</h3>
             <div className="sr-filters">
-              <label>
-                Invoice Date:
-                <input
-                  type="date"
-                  value={invoiceDate}
-                  onChange={(e) => setInvoiceDate(e.target.value)}
-                />
-              </label>
-              <button onClick={searchInvoicesForReturn}>Search</button>
-            </div>
+  <div className="sr-date-box">
+    <label>Invoice Date:</label>
+    <input
+      type="date"
+      value={invoiceDate}
+      onChange={(e) => setInvoiceDate(e.target.value)}
+    />
+  </div>
+
+  <button className="btn-submit small" onClick={searchInvoicesForReturn}>
+    Search
+  </button>
+</div>
+
 
             <div className="sr-list-container">
               <table className="sr-list-table">
@@ -465,8 +485,8 @@ export default function SalesReturn({user}) {
                 </div>
               </div>
 
-              <div className="sr-actions">
-                <button onClick={saveSalesReturn}>
+              <div >
+                <button className="btn-submit small" onClick={saveSalesReturn}>
                   Save Sales Return
                 </button>
               </div>
@@ -489,7 +509,7 @@ export default function SalesReturn({user}) {
                   onChange={(e) => setSrDate(e.target.value)}
                 />
               </label>
-              <button onClick={searchSalesReturns}>Search</button>
+              <button className="btn-submit small" onClick={searchSalesReturns}>Search</button>
             </div>
 
             <div className="sr-list-container">
@@ -607,12 +627,43 @@ export default function SalesReturn({user}) {
               </div>
 
               <div className="sr-actions">
-                <button onClick={printSalesReturn}>Print</button>
+                <button className="btn-submit small" onClick={printSalesReturn}>Print</button>
               </div>
             </div>
           </div>
         </>
       )}
+    {showPdfModal && (
+  <div className="pdf-modal-overlay">
+    <div className="pdf-modal-box">
+
+      <div className="pdf-modal-header">
+        <h3>Sales Return PDF Preview</h3>
+        <p>Saved to: <b>{downloadPath}</b></p>
+        <button className="btn-submit small" onClick={() => setShowPdfModal(false)}>X</button>
+      </div>
+
+      <iframe
+        src={pdfPath}
+        style={{ width: "100%", height: "80vh", border: "none" }}
+      ></iframe>
+
+      <button
+        className="btn-submit small"
+        onClick={() =>
+          document
+            .querySelector(".pdf-modal-box iframe")
+            .contentWindow.print()
+        }
+      >
+        Print
+      </button>
+
     </div>
+  </div>
+)}
+
+    </div>
+    
   );
 }

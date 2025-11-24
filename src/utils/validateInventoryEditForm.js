@@ -59,9 +59,9 @@ export default function validateInventoryEditForm(formData) {
   // ------------------------------
   // 8. Net Purchase Price
   // ------------------------------
-  if (formData.netpurchasePrice) {
-    r = validateDecimal(formData.netpurchasePrice, "Net Purchase Price");
-    if (!r.valid) pushErr("netpurchasePrice", r.message);
+  if (formData.netPurchasePrice) {
+    r = validateDecimal(formData.netPurchasePrice, "Net Purchase Price");
+    if (!r.valid) pushErr("netPurchasePrice", r.message);
   }
 
   // ------------------------------

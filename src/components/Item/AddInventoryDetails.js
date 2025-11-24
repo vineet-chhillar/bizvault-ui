@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./ItemForms.css";
-import  validateInventoryForm  from "../../utils/validateInvoiceForm";
-
+//import  validateInventoryForm  from "../../utils/validateInvoiceForm";
+import validateInventoryEditForm from "../../utils/validateInventoryEditForm";
 
 export default function AddInventoryDetails({ selectedItem, selectedItemName,onSave, onCancel,selectedItemForDetails,itemDetails }) {
  
@@ -132,8 +132,9 @@ const handleChange = (e) => {
 
 
 
-    console.log("validateInventoryForm:", validateInventoryForm);
-  const validationErrors = validateInventoryForm(inventoryData, showOptional);
+    console.log("validateInventoryEditForm:", validateInventoryEditForm);
+  //const validationErrors = validateInventoryForm(inventoryData, showOptional);
+  const validationErrors = validateInventoryEditForm(inventoryData);
 
   if (validationErrors.length > 0) {
     const errorMap = {};
