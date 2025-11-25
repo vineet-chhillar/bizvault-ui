@@ -351,7 +351,7 @@ const [pdfPath, setPdfPath] = useState("");
     />
   </div>
 
-  <button className="btn-submit small" onClick={searchInvoicesForReturn}>
+  <button className="btn-submit search" onClick={searchInvoicesForReturn}>
     Search
   </button>
 </div>

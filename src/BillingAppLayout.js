@@ -4,6 +4,7 @@ import EditInventory from "./components/Item/EditInventory";
 import EditItem from "./components/Item/EditItem";
 import CompanySetup from "./components/Item/CompanySetup";
 import InvoiceEditor from "./components/Item/InvoiceEditor";
+import SupplierPage from "./components/Item/SupplierPage";
 
 
 import {
@@ -204,8 +205,8 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
               <span className="label">Accounts</span>
             </NavLink>
 
-            <NavLink
-              to="/supplier"
+            *<NavLink
+              to="Item/SupplierPage"
               onClick={() => isMobile && setMobileOpen(false)}
               className={({ isActive }) =>
                 "nav-link" + (isActive ? " active" : "")
@@ -214,6 +215,9 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
               <span className="icon"><FaTruck /></span>
               <span className="label">Supplier</span>
             </NavLink>
+
+            
+
 
             <NavLink
               to="/customer"
@@ -405,9 +409,10 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
   <Route path="/Item/CreateItem" element={<CreateItem />}/>
   <Route path="/Item/EditInventory" element={<EditInventory />} />
   <Route path="/Item/EditItem" element={<EditItem />} />
-  <Route path="/item/CompanySetup" element={<CompanySetup user={user} />} />
-  <Route path="/item/InvoiceEditor" element={<InvoiceEditor user={user} />} />
-  <Route path="/item/SalesReturn" element={<SalesReturn user={user} />} />
+  <Route path="/Item/CompanySetup" element={<CompanySetup user={user} />} />
+  <Route path="/Item/InvoiceEditor" element={<InvoiceEditor user={user} />} />
+  <Route path="/Item/SalesReturn" element={<SalesReturn user={user} />} />
+  <Route path="/Item/SupplierPage" element={<SupplierPage user={user} />} />
 </Routes>
           {/*<main className="main-content">
           

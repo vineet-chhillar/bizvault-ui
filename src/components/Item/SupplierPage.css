@@ -1,0 +1,244 @@
+.form-group {
+  margin-bottom: 0 !important;
+}
+.inventory-form {
+  width: 100%;
+}
+
+.inventory-form .form-body {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  flex-direction: row !important;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 12px 18px;
+}
+
+.inventory-form .form-group {
+  flex: 1 1 260px;          /* full horizontal flow */
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+.inventory-btns {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding-top: 5px !important;
+  border-top: 1px dashed #ddd;
+  margin-top: 5px !important;
+  margin-bottom: 5px !important;
+}
+
+.inventory-btns button,
+.inventory-btns .btn-submit.small {
+  margin: 0 !important;
+  padding: 8px 18px !important;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Save button */
+.inventory-btns .btn-submit.small[type="submit"] {
+  background-color: #4e1d7c;
+  color: #fff;
+}
+.inventory-btns .btn-submit.small[type="submit"]:hover {
+  background-color: #62349c;
+}
+
+/* Cancel */
+.inventory-btns .btn-submit.small[type="button"] {
+  background-color: #4e1d7c;
+  color: #fff;
+  border: 1px solid #d9d3f3;
+}
+.inventory-btns .btn-submit.small[type="button"]:hover {
+  background-color: #62349c;
+}
+
+/* Edit Form Container */
+.inventory-form .form-body {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  gap: 4px 10px !important;
+  margin-bottom: 0px !important;
+  
+}
+
+/* Compact spacing between controls */
+.inventory-form .form-group {
+  flex: 0 1 240px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.form-group.small  { width: 160px; }
+.form-group.mid    { width: 220px; }
+.form-group.wide   { width: 300px; }
+.form-group.full   { width: 100% !important; max-width: none; }
+
+.form-group label {
+  font-weight: 600;
+  
+  color: #333;
+  font-size: 1rem;
+   
+    margin-bottom: 2px !important;
+  padding: 0 !important;
+  line-height: 1.2;
+}
+
+.form-group input {
+  width: 80%;
+  max-width: 200px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  padding: 6px 8px !important;
+}
+.form-group input:focus {
+  border-color: #4e1d7c;
+  box-shadow: 0 0 3px rgba(78, 29, 124, 0.2);
+}
+
+.form-group textarea {
+  width: 100% !important;
+  padding: 6px 8px !important;
+   min-height: 40px !important;
+}
+.inventory-form .form-body {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 4px 10px;
+}
+.inventory-title-supplier {
+  color: #4e1d7c;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+.inventory-supplier-btns button,
+.inventory-supplier-btns .btn-submit.small {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  padding: 8px 18px !important;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+}
+/* Small panel on the left */
+.supplier-left-panel {
+  width: 265px;
+  background: #fafafa;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 8px;                /* reduced padding */
+  display: flex;
+  flex-direction: column;
+  gap: 4px;                    /* very small gap */
+  margin-bottom: 10px;
+}
+
+/* Compact alignment of search controls */
+.supplier-left-panel .toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;                    /* reduced gap between input & search button */
+  margin: 0;
+  padding: 0;
+}
+
+/* Remove external margins that cause space */
+.supplier-left-panel input,
+.supplier-left-panel button {
+  margin: 0 !important;        /* remove default margins */
+}
+
+/* Input compact height */
+.supplier-left-panel input {
+  padding: 6px 8px !important;
+}
+
+/* Compact buttons */
+.supplier-left-panel .btn-submit.small {
+  padding: 6px 8px !important;
+  font-size: 0.85rem !important;
+  
+}
+.supplier-left-panel .btn-submit.search {
+  padding: 6px 8px !important;
+  font-size: 0.85rem !important;
+  background-color: #9d63b8;
+}
+/* Make new supplier button full width */
+.supplier-left-panel .fullwidth {
+  width: 100%;
+}
+.page-header {
+  width: 100%;
+  text-align: center;                 /* center the heading */
+  padding: 8px 0 14px 0;              /* spacing around */
+  margin-bottom: 10px;
+  border-bottom: 1px solid #e2e2e2;   /* subtle elegant underline */
+}
+
+.page-header h2 {
+  font-size: 1.45rem;                 /* slightly larger */
+  font-weight: 700;                   /* bolder look */
+  color: #4e1d7c;                     /* elegant highlight color (purple theme) */
+  letter-spacing: 0.5px;              /* stylish spacing */
+  margin: 0;
+}
+/* Header container boxed */
+.card-header {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e6e6e6;
+  border-radius: 10px;
+  padding: 14px 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06); /* subtle shadow */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Flex wrapper for icon + title */
+.header-icon-title {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* spacing between icon and text */
+}
+
+/* Icon styling */
+.header-icon {
+  width: 28px;
+  height: 28px;
+  color: #4e1d7c; /* theme color */
+}
+
+/* Title styling */
+.card-header h2 {
+  font-size: 1.55rem;
+  font-weight: 700;
+  margin: 0;
+  color: #4e1d7c;
+  letter-spacing: 0.6px;
+  text-align: center;
+}

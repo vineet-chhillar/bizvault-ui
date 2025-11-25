@@ -900,7 +900,7 @@ h1.form-title, h2.form-title, h3.form-title {
   color: #6f42c1;
 }
 .invaction-btn.invaction-modify {
-  background-color: #6e5685; /* beautiful purple (BlueViolet) */
+  background-color: #5f3a81; /* beautiful purple (BlueViolet) */
   color: white;
   border: none;
   padding: 3px 5px; /* half the original */
@@ -920,7 +920,7 @@ h1.form-title, h2.form-title, h3.form-title {
   vertical-align: middle;
 }
 .invaction-btn.invaction-delete {
-  background-color: #644e79; /* same purple tone */
+  background-color: #5d3980; /* same purple tone */
   color: white;
   border: none;
   padding: 3px 5px; /* half the original */
