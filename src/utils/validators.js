@@ -15,14 +15,18 @@ export function validateString(value, fieldName) {
 // VALIDATOR: DROPDOWN (must select a value)
 // ----------------------------------------------
 export function validateDropdown(value, fieldName) {
-    if (!value || value.toString().trim() === "") {
-        return {
-            valid: false,
-            message: `Please select ${fieldName}.`
-        };
-    }
-    return { valid: true };
+  const val = value === null || value === undefined ? "" : value.toString().trim();
+
+  if (val === "" || val === "0") {
+    return {
+      valid: false,
+      message: `Please select ${fieldName}.`
+    };
+  }
+
+  return { valid: true };
 }
+
 
 // ----------------------------------------------
 // VALIDATOR: NUMBER (decimal allowed)

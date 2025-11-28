@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from "react";
 import "./SalesReturn.css";
 
-export default function SalesReturn({user}) {
+export default function PurchaseReturn({ user }) {
   const [activeTab, setActiveTab] = useState("CREATE");
 
-const [showPdfModal, setShowPdfModal] = useState(false);
-const [downloadPath, setDownloadPath] = useState("");
-const [pdfPath, setPdfPath] = useState("");
+  const [showPdfModal, setShowPdfModal] = useState(false);
+  const [downloadPath, setDownloadPath] = useState("");
+  const [pdfPath, setPdfPath] = useState("");
 
   // ---------------- CREATE TAB ----------------
-  const [invoiceDate, setInvoiceDate] = useState("");
-  const [invoiceResults, setInvoiceResults] = useState([]);
-  const [invoiceInfo, setInvoiceInfo] = useState(null);
+  const [purchaseDate, setPurchaseDate] = useState("");
+  const [purchaseResults, setPurchaseResults] = useState([]);
+  const [purchaseInfo, setPurchaseInfo] = useState(null);
   const [newReturnDate, setNewReturnDate] = useState(
     new Date().toISOString().slice(0, 10)
   );
@@ -26,13 +26,13 @@ const [pdfPath, setPdfPath] = useState("");
   const [newError, setNewError] = useState("");
 
   // ---------------- VIEW TAB ----------------
-  const [srDate, setSrDate] = useState("");
-  const [srResults, setSrResults] = useState([]);
+  const [prDate, setPrDate] = useState("");
+  const [prResults, setPrResults] = useState([]);
   const [currentReturnId, setCurrentReturnId] = useState(null);
   const [viewReturnNo, setViewReturnNo] = useState("");
   const [viewReturnDate, setViewReturnDate] = useState("");
   const [viewNotes, setViewNotes] = useState("");
-  const [viewInvoiceInfo, setViewInvoiceInfo] = useState(null);
+  const [viewPurchaseInfo, setViewPurchaseInfo] = useState(null);
   const [viewItems, setViewItems] = useState([]);
   const [viewTotals, setViewTotals] = useState({
     sub: 0,
@@ -45,42 +45,75 @@ const [pdfPath, setPdfPath] = useState("");
   // ---------------- WEBVIEW LISTENER ----------------
   useEffect(() => {
     const handler = (event) => {
-      const msg = event.data;
-      if (!msg) return;
+  let msg = event.data;
 
-      switch (msg.action) {
-        case "SearchInvoicesForReturnResponse":
-          setInvoiceResults(msg.invoices || []);
-          break;
+  if (!msg) return;
 
-        case "LoadInvoiceForReturnResponse":
-          handleInvoiceLoadedForNewReturn(msg.invoice);
-          break;
-
-        case "SaveSalesReturnResponse":
-          if (msg.success) alert("Sales return saved successfully.");
-          else alert("Failed to save return.");
-          break;
-
-        case "SearchSalesReturnsResponse":
-          setSrResults(msg.returns || []);
-          break;
-
-        case "LoadSalesReturnDetailResponse":
-          handleSalesReturnLoadedForView(msg.returnData);
-          break;
-
-        case "PrintSalesReturnResponse":
-          if (msg.success) {
-    const fileName = msg.pdfPath.split("\\").pop();
-    const url = "https://invoices.local/" + fileName;
-
-    setPdfPath(url);
-    setDownloadPath(msg.pdfPath);
-    setShowPdfModal(true);
-  } else {
-    alert("Print failed: " + msg.message);
+  if (typeof msg === "string") {
+    try { msg = JSON.parse(msg); } catch { return; }
   }
+
+  if (typeof msg !== "object") return;
+
+  // SUPPORT BOTH action and Action
+  const action = msg.action || msg.Action;
+  if (!action) return;
+
+  switch (action) {
+    case "SearchPurchaseItemsByDateResponse":
+  setPurchaseResults(msg.items || []);
+  break;
+
+    case "LoadPurchaseForReturnResponse":
+      handlePurchaseLoadedForNewReturn(msg.item || msg.Item || msg.data);
+      break;
+
+   case "SavePurchaseReturnResponse":
+{
+  if (msg.success) {
+    const rn = msg.data?.returnNo || msg.data?.ReturnNo;
+    const rid = msg.data?.returnId || msg.data?.ReturnId;
+
+    alert(`Purchase return saved successfully${rn ? " — " + rn : ""}.`);
+
+    // Reset screen
+    setNewItems([]);
+    setPurchaseInfo(null);
+    setNewNotes("");
+    setNewReturnDate(new Date().toISOString().slice(0, 10));
+    setNewTotals({ sub: 0, tax: 0, total: 0, roundOff: 0 });
+    setPurchaseResults([]);
+
+    // OPTIONAL: Show ReturnNo in UI instantly
+    // setViewReturnNo(rn);
+    // setViewReturnDate(new Date().toISOString().slice(0, 10));
+
+  } else {
+    alert("Failed to save purchase return: " + msg.error);
+  }
+  break;
+}
+
+
+    case "SearchPurchaseReturnsResponse":
+      setPrResults(msg.returns || msg.Returns || msg.data || []);
+      break;
+
+    case "LoadPurchaseReturnDetailResponse":
+      console.log("sdfdfgfgfg");
+      handlePurchaseReturnLoadedForView(msg.returnData || msg.ReturnData || msg.data);
+      break;
+
+        case "PrintPurchaseReturnResponse":
+          if (msg.success) {
+            const fileName = msg.pdfPath.split("\\").pop();
+            const url = "https://invoices.local/" + fileName;
+            setPdfPath(url);
+            setDownloadPath(msg.pdfPath);
+            setShowPdfModal(true);
+          } else {
+            alert("Print failed: " + msg.message);
+          }
           break;
 
         default:
@@ -120,56 +153,56 @@ const [pdfPath, setPdfPath] = useState("");
     setViewTotals({ sub, tax, total, roundOff });
   };
 
-  // ---------------- CREATE MODE: LOAD INVOICE ----------------
-  const handleInvoiceLoadedForNewReturn = (invoice) => {
-    if (!invoice) return;
+  // ---------------- CREATE MODE: LOAD PURCHASE ITEM ----------------
+  const handlePurchaseLoadedForNewReturn = (item) => {
+    if (!item) return;
 
-    setInvoiceInfo({
-      id: invoice.Id,
-      invoiceNo: invoice.InvoiceNo,
-      customerId: invoice.CustomerId,
-      customerName: invoice.CustomerName,
+    // purchaseInfo is the header (invoice/refno/supplier)
+    setPurchaseInfo({
+      id: item.ItemDetailsId,
+      invoiceNo: item.InvoiceNo, // refno
+      supplierId: item.SupplierId,
+      supplierName: item.SupplierName,
     });
 
     setNewNotes("");
     setNewReturnDate(new Date().toISOString().slice(0, 10));
 
-    const mapped = (invoice.Items || []).map((x) => {
-      // GST formula (your option A)
-      const taxableUnit = x.Rate * (1 - (x.DiscountPercent || 0) / 100);
-      const gstUnit = taxableUnit * ((x.GstPercent || 0) / 100);
+    const mapped = [
+      {
+        itemDetailsId: item.ItemDetailsId,
+        itemId: item.ItemId,
+        itemName: item.ItemName,
+        batchNo: item.BatchNo,
+        originalQty: item.Quantity || 0,
+        returnedQty: item.AlreadyReturnedQty || 0,
+        availableReturnQty:
+          (item.Quantity || 0) - (item.AlreadyReturnedQty || 0),
 
-      return {
-        invoiceItemId: x.InvoiceItemId,
-        itemId: x.ItemId,
-        itemName: x.Name, // backend uses Name
-        batchNo: x.BatchNo,
-        originalQty: x.OriginalQty,
-        returnedQty: x.ReturnedQty,
-        availableReturnQty: x.AvailableReturnQty,
+        rate: item.PurchasePrice,
+        discountPercent: item.DiscountPercent,
+        gstPercent: item.GstPercent,
 
-        rate: x.Rate,
-        discountPercent: x.DiscountPercent,
-        gstPercent: x.GstPercent,
-
-        // base numbers for calculations
-        taxableUnit,
-        gstUnit,
+        // base numbers for calculations: use NetPurchasePrice as taxable unit
+        taxableUnit: item.NetPurchasePrice || item.PurchasePrice || 0,
+        gstUnit:
+          (item.NetPurchasePrice || item.PurchasePrice || 0) *
+          ((item.GstPercent || 0) / 100),
 
         returnQty: 0,
         lineSubTotal: 0,
         gstValue: 0,
         lineTotal: 0,
-      };
-    });
+      },
+    ];
 
     setNewItems(mapped);
     recalcNewTotals(mapped);
   };
 
   // ---------------- CREATE MODE: CHANGE QTY ----------------
-  const handleNewQtyChange = (index, qty) => {
-    qty = parseFloat(qty) || 0;
+  const handleNewQtyChange = (index, qtyInput) => {
+    let qty = parseFloat(qtyInput) || 0;
 
     const rows = [...newItems];
     const r = rows[index];
@@ -187,9 +220,9 @@ const [pdfPath, setPdfPath] = useState("");
   };
 
   // ---------------- CREATE MODE: SAVE ----------------
-  const saveSalesReturn = () => {
-    if (!invoiceInfo) {
-      setNewError("Select an invoice first.");
+  const savePurchaseReturn = () => {
+    if (!purchaseInfo) {
+      setNewError("Select a purchase item first.");
       return;
     }
     const any = newItems.some((i) => i.returnQty > 0);
@@ -199,116 +232,118 @@ const [pdfPath, setPdfPath] = useState("");
     }
     setNewError("");
 
-    const dto = {
-      Id: 0,
-      ReturnDate: newReturnDate,
-      InvoiceId: invoiceInfo.id,
-      InvoiceNo: invoiceInfo.invoiceNo,
-      CustomerId: invoiceInfo.customerId,
-      SubTotal: newTotals.sub,
-      TotalTax: newTotals.tax,
-      TotalAmount: newTotals.total,
-      RoundOff: newTotals.roundOff,
-      Notes: newNotes,
-      CreatedBy: user?.email,
-      CreatedAt: new Date().toISOString(),
-      Items: newItems
-        .filter((x) => x.returnQty > 0)
-        .map((x) => ({
-          InvoiceItemId: x.invoiceItemId,
-          ItemId: x.itemId,
-          BatchNo: x.batchNo,
-          Qty: x.returnQty,
-          Rate: x.rate,
-          DiscountPercent: x.discountPercent,
-          GstPercent: x.gstPercent,
-          GstValue: x.gstValue,
-          CgstPercent: x.gstPercent / 2,
-          CgstValue: x.gstValue / 2,
-          SgstPercent: x.gstPercent / 2,
-          SgstValue: x.gstValue / 2,
-          IgstPercent: 0,
-          IgstValue: 0,
-          LineSubTotal: x.lineSubTotal,
-          LineTotal: x.lineTotal,
-        })),
-    };
+   const x = newItems[0];  // single row
+
+const dto = {
+  ReturnId: 0,
+  ReturnNo: "",      // backend will generate
+  ReturnNum: 0,      // backend will generate
+  ItemDetailsId: x.itemDetailsId,
+  ItemId: x.itemId,
+  SupplierId: purchaseInfo.supplierId,
+  ReturnDate: newReturnDate,
+
+  Qty: x.returnQty,
+  Rate: x.rate,
+  DiscountPercent: x.discountPercent,
+
+  NetRate: x.taxableUnit,     // rate - discount
+  BatchNo: x.batchNo,
+
+  GstPercent: x.gstPercent,
+  Amount: x.lineSubTotal,
+  Cgst: x.gstValue / 2,
+  Sgst: x.gstValue / 2,
+  Igst: 0,
+  TotalAmount: x.lineTotal,
+
+  Remarks: newNotes,
+  CreatedBy: user?.email
+};
+
+
 
     window.chrome.webview.postMessage({
-      Action: "SaveSalesReturn",
+      Action: "SavePurchaseReturn",
       Payload: dto,
     });
   };
 
-  // ---------------- VIEW MODE: LOAD SALES RETURN ----------------
-  const handleSalesReturnLoadedForView = (data) => {
-    setCurrentReturnId(data.Id);
-    setViewReturnNo(data.ReturnNo);
-    setViewReturnDate(data.ReturnDate?.slice(0, 10));
-    setViewNotes(data.Notes);
-    setViewInvoiceInfo({
-      invoiceNo: data.InvoiceNo,
-      customerName: data.CustomerName,
-    });
+  // ---------------- VIEW MODE: LOAD PURCHASE RETURN ----------------
+const handlePurchaseReturnLoadedForView = (data) => {
+  if (!data) return;
+console.log("data received in handlePurchaseReturnLoadedForView");
+  setCurrentReturnId(data.Id);
+  setViewReturnNo(data.ReturnNo);
+  setViewReturnDate(data.ReturnDate?.slice(0, 10) || "");
+  setViewNotes(data.Notes || "");
 
-    const rows = (data.Items || []).map((x) => ({
-      itemName: x.ItemName,
-      batchNo: x.BatchNo,
-      returnQty: x.Qty,
-      rate: x.Rate,
-      gstPercent: x.GstPercent,
-      lineSubTotal: x.LineSubTotal,
-      gstValue: x.GstValue,
-      lineTotal: x.LineTotal,
-    }));
+  setViewPurchaseInfo({
+    invoiceNo: data.InvoiceNo || "",
+    supplierName: data.SupplierName || ""
+  });
 
-    setViewItems(rows);
-    recalcViewTotals(rows);
-  };
+  // Purchase Return is ALWAYS single-item, but backend returns Items[] for UI consistency
+  //const items = data.Items || [];
+  const rows = [
+  {
+    itemName: data.ItemName,
+    batchNo: data.BatchNo,
+    returnQty: data.Qty,
+    rate: data.Rate,
+    gstPercent: data.GstPercent,
+    lineSubTotal: data.LineSubTotal,
+    gstValue: data.GstValue,
+    lineTotal: data.LineTotal
+  }
+];
+
+setViewItems(rows);
+recalcViewTotals(rows);
+};
+
 
   // ---------------- SEARCH ACTIONS ----------------
-  const searchInvoicesForReturn = () => {
-    if (!invoiceDate) {
-      setNewError("Select invoice date.");
+  const searchPurchaseItemsForReturn = () => {
+    if (!purchaseDate) {
+      setNewError("Select purchase date.");
       return;
     }
     window.chrome.webview.postMessage({
-      Action: "SearchInvoicesForReturn",
-      Payload: { Date: invoiceDate },
+      Action: "SearchPurchaseItemsByDate",
+      Payload: { Date: purchaseDate },
     });
   };
 
-  const searchSalesReturns = () => {
-    if (!srDate) {
+  const searchPurchaseReturns = () => {
+    if (!prDate) {
       setViewError("Select return date.");
       return;
     }
     window.chrome.webview.postMessage({
-      Action: "SearchSalesReturns",
-      Payload: { Date: srDate },
+      Action: "SearchPurchaseReturns",
+      Payload: { Date: prDate },
     });
   };
 
-  const clickInvoiceRow = (inv) =>
+  const clickPurchaseRow = (inv) =>
     window.chrome.webview.postMessage({
-      Action: "LoadInvoiceForReturn",
-      Payload: { InvoiceId: inv.Id },
+      Action: "LoadPurchaseForReturn",
+      Payload: { ItemDetailsId: inv.ItemDetailsId || inv.id || inv.ItemDetailsId },
     });
 
-  const clickSalesReturnRow = (sr) =>
+  const clickPurchaseReturnRow = (sr) =>
     window.chrome.webview.postMessage({
-      Action: "LoadSalesReturnDetail",
+      Action: "LoadPurchaseReturnDetail",
       Payload: { ReturnId: sr.Id },
     });
 
-  const printSalesReturn = () =>
+  const printPurchaseReturn = () =>
     currentReturnId &&
     window.chrome.webview.postMessage({
-      Action: "PrintSalesReturn",
+      Action: "PrintPurchaseReturn",
       Payload: { ReturnId: currentReturnId },
     });
-
-
 
   // ==========================================================
   // ======================== UI ==============================
@@ -316,23 +351,22 @@ const [pdfPath, setPdfPath] = useState("");
 
   return (
     <div className="sales-return">
-      <h2>Sales Return</h2>
+      <h2>Purchase Return</h2>
 
       <div className="sr-tabs">
         <button
-  className={`btn-submit small ${activeTab === "CREATE" ? "active" : ""}`}
-  onClick={() => setActiveTab("CREATE")}
->
-  Create Sales Return
-</button>
+          className={`btn-submit small ${activeTab === "CREATE" ? "active" : ""}`}
+          onClick={() => setActiveTab("CREATE")}
+        >
+          Create Purchase Return
+        </button>
 
-<button
-  className={`btn-submit small ${activeTab === "VIEW" ? "active" : ""}`}
-  onClick={() => setActiveTab("VIEW")}
->
-  View / Print Sales Return
-</button>
-
+        <button
+          className={`btn-submit small ${activeTab === "VIEW" ? "active" : ""}`}
+          onClick={() => setActiveTab("VIEW")}
+        >
+          View / Print Purchase Return
+        </button>
       </div>
 
       {/* CREATE TAB */}
@@ -340,47 +374,48 @@ const [pdfPath, setPdfPath] = useState("");
         <>
           {/* SEARCH BLOCK */}
           <div className="sr-search-block">
-            <h3>Select Invoice (by Date)</h3>
+            <h3>Select Purchase Item (by Date)</h3>
             <div className="sr-filters">
-  <div className="sr-date-box">
-    <label>Invoice Date:</label>
-    <input
-      type="date"
-      value={invoiceDate}
-      onChange={(e) => setInvoiceDate(e.target.value)}
-    />
-  </div>
+              <div className="sr-date-box">
+                <label>Purchase Date:</label>
+                <input
+                  type="date"
+                  value={purchaseDate}
+                  onChange={(e) => setPurchaseDate(e.target.value)}
+                />
+              </div>
 
-  <button className="btn-submit small" onClick={searchInvoicesForReturn}>
-    Search
-  </button>
-</div>
-
+              <button className="btn-submit small" onClick={searchPurchaseItemsForReturn}>
+                Search
+              </button>
+            </div>
 
             <div className="sr-list-container">
               <table className="sr-list-table">
                 <thead>
                   <tr>
-                    <th>Invoice No</th>
+                    <th>Ref/Invoice</th>
                     <th>Date</th>
-                    <th>Customer</th>
-                    <th>Total</th>
+                    <th>ItemName</th>
+                    <th>Supplier</th>
+                    <th>Qty</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {invoiceResults.length === 0 && (
+                  {purchaseResults.length === 0 && (
                     <tr>
                       <td colSpan="4" style={{ textAlign: "center" }}>
-                        No invoices found.
+                        No purchases found.
                       </td>
                     </tr>
                   )}
-                  {invoiceResults.map((inv) => (
-                    <tr key={inv.Id} onClick={() => clickInvoiceRow(inv)}>
+                  {purchaseResults.map((inv) => (
+                    <tr key={inv.ItemDetailsId} onClick={() => clickPurchaseRow(inv)}>
                       <td>{inv.InvoiceNo}</td>
-                      <td>{inv.InvoiceDate}</td>
-                      <td>{inv.CustomerName}</td>
-                      <td>{inv.TotalAmount?.toFixed(2)}</td>
+                      <td>{inv.PurchaseDate}</td>
+                      <td>{inv.ItemName}</td>
+                      <td>{inv.SupplierName}</td>
+                      <td>{inv.Quantity}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -391,13 +426,13 @@ const [pdfPath, setPdfPath] = useState("");
           {/* HEADER */}
           <div className="sr-header-row">
             <div>
-              {invoiceInfo && (
+              {purchaseInfo && (
                 <>
                   <div>
-                    <strong>Invoice No:</strong> {invoiceInfo.invoiceNo}
+                    <strong>Ref/Invoice:</strong> {purchaseInfo.invoiceNo}
                   </div>
                   <div>
-                    <strong>Customer:</strong> {invoiceInfo.customerName}
+                    <strong>Supplier:</strong> {purchaseInfo.supplierName}
                   </div>
                 </>
               )}
@@ -449,12 +484,10 @@ const [pdfPath, setPdfPath] = useState("");
                         min="0"
                         max={row.availableReturnQty}
                         value={row.returnQty}
-                        onChange={(e) =>
-                          handleNewQtyChange(i, e.target.value)
-                        }
+                        onChange={(e) => handleNewQtyChange(i, e.target.value)}
                       />
                     </td>
-                    <td>{row.lineTotal.toFixed(2)}</td>
+                    <td>{(row.lineTotal || 0).toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -485,9 +518,9 @@ const [pdfPath, setPdfPath] = useState("");
                 </div>
               </div>
 
-              <div >
-                <button className="btn-submit small" onClick={saveSalesReturn}>
-                  Save Sales Return
+              <div>
+                <button className="btn-submit small" onClick={savePurchaseReturn}>
+                  Save Purchase Return
                 </button>
               </div>
             </div>
@@ -499,17 +532,19 @@ const [pdfPath, setPdfPath] = useState("");
       {activeTab === "VIEW" && (
         <>
           <div className="sr-search-block">
-            <h3>Select Sales Return (by Date)</h3>
+            <h3>Select Purchase Return (by Date)</h3>
             <div className="sr-filters">
               <label>
                 Return Date:
                 <input
                   type="date"
-                  value={srDate}
-                  onChange={(e) => setSrDate(e.target.value)}
+                  value={prDate}
+                  onChange={(e) => setPrDate(e.target.value)}
                 />
               </label>
-              <button className="btn-submit small" onClick={searchSalesReturns}>Search</button>
+              <button className="btn-submit small" onClick={searchPurchaseReturns}>
+                Search
+              </button>
             </div>
 
             <div className="sr-list-container">
@@ -518,25 +553,25 @@ const [pdfPath, setPdfPath] = useState("");
                   <tr>
                     <th>Return No</th>
                     <th>Date</th>
-                    <th>Invoice No</th>
-                    <th>Customer</th>
+                    <th>Ref/Invoice</th>
+                    <th>Supplier</th>
                     <th>Total</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {srResults.length === 0 && (
+                  {prResults.length === 0 && (
                     <tr>
                       <td colSpan="5" style={{ textAlign: "center" }}>
-                        No sales returns found.
+                        No purchase returns found.
                       </td>
                     </tr>
                   )}
-                  {srResults.map((sr) => (
-                    <tr key={sr.Id} onClick={() => clickSalesReturnRow(sr)}>
+                  {prResults.map((sr) => (
+                    <tr key={sr.Id} onClick={() => clickPurchaseReturnRow(sr)}>
                       <td>{sr.ReturnNo}</td>
                       <td>{sr.ReturnDate}</td>
                       <td>{sr.InvoiceNo}</td>
-                      <td>{sr.CustomerName}</td>
+                      <td>{sr.SupplierName}</td>
                       <td>{sr.TotalAmount?.toFixed(2)}</td>
                     </tr>
                   ))}
@@ -552,13 +587,13 @@ const [pdfPath, setPdfPath] = useState("");
                   <strong>Return No:</strong> {viewReturnNo}
                 </div>
               )}
-              {viewInvoiceInfo && (
+              {viewPurchaseInfo && (
                 <>
                   <div>
-                    <strong>Invoice No:</strong> {viewInvoiceInfo.invoiceNo}
+                    <strong>Ref/Invoice:</strong> {viewPurchaseInfo.invoiceNo}
                   </div>
                   <div>
-                    <strong>Customer:</strong> {viewInvoiceInfo.customerName}
+                    <strong>Supplier:</strong> {viewPurchaseInfo.supplierName}
                   </div>
                 </>
               )}
@@ -627,43 +662,39 @@ const [pdfPath, setPdfPath] = useState("");
               </div>
 
               <div className="sr-actions">
-                <button className="btn-submit small" onClick={printSalesReturn}>Print</button>
+                <button className="btn-submit small" onClick={printPurchaseReturn}>
+                  Print
+                </button>
               </div>
             </div>
           </div>
         </>
       )}
-    {showPdfModal && (
-  <div className="pdf-modal-overlay">
-    <div className="pdf-modal-box">
 
-      <div className="pdf-modal-header">
-        <h3>Sales Return PDF Preview</h3>
-        <p>Saved to: <b>{downloadPath}</b></p>
-        <button className="btn-submit small" onClick={() => setShowPdfModal(false)}>X</button>
-      </div>
+      {showPdfModal && (
+        <div className="pdf-modal-overlay">
+          <div className="pdf-modal-box">
+            <div className="pdf-modal-header">
+              <h3>Purchase Return PDF Preview</h3>
+              <p>
+                Saved to: <b>{downloadPath}</b>
+              </p>
+              <button className="btn-submit small" onClick={() => setShowPdfModal(false)}>
+                X
+              </button>
+            </div>
 
-      <iframe
-        src={pdfPath}
-        style={{ width: "100%", height: "80vh", border: "none" }}
-      ></iframe>
+            <iframe src={pdfPath} style={{ width: "100%", height: "80vh", border: "none" }}></iframe>
 
-      <button
-        className="btn-submit small"
-        onClick={() =>
-          document
-            .querySelector(".pdf-modal-box iframe")
-            .contentWindow.print()
-        }
-      >
-        Print
-      </button>
-
+            <button
+              className="btn-submit small"
+              onClick={() => document.querySelector(".pdf-modal-box iframe").contentWindow.print()}
+            >
+              Print
+            </button>
+          </div>
+        </div>
+      )}
     </div>
-  </div>
-)}
-
-    </div>
-    
   );
 }

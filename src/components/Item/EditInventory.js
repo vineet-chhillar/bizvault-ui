@@ -16,7 +16,36 @@ const EditInventory = () => {
   const selectedItemIdRef = useRef();
 const [validationErrors, setValidationErrors] = useState({});
 
+const [suppliers, setSuppliers] = useState([]);
+const [selectedSupplierId, setSelectedSupplierId] = useState(0);
 
+
+
+useEffect(() => {
+  if (!window.chrome?.webview) return;
+
+  const handler = (event) => {
+    let msg = event.data || event.detail;
+
+    if (!msg) return;
+
+    if (typeof msg === "string") {
+      try { msg = JSON.parse(msg); } catch { return; }
+    }
+
+    if (msg.action === "GetAllSuppliers" && msg.success) {
+      setSuppliers(msg.data);
+    }
+  };
+
+  window.chrome.webview.addEventListener("message", handler);
+
+  // 🔥 Now request suppliers (listener is active)
+  window.chrome.webview.postMessage({ Action: "GetAllSuppliers" });
+
+  return () =>
+    window.chrome.webview.removeEventListener("message", handler);
+}, []);
 
   // ✅ Handle incoming messages from C#
   useEffect(() => {
@@ -36,7 +65,7 @@ const [validationErrors, setValidationErrors] = useState({});
 if (data.action === "updateInventoryResponse") {
     if (data.success) {
        alert(data.message || "✅ Inventory updated successfully!");
-        const itemToRefresh = selectedItemIdRef.current;
+        const itemToRefresh = selectedItemIdRef.itemId;
     console.log("🔁 Refreshing inventory for item:", itemToRefresh);
        if (itemToRefresh){
            handleSearch(itemToRefresh);
@@ -170,6 +199,16 @@ if (data.action === "updateInventoryResponse") {
     alert("Please correct the highlighted errors.");
     return;
   }
+const dateFromCalendar = formData.date; // e.g., "2025-11-27"
+
+const now = new Date();
+const timePart =
+  String(now.getHours()).padStart(2, "0") + ":" +
+  String(now.getMinutes()).padStart(2, "0") + ":" +
+  String(now.getSeconds()).padStart(2, "0");
+
+// Merge date + time → "2025-11-27 14:32:10"
+const finalDateTime = `${dateFromCalendar} ${timePart}`;
 
   setValidationErrors({});
     window.chrome?.webview?.postMessage({
@@ -177,10 +216,9 @@ if (data.action === "updateInventoryResponse") {
       payload: {
         id: formData.Id,
         item_id: parseInt(formData.Item_Id || selectedItemId),
-        hsnCode: formData.hsnCode,
         batchNo: formData.batchNo,
         refno: formData.refno,
-        date: formData.date,
+        date: finalDateTime,
         quantity: parseInt(formData.quantity),
         purchasePrice: parseFloat(formData.purchasePrice),
 
@@ -201,6 +239,7 @@ if (data.action === "updateInventoryResponse") {
         weight: formData.weight,
         dimension: formData.dimension,
         invbatchno: selectedBatchNo,
+        supplierId: selectedSupplierId,
       },
     });
   };
@@ -260,7 +299,7 @@ if (data.action === "updateInventoryResponse") {
           <table className="inventory-table">
             <thead>
               <tr>
-                <th>HSN/SAC</th>
+                <th>Supplier</th>
                 <th>Batch No</th>
                 <th>Ref/Invoice No</th>
                 <th>Date</th>
@@ -282,10 +321,15 @@ if (data.action === "updateInventoryResponse") {
             <tbody>
               {inventory.map((inv) => (
                 <tr key={inv.Id || inv.id}>
-                  <td>{inv.HsnCode || inv.hsnCode}</td>
+                  <td>{inv.SupplierName || inv.SupplierName}</td>
                   <td>{inv.BatchNo || inv.batchNo}</td>
                   <td>{inv.refno || inv.refno}</td>
-                  <td>{(inv.Date || inv.date || "").split("T")[0].split(" ")[0]}</td>
+                 <td>
+  {(inv.Date || inv.date || "")
+    .replace("T", " ")
+    .split(".")[0]  /* removes milliseconds */
+  }
+</td>
                   <td>{inv.Quantity || inv.quantity}</td>
                   <td>{inv.purchasePrice || inv.purchasePrice}</td>
 
@@ -323,6 +367,7 @@ onClick={() => {
   console.log("Editing normalized record:", normalized);
   setFormData(normalized); // ✅ use fixed data
   setSelectedBatchno(inv.BatchNo || inv.batchNo);
+  setSelectedSupplierId(Number(normalized.supplierId) || 0);
 }}
 
 
@@ -391,6 +436,25 @@ onClick={() => {
           <h3 className="inventory-title">🏷️ Edit Inventory Record For Batch : {selectedBatchNo}</h3>
 
           <div className="form-row-horizontal">
+
+<div className="form-group">
+    <label>Supplier</label>
+   <select
+   className={validationErrors.supplierId ? "inv-error" : ""}
+  value={selectedSupplierId}
+  onChange={(e) => setSelectedSupplierId(Number(e.target.value))}
+>
+  <option value="0">Select Supplier</option>
+  {suppliers.map((s) => (
+    <option key={s.SupplierId} value={s.SupplierId}>
+      {s.SupplierName}
+    </option>
+  ))}
+</select>
+ 
+</div>
+
+
             <div className="form-group">
               <label>HSN Code</label>
               <input

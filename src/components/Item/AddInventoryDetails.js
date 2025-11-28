@@ -5,10 +5,21 @@ import validateInventoryEditForm from "../../utils/validateInventoryEditForm";
 
 export default function AddInventoryDetails({ selectedItem, selectedItemName,onSave, onCancel,selectedItemForDetails,itemDetails }) {
  
+const [suppliers, setSuppliers] = useState([]);
+const [selectedSupplierId, setSelectedSupplierId] = useState(0);
+
+{/*const now = new Date();
+const formatted =
+  now.getFullYear() + "-" +
+  String(now.getMonth() + 1).padStart(2, "0") + "-" +
+  String(now.getDate()).padStart(2, "0") + " " +
+  String(now.getHours()).padStart(2, "0") + ":" +
+  String(now.getMinutes()).padStart(2, "0") + ":" +
+  String(now.getSeconds()).padStart(2, "0");*/}
 
   const [inventoryData, setInventoryData] = useState({
     item_id: "",
-    hsnCode: "",
+    supplierId:0,
     batchNo: "",
     refno:"",
    date: new Date().toISOString().split("T")[0],
@@ -54,6 +65,34 @@ export default function AddInventoryDetails({ selectedItem, selectedItemName,onS
 
 const [errors, setErrors] = useState({});
 
+useEffect(() => {
+  if (!window.chrome?.webview) return;
+
+  const handler = (event) => {
+    let msg = event.data || event.detail;
+
+    if (!msg) return;
+
+    if (typeof msg === "string") {
+      try { msg = JSON.parse(msg); } catch { return; }
+    }
+
+    if (msg.action === "GetAllSuppliers" && msg.success) {
+      setSuppliers(msg.data);
+    }
+  };
+
+  window.chrome.webview.addEventListener("message", handler);
+
+  // 🔥 Now request suppliers (listener is active)
+  window.chrome.webview.postMessage({ Action: "GetAllSuppliers" });
+
+  return () =>
+    window.chrome.webview.removeEventListener("message", handler);
+}, []);
+
+
+
 
 // ✅ Listen for confirmation messages from C#
   useEffect(() => {
@@ -71,10 +110,6 @@ const [errors, setErrors] = useState({});
           return;
         }
       }
-
-
-      
-
       // ✅ Handle AddItemDetails response
       if (msg.Type === "AddItemDetails") {
         if (msg.Status === "Success") {
@@ -113,6 +148,9 @@ const handleChange = (e) => {
   updatedData.netPurchasePrice = netPurchasePrice.toFixed(2);
   updatedData.amount = amount.toFixed(2);
 
+  //console.log(selectedSupplierId);
+  //inventoryData.supplierId=selectedSupplierId;
+  //console.log(inventoryData.supplierId);
   // Set the final updated state
   setInventoryData(updatedData);
 };
@@ -128,13 +166,18 @@ const handleChange = (e) => {
 
   // ✅ Save inventory — send to C# instead of local state
   const handleSave = (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
+  // 🔥 1. Merge supplierId into form before validation (DO NOT setInventoryData here)
+  const updatedData = {
+    ...inventoryData,
+    supplierId: Number(selectedSupplierId),
+  };
 
+  console.log("🔥 VALIDATION INPUT:", updatedData);
 
-    console.log("validateInventoryEditForm:", validateInventoryEditForm);
-  //const validationErrors = validateInventoryForm(inventoryData, showOptional);
-  const validationErrors = validateInventoryEditForm(inventoryData);
+  // 🔥 2. Validate using updatedData
+  const validationErrors = validateInventoryEditForm(updatedData);
 
   if (validationErrors.length > 0) {
     const errorMap = {};
@@ -145,22 +188,20 @@ const handleChange = (e) => {
     return;
   }
 
+  // Clear errors
   setErrors({});
 
-console.log("✅ handleSave() called for:", e.Item_Id);
-console.log(selectedItem.id);
- const user = JSON.parse(localStorage.getItem("user"));
+  console.log("✅ handleSave() for item:", selectedItem.id);
 
+  const user = JSON.parse(localStorage.getItem("user"));
 
-
-
-  // ✅ Duplicate check — prevent same BatchNo for the same Item
+  // 🔥 3. Duplicate batch no check
   const exists =
     Array.isArray(itemDetails) &&
     itemDetails.some(
       (inv) =>
         String(inv.BatchNo || inv.batchNo).trim().toLowerCase() ===
-          String(inventoryData.batchNo).trim().toLowerCase() &&
+          String(updatedData.batchNo).trim().toLowerCase() &&
         parseInt(inv.Item_Id || inv.item_Id || inv.item_id) ===
           parseInt(selectedItem.id)
     );
@@ -169,57 +210,69 @@ console.log(selectedItem.id);
     alert("⚠️ This batch number already exists for the selected item!");
     return;
   }
+const dateFromCalendar = updatedData.date; // e.g., "2025-11-27"
 
+const now = new Date();
+const timePart =
+  String(now.getHours()).padStart(2, "0") + ":" +
+  String(now.getMinutes()).padStart(2, "0") + ":" +
+  String(now.getSeconds()).padStart(2, "0");
 
+// Merge date + time → "2025-11-27 14:32:10"
+const finalDateTime = `${dateFromCalendar} ${timePart}`;
 
+  // 🔥 4. Build payload for C#
+  const payload = {
+    Item_Id: selectedItem.id,
 
-    if (window.chrome?.webview) {
-      const payload = {
-        Item_Id: selectedItem.id, // or selectedItem.Item_Id if from DB
-        HsnCode: inventoryData.hsnCode,
-        BatchNo: inventoryData.batchNo,
-        refno: inventoryData.refno,
-        Date: new Date().toISOString().split("T")[0], // "2024-10-25"
-        
-        Quantity: parseFloat(inventoryData.quantity) || 0,
-        PurchasePrice: parseFloat(inventoryData.purchasePrice) || 0,
+    SupplierId: updatedData.supplierId,
+    BatchNo: updatedData.batchNo,
+    refno: updatedData.refno,
+    //Date: new Date().toISOString().split("T")[0],
+Date: finalDateTime,
+    Quantity: parseFloat(updatedData.quantity) || 0,
+    PurchasePrice: parseFloat(updatedData.purchasePrice) || 0,
 
-        DiscountPercent: parseFloat(inventoryData.discountPercent) || 0,
-        NetPurchasePrice: parseFloat(inventoryData.netPurchasePrice) || 0,
-        Amount: parseFloat(inventoryData.amount) || 0,
+    DiscountPercent: parseFloat(updatedData.discountPercent) || 0,
+    NetPurchasePrice: parseFloat(updatedData.netPurchasePrice) || 0,
+    Amount: parseFloat(updatedData.amount) || 0,
 
-        SalesPrice: parseFloat(inventoryData.salesPrice) || 0,
-        Mrp: parseFloat(inventoryData.mrp) || 0,
-        GoodsOrServices: inventoryData.goodsOrServices,
-        Description: inventoryData.description,
-        MfgDate: inventoryData.mfgdate,
-        ExpDate: inventoryData.expdate,
-        ModelNo: inventoryData.modelno,
-        Brand: inventoryData.brand,
-        Size: inventoryData.size,
-        Color: inventoryData.color,
-        Weight: parseFloat(inventoryData.weight) || 0,
-        Dimension: inventoryData.dimension,
-        CreatedBy: user.email, 
-        CreatedAt: new Date().toISOString(),
-      };
+    SalesPrice: parseFloat(updatedData.salesPrice) || 0,
+    Mrp: parseFloat(updatedData.mrp) || 0,
 
-      console.log("📤 Sending Inventory to C#:", payload);
+    GoodsOrServices: updatedData.goodsOrServices,
+    Description: updatedData.description,
+    MfgDate: updatedData.mfgdate,
+    ExpDate: updatedData.expdate,
+    ModelNo: updatedData.modelno,
+    Brand: updatedData.brand,
+    Size: updatedData.size,
+    Color: updatedData.color,
+    Weight: parseFloat(updatedData.weight) || 0,
+    Dimension: updatedData.dimension,
 
-
-
-
-      window.chrome.webview.postMessage({
-        Action: "AddItemDetails",
-        Payload: payload,
-      });
-    } 
-    else {
-      console.warn("⚠️ WebView2 not available — running in browser?");
-    }
-    // ✅ Dispatch event so CreateItem refreshes
-  document.dispatchEvent(new CustomEvent("InventoryUpdated", { detail: { itemId: selectedItem.id } }));
+    CreatedBy: user.email,
+    CreatedAt: new Date().toISOString(),
   };
+
+  console.log("📤 Sending Inventory to C#:", payload);
+
+  // 🔥 5. Send to C#
+  if (window.chrome?.webview) {
+    window.chrome.webview.postMessage({
+      Action: "AddItemDetails",
+      Payload: payload,
+    });
+  } else {
+    console.warn("⚠️ WebView2 not available — running in browser?");
+  }
+
+  // 🔥 6. Notify CreateItem screen to refresh inventory list
+  document.dispatchEvent(
+    new CustomEvent("InventoryUpdated", { detail: { itemId: selectedItem.id } })
+  );
+};
+
 
   return (
     <div className="inventory-form">
@@ -229,19 +282,26 @@ console.log(selectedItem.id);
 
       <form className="inventory-body" onSubmit={handleSave}>
         <div className="form-row">
-          
-          {/* HSN/SAC Code */}
+    {/* Supplier */}      
 <div className="form-group">
-  <label>HSN/SAC Code</label>
-  <input
-    name="hsnCode"
-    value={inventoryData.hsnCode}
-    onChange={handleChange}
-    placeholder="Enter HSN/SAC code"
-    className={errors.hsnCode ? "error-input" : ""}
-  />
-  {errors.hsnCode && <div className="error">{errors.hsnCode}</div>}
+    <label>Supplier</label>
+   <select
+  value={selectedSupplierId}
+  onChange={(e) => setSelectedSupplierId(Number(e.target.value))}
+>
+  <option value="0">Select Supplier</option>
+  {suppliers.map((s) => (
+    <option key={s.SupplierId} value={s.SupplierId}>
+      {s.SupplierName}
+    </option>
+  ))}
+</select>
+ {errors.supplierId && (<div className="error">{errors.supplierId}</div>
+  )}
 </div>
+
+
+         
 
 {/* Batch No */}
 <div className="form-group">

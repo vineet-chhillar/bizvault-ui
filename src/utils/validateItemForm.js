@@ -10,6 +10,7 @@ export function validateItemForm(data) {
   // Normalize: accept both uppercase/lowercase versions
   const Name = data.Name || data.name;
   const ItemCode = data.ItemCode || data.itemcode;
+  const HsnCode = data.HsnCode || data.hsncode;
   const CategoryId = data.CategoryId || data.categoryid;
   const DateValue = data.Date || data.date;
   const Description = data.Description || data.description;
@@ -23,6 +24,11 @@ export function validateItemForm(data) {
   // 2. Item Code
   r = validateString(ItemCode, "Item Code");
   if (!r.valid) errors.push({ field: "itemcode", message: r.message });
+
+
+  // 2. Hsn Code
+  r = validateString(HsnCode, "HSN/SAC Code");
+  if (!r.valid) errors.push({ field: "hsncode", message: r.message });
 
   // 3. Category
   r = validateDropdown(CategoryId, "Category");

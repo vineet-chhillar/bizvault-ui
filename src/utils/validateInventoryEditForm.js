@@ -10,11 +10,15 @@ export default function validateInventoryEditForm(formData) {
   const errors = [];
   const pushErr = (field, message) => errors.push({ field, message });
 
+  
+  let r = validateDropdown(formData.supplierId, "Supplier");
+  if (!r.valid) pushErr("supplierId", r.message);
+
   // ------------------------------
   // 1. HSN Code
   // ------------------------------
-  let r = validateString(formData.hsnCode, "HSN/SAC Code");
-  if (!r.valid) pushErr("hsnCode", r.message);
+  //r = validateString(formData.hsnCode, "HSN/SAC Code");
+  //if (!r.valid) pushErr("hsnCode", r.message);
 
   // ------------------------------
   // 2. Batch No

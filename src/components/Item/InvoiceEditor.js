@@ -474,7 +474,7 @@ useEffect(() => {
       if (msg.action === "GetCustomersResponse") {
   setCustomerList(msg.customers || []);
 }
-if (msg.action === "SaveInvoiceResponse") {
+{/*if (msg.action === "SaveInvoiceResponse") {
 
   if (!msg.success) {
     setModalMessage(msg.errors.join("\n"));
@@ -484,7 +484,7 @@ if (msg.action === "SaveInvoiceResponse") {
 
   // SUCCESS
   alert("Invoice saved successfully!");
-}
+}*/}
 
 
 if (msg.action === "PrintInvoiceResponse") {
@@ -760,7 +760,7 @@ type="button"
 
         <div className="invoice-date-row">
   <div className="invoice-date-section">
-    <label>Invoice Date</label>
+    <label>Sales Date</label>
     <input 
       type="date" 
       value={invoiceDate} 

@@ -15,7 +15,9 @@ const emptySupplier = {
   Balance: 0,
   CreatedBy: "",
   CreatedAt: "",
+  State: ""  // ← NEW
 };
+
 
 function SupplierPage() {
   const [suppliers, setSuppliers] = useState([]);
@@ -24,6 +26,15 @@ function SupplierPage() {
 
   const [supplier, setSupplier] = useState(null); // null = no form open
   const [saving, setSaving] = useState(false);
+const INDIAN_STATES = [
+  "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh",
+  "Goa","Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka",
+  "Kerala","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram",
+  "Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana",
+  "Tripura","Uttar Pradesh","Uttarakhand","West Bengal","Delhi",
+  "Jammu & Kashmir","Ladakh","Puducherry","Andaman & Nicobar",
+  "Chandigarh","Dadra & Nagar Haveli","Daman & Diu","Lakshadweep"
+];
 
   // =====================================================
   // LOAD SUPPLIERS
@@ -119,7 +130,10 @@ if (!supplier.SupplierName.trim()) {
   alert("Supplier Name is required");
   return;
 }
-
+if (!supplier.State || supplier.State.trim() === "") {
+  alert("State is required");
+  return;
+}
 // Optional mobile validation
 if (supplier.Mobile && supplier.Mobile.trim() !== "") {
   if (supplier.Mobile.length !== 10 || !/^\d+$/.test(supplier.Mobile)) {
@@ -230,6 +244,7 @@ if (supplier.GSTIN && supplier.GSTIN.trim() !== "") {
               <th>GSTIN</th>
               <th>Address</th>
             <th>City</th>
+            <th>State</th>
              <th>PinCode</th>
             <th>Opening Balance</th>
             <th>Balance</th>
@@ -254,6 +269,7 @@ if (supplier.GSTIN && supplier.GSTIN.trim() !== "") {
               <td>{s.GSTIN}</td>
               <td>{s.Address}</td>
               <td>{s.City}</td>
+              <td>{s.State}</td>
               <td>{s.PinCode}</td>
               <td>{s.OpeningBalance}</td>
               <td>{s.Balance}</td>
@@ -384,6 +400,24 @@ if (supplier.GSTIN && supplier.GSTIN.trim() !== "") {
           onChange={(e) => handleChange("City", e.target.value)}
         />
       </div>
+
+      <div className="form-group mid">
+  <label>State *</label>
+  <select
+    value={supplier.State}
+    onChange={(e) => handleChange("State", e.target.value)}
+    style={{
+      borderColor: supplier.State ? "#ccc" : "red",
+      padding: "6px"
+    }}
+  >
+    <option value="">-- Select State --</option>
+    {INDIAN_STATES.map(s => (
+      <option key={s} value={s}>{s}</option>
+    ))}
+  </select>
+</div>
+
 
       <div className="form-group small">
         <label>Pincode</label>

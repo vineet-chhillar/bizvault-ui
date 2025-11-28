@@ -123,21 +123,22 @@
 }
 
 .data-table th:nth-child(1) { width: 10%; } /* Item */
-.data-table th:nth-child(2) { width: 10%; } /* Batch */
-.data-table th:nth-child(3) { width: 8%; } /* HSN */
-.data-table th:nth-child(4) { width: 7%; }  /* Qty */
-.data-table th:nth-child(5) { width: 7%; } /* Rate */
-.data-table th:nth-child(6) { width: 7%; } /* discount */
-.data-table th:nth-child(7) { width: 7%; }  /* GST% */
-.data-table th:nth-child(8) { width: 7%; }  /* GST% */
-.data-table th:nth-child(9) { width: 7%; }  /* SGST */
-.data-table th:nth-child(10) { width: 7%; }  /* CGST */
+.data-table th:nth-child(2) { width: 5%; } /* Batch */
+.data-table th:nth-child(3) { width: 5%; } /* HSN */
+.data-table th:nth-child(4) { width: 5%; }  /* Qty */
+.data-table th:nth-child(5) { width: 5%; } /* Rate */
+.data-table th:nth-child(6) { width: 5%; } /* discount */
+.data-table th:nth-child(7) { width: 5%; }  /* GST% */
+.data-table th:nth-child(8) { width: 5%; }  /* GST% */
+.data-table th:nth-child(9) { width: 5%; }  /* SGST */
+.data-table th:nth-child(10) { width: 5%; }  /* CGST */
 .data-table th:nth-child(11) { width: 7%; }  /* IGST */
 .data-table th:nth-child(12) { width: 7%; } /* Amount */
 .data-table th:nth-child(13) { width: 7%; }  /* Delete */
 .data-table th:nth-child(14) { width: 7%; }  /* IGST */
 .data-table th:nth-child(15) { width: 7%; } /* Amount */
 .data-table th:nth-child(16) { width: 7%; }  /* Delete */
+.data-table th:nth-child(17) { width: 7%; }  /* Delete */
 
 .data-table tbody tr:nth-child(even) {
   background: #f9f9f9;

@@ -10,9 +10,21 @@ import { validateItemForm } from "../../utils/validateItemForm";
 
 
 export default function CreateItem() {
+{/*}  const now = new Date();
+const formatted =
+  now.getFullYear() + "-" +
+  String(now.getMonth() + 1).padStart(2, "0") + "-" +
+  String(now.getDate()).padStart(2, "0") + " " +
+  String(now.getHours()).padStart(2, "0") + ":" +
+  String(now.getMinutes()).padStart(2, "0") + ":" +
+  String(now.getSeconds()).padStart(2, "0");
+  */}
+
+
   const [itemData, setItemData] = useState({
     name: "",
     itemcode: "",
+    hsncode:"",
     categoryid: "",
     categoryname:"",
     date: new Date().toISOString().split("T")[0],
@@ -202,10 +214,20 @@ if (itemErrors.length > 0) {
   return;
 }
 
-    console.log(itemData.name,itemData.itemcode,itemData.categoryname,
+    console.log(itemData.name,itemData.itemcode,itemData.hsncode,itemData.categoryname,
       itemData.description,itemData.gstpercent,itemData.unitname,itemData.date);
 
-  
+  const dateFromCalendar = itemData.date; // e.g., "2025-11-27"
+
+const now = new Date();
+const timePart =
+  String(now.getHours()).padStart(2, "0") + ":" +
+  String(now.getMinutes()).padStart(2, "0") + ":" +
+  String(now.getSeconds()).padStart(2, "0");
+
+// Merge date + time → "2025-11-27 14:32:10"
+const finalDateTime = `${dateFromCalendar} ${timePart}`;
+
 
     const user = JSON.parse(localStorage.getItem("user"));
     {/*console.log("Logged in user:", user.email);*/}
@@ -213,9 +235,10 @@ if (itemErrors.length > 0) {
     const payload = {
       Name: itemData.name,
       ItemCode: itemData.itemcode,
+      HsnCode:itemData.hsncode,
       CategoryId: itemData.categoryid,
       CategoryName: itemData.categoryname,
-      Date: itemData.date,
+      Date: finalDateTime,
       Description: itemData.description,
        UnitId: parseInt(itemData.unitid),
        UnitName: itemData.unitname,
@@ -235,6 +258,7 @@ if (itemErrors.length > 0) {
     setItemData({
       name: "",
       itemcode: "",
+      hsncode:"",
       categoryid: "",
       date: new Date().toISOString().split("T")[0],
       description: "",
@@ -542,6 +566,20 @@ console.log("📤 Sending AddItemDetails:", {
   {errors.itemcode && <div className="error">{errors.itemcode}</div>}
 </div>
 
+
+{/* HSN CODE */}
+<div className="form-group">
+  <label>HSN/SAC Code</label>
+  <input
+    name="hsncode"
+    value={itemData.hsncode}
+    onChange={handleChange}
+    placeholder="Enter hsn code"
+    className={errors.hsncode ? "error-input" : ""}
+  />
+  {errors.hsncode && <div className="error">{errors.hsncode}</div>}
+</div>
+
 {/* CATEGORY */}
 <div className="form-group">
   <label>Category</label>
@@ -648,6 +686,7 @@ console.log("📤 Sending AddItemDetails:", {
               <tr>
                 <th>Item Name</th>
                 <th>Item Code</th>
+                <th>HSN/SAC Code</th>
                 <th>Category</th>
                 <th>Date</th>
                 <th>Description</th>
@@ -662,6 +701,7 @@ console.log("📤 Sending AddItemDetails:", {
                 <tr key={i.Id}>
                   <td>{i.Name}</td>
                   <td>{i.ItemCode}</td>
+                  <td>{i.HsnCode}</td>
                   <td>{i.CategoryName}</td>
                   <td>{i.Date}</td>
                   <td>{i.Description}</td>
@@ -674,6 +714,7 @@ console.log("📤 Sending AddItemDetails:", {
     onClick={() => {
       handleAddInventoryClick(i);
       getItemNameById(i.Id);
+      fetchItemDetails(i.Id);
     }}
       >
         <svg
@@ -801,7 +842,7 @@ console.log("📤 Sending AddItemDetails:", {
       <thead>
         <tr>
           <th>Item Name</th>
-          <th>HSN/SAC Code</th>
+          <th>Supplier</th>
           <th>Batch No</th>
           <th>Ref/Invoice No</th>
           <th>Date</th>
@@ -824,7 +865,8 @@ console.log("📤 Sending AddItemDetails:", {
         {itemDetails.map((d) => (
           <tr key={d.id}>
             <td>{selectedItemName}</td>
-    <td>{d.HsnCode}</td>
+            <td>{d.SupplierName}</td>
+    
     <td>{d.BatchNo}</td>
     <td>{d.refno}</td>
     <td>{d.Date}</td>

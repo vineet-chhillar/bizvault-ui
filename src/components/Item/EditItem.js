@@ -147,6 +147,7 @@ console.log("📩 item id is:", formData.Id +","+formData.CategoryName+""+formDa
         action: "updateItem",
         payload: {
           id: formData.Id,
+          hsncode:formData.HsnCode,
           name: formData.Name,
           itemcode: formData.ItemCode,
           categoryid: formData.CategoryId,
@@ -197,6 +198,7 @@ console.log("📩 item id is:", formData.Id +","+formData.CategoryName+""+formDa
             <tr>
               <th>Name</th>
               <th>Item Code</th>
+              <th>HSN/SAC Code</th>
               <th>Category</th>
               <th>Date</th>
               <th>Description</th>
@@ -211,6 +213,7 @@ console.log("📩 item id is:", formData.Id +","+formData.CategoryName+""+formDa
                 <tr key={i.Id}>
                   <td>{i.Name}</td>
                   <td>{i.ItemCode}</td>
+                  <td>{i.HsnCode}</td>
                   <td>{i.CategoryName}</td>
                   <td>{i.Date}</td>
                   <td>{i.Description}</td>
@@ -331,6 +334,19 @@ console.log("📩 item id is:", formData.Id +","+formData.CategoryName+""+formDa
            className={errors.itemcode ? "error-input" : ""}
         />
         {errors.ItemCode && <div className="error">{errors.ItemCode}</div>}
+      </div>
+
+{/* HSN Code */}
+      <div className="form-group">
+        <label>HSN/SAC Code</label>
+        <input
+          type="text"
+          name="HsnCode"
+          value={formData.HsnCode || ""}
+          onChange={handleChange}
+           className={errors.hsncode ? "error-input" : ""}
+        />
+        {errors.HsnCode && <div className="error">{errors.HsnCode}</div>}
       </div>
 
       {/* Category */}

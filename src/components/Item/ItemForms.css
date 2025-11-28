@@ -338,7 +338,7 @@ h1.form-title, h2.form-title, h3.form-title {
 /* --- Custom Column Widths (adjust to your liking) --- */
 .data-table th:nth-child(1), /* Item Name */
 .data-table td:nth-child(1) {
-  width: 12%;
+  width: 10%;
   text-align: center; /* center align Unit, GST %, and buttons */
 }
 
@@ -350,7 +350,7 @@ h1.form-title, h2.form-title, h3.form-title {
 
 .data-table th:nth-child(3), /* Category */
 .data-table td:nth-child(3) {
-  width: 18%;
+  width: 15%;
   text-align: center; /* center align Unit, GST %, and buttons */
 }
 
@@ -362,7 +362,7 @@ h1.form-title, h2.form-title, h3.form-title {
 
 .data-table th:nth-child(5), /* Description */
 .data-table td:nth-child(5) {
-  width: 20%; /* small column */
+  width: 25%; /* small column */
   text-align: center; /* center align Unit, GST %, and buttons */
 }
 
@@ -379,7 +379,7 @@ h1.form-title, h2.form-title, h3.form-title {
 
 .data-table th:nth-child(8), /* Action buttons */
 .data-table td:nth-child(8) {
-  width: 12%;
+  width: 8%;
   text-align: center;
   white-space: nowrap;
 }
@@ -466,13 +466,13 @@ h1.form-title, h2.form-title, h3.form-title {
 
 .item-table th:nth-child(5),
 .item-table td:nth-child(5) {
-  width: 10%; /* small for unit */
+  width: 6%; /* small for unit */
   text-align: center;
 }
 
 .item-table th:nth-child(6),
 .item-table td:nth-child(6) {
-  width: 5%; /* small for GST */
+  width: 11%; /* small for GST */
   text-align: center;
 }
 

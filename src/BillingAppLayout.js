@@ -3,9 +3,11 @@ import CreateItem from "./components/Item/CreateItem";
 import EditInventory from "./components/Item/EditInventory";
 import EditItem from "./components/Item/EditItem";
 import CompanySetup from "./components/Item/CompanySetup";
+import PurchaseInvoiceEditor from "./components/Item/PurchaseInvoiceEditor";
 import InvoiceEditor from "./components/Item/InvoiceEditor";
 import SupplierPage from "./components/Item/SupplierPage";
-
+import SalesReturn from "./components/Item/SalesReturn";
+import PurchaseReturn from "./components/Item/PurchaseReturn";
 
 import {
   BrowserRouter as Router,
@@ -33,7 +35,7 @@ import {
   FaBoxes,
   FaCubes
 } from "react-icons/fa";
-import SalesReturn from "./components/Item/SalesReturn";
+
 
 
 /* Hook: derive title from route */
@@ -282,14 +284,25 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
   {/* Collapsible Children */}
   <div className={`nav-children-tabs ${isItemOpen ? "open" : ""}`}>
     <NavLink
+      to="/item/PurchaseInvoiceEditor"
+      onClick={() => isMobile && setMobileOpen(false)}
+      className={({ isActive }) =>
+        "nav-tab-link" + (isActive ? " active" : "")
+      }
+    >
+      Create/View/Print Purchase Invoice
+    </NavLink>
+    
+    <NavLink
       to="/item/InvoiceEditor"
       onClick={() => isMobile && setMobileOpen(false)}
       className={({ isActive }) =>
         "nav-tab-link" + (isActive ? " active" : "")
       }
     >
-      Create/View/Print Invoice
+      Create/View/Print Sales Invoice
     </NavLink>
+
 <NavLink
       to="/item/SalesReturn"
       onClick={() => isMobile && setMobileOpen(false)}
@@ -300,7 +313,7 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
       Sales Return
     </NavLink>
     <NavLink
-      to="/item/PurchaseReturnEditor"
+      to="/item/PurchaseReturn"
       onClick={() => isMobile && setMobileOpen(false)}
       className={({ isActive }) =>
         "nav-tab-link" + (isActive ? " active" : "")
@@ -410,8 +423,10 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
   <Route path="/Item/EditInventory" element={<EditInventory />} />
   <Route path="/Item/EditItem" element={<EditItem />} />
   <Route path="/Item/CompanySetup" element={<CompanySetup user={user} />} />
+  <Route path="/Item/PurchaseInvoiceEditor" element={<PurchaseInvoiceEditor user={user} />} />
   <Route path="/Item/InvoiceEditor" element={<InvoiceEditor user={user} />} />
   <Route path="/Item/SalesReturn" element={<SalesReturn user={user} />} />
+  <Route path="/Item/PurchaseReturn" element={<PurchaseReturn user={user} />} />
   <Route path="/Item/SupplierPage" element={<SupplierPage user={user} />} />
 </Routes>
           {/*<main className="main-content">
