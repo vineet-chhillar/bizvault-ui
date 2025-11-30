@@ -982,3 +982,20 @@ h1.form-title, h2.form-title, h3.form-title {
   border: 1px solid red !important;
   background: #ffeaea;
 }
+.details-row td {
+  white-space: normal !important;
+  overflow: visible !important;
+  padding: 10px;
+}
+
+.item-details-panel {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3-column layout */
+  gap: 8px;
+  align-items: center;
+}
+
+.item-details-panel .detail-row {
+  display: flex;
+  flex-direction: column;
+}

@@ -12,7 +12,8 @@ const blankLine = () => ({
   Qty: 1,
   Rate: "",
   Discount: 0,
-
+NetRate:0,
+   netamount: 0,
   GstPercent: 0,
   GstValue: 0,
 
@@ -25,12 +26,35 @@ const blankLine = () => ({
   IgstValue: 0,
 
   Amount: 0,
-  TaxAmount: 0
+  TaxAmount: 0,
+  Notes:"",
+
+  // OPTIONAL FIELDS
+  salesPrice: "",
+  mrp: "",
+  description: "",
+  mfgdate: "",
+  expdate: "",
+  modelno: "",
+  brand: "",
+  size: "",
+  color: "",
+  weight: "",
+  dimension: "",
+
+  showDetails: false
 });
 
 export default function PurchaseInvoiceEditor({ user }) {
 
   // ========= STATE =========
+  const [notes, setNotes] = useState("");
+const [backupLine, setBackupLine] = useState(null);
+
+const [printDate, setPrintDate] = useState(
+  new Date().toISOString().slice(0, 10)
+);
+
   const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().slice(0,10));
   const [supplierList, setSupplierList] = useState([]);
   const [supplierId, setSupplierId] = useState("");
@@ -39,6 +63,13 @@ export default function PurchaseInvoiceEditor({ user }) {
   const [itemList, setItemList] = useState([]);
   const [itemSearchIndex, setItemSearchIndex] = useState(null);
   const [lines, setLines] = useState([ blankLine() ]);
+// track which row has its details open (null = none)
+const [activeDetailIndex, setActiveDetailIndex] = useState(null);
+// style for floating panel (top, left, width)
+const [detailStyle, setDetailStyle] = useState({ top: 0, left: 0, width: 0 });
+// refs for each main row
+const rowRefs = React.useRef([]);
+rowRefs.current = lines.map((_, i) => rowRefs.current[i] ?? React.createRef());
 
   const [totals, setTotals] = useState({
     subTotal: 0,
@@ -46,6 +77,10 @@ export default function PurchaseInvoiceEditor({ user }) {
     total: 0,
     roundOff: 0
   });
+
+const [invoiceNum, setInvoiceNum] = useState("");
+const [invoiceFY, setInvoiceFY] = useState("");
+const [invoiceNo, setInvoiceNo] = useState("");
 
   const [invoiceId, setInvoiceId] = useState(null);
   const [invoiceNumbers, setInvoiceNumbers] = useState([]);
@@ -57,7 +92,13 @@ export default function PurchaseInvoiceEditor({ user }) {
 
   const [company, setCompany] = useState(null);
 
+useEffect(() => {
+  fetchInvoiceNumbers(printDate);
+}, [printDate]);
 
+useEffect(() => {
+  window.chrome.webview.postMessage({ Action: "GetNextPurchaseInvoiceNum" });
+}, []);
   // ========= LOAD COMPANY =========
   useEffect(() => {
     window.chrome?.webview?.postMessage({ Action: "GetCompanyProfile" });
@@ -76,10 +117,133 @@ export default function PurchaseInvoiceEditor({ user }) {
   }, []);
 
 
+  
+
+
+  // ========= TOGGLE DETAILS =========
+const toggleItemDetails = (i) => {
+  // if already open, close it
+  if (activeDetailIndex === i) {
+    setActiveDetailIndex(null);
+    return;
+  }
+
+  // otherwise compute position of the row and open panel
+  const trEl = rowRefs.current[i]?.current;
+  if (!trEl) {
+    console.warn("Row element not found for index", i);
+    setActiveDetailIndex(i); // still open, fallback
+    return;
+  }
+
+  const container = trEl.closest(".invoice-editor") || document.body;
+  const trRect = trEl.getBoundingClientRect();
+  const containerRect = container.getBoundingClientRect();
+
+  // compute top/left relative to container
+  const top = trRect.bottom - containerRect.top + 6; // small gap below row
+  const left = trRect.left - containerRect.left;
+  const width = trRect.width;
+
+  setDetailStyle({ top, left, width });
+  setActiveDetailIndex(i);
+};
+
+
+
+
+  // ========= UPDATE LINE =========
+ const updateLine = (i, key, val) => {
+  setLines(prev => {
+    const copy = [...prev];
+    const line = { ...copy[i], [key]: val };
+
+    const qty = Number(line.Qty) || 0;
+    const rate = Number(line.Rate) || 0;
+    const discountPct = Number(line.Discount) || 0;
+    const gstPct = Number(line.GstPercent) || 0;
+
+    // ---------- N E T   R A T E ----------
+    let netrate = rate - (rate * discountPct / 100);   // numeric
+    netrate = +netrate.toFixed(2);
+    line.netrate = netrate;                            // <-- assign to line
+
+    // ---------- N E T   A M O U N T ----------
+    const netamount = qty * netrate;
+    line.netamount = +netamount.toFixed(2);
+
+    // (for backward compatibility with your existing Amount column)
+    line.Amount = line.netamount;
+
+    // ---------- GST ON NET ----------
+    const gstValue = +(netamount * (gstPct / 100)).toFixed(2);
+    line.GstValue = gstValue;
+    line.TaxAmount = gstValue;
+
+    // ---------- GST SPLIT ----------
+   // ---------- GST SPLIT ----------
+if (gstPct > 0) {
+  if (isInterState()) {
+    // IGST only
+    line.IgstPercent = gstPct;
+    line.IgstValue = gstValue;
+
+    line.CgstPercent = 0;
+    line.CgstValue = 0;
+    line.SgstPercent = 0;
+    line.SgstValue = 0;
+  } else {
+    // CGST + SGST (split exactly to match gstValue with rounding)
+    const halfPct = gstPct / 2;
+    line.CgstPercent = halfPct;
+    line.SgstPercent = halfPct;
+    line.IgstPercent = 0;
+
+    const cg = Number((gstValue / 2).toFixed(2));   // first half rounded
+    const sg = +(gstValue - cg).toFixed(2);         // remainder so cg+sg = gstValue
+
+    line.CgstValue = cg;
+    line.SgstValue = sg;
+    line.IgstValue = 0;
+  }
+} else {
+  // zero GST — clear all
+  line.IgstPercent = 0;
+  line.IgstValue   = 0;
+  line.CgstPercent = 0;
+  line.CgstValue   = 0;
+  line.SgstPercent = 0;
+  line.SgstValue   = 0;
+}
+
+
+    copy[i] = line;
+    return copy;
+  });
+};
+
+
+
+
+  const addLine = () => setLines(prev => [...prev, blankLine()]);
+  const removeLine = (i) => {
+  setLines(prev => {
+    if (prev.length === 1) {
+      alert("At least one item is required in the invoice.");
+      return prev; // do NOT delete
+    }
+
+    return prev.filter((_, j) => j !== i);
+  });
+};
+
+
   // ========= RECALC TOTALS =========
   useEffect(() => recalc(), [lines]);
 
   const isInterState = () => {
+    //console.log(company.State)
+    //console.log(supplierInfo.State)
     const seller = company?.State?.toLowerCase().trim();
     const buyer  = supplierInfo?.State?.toLowerCase().trim();
 
@@ -88,74 +252,18 @@ export default function PurchaseInvoiceEditor({ user }) {
   };
 
 
-  const recalc = () => {
-    let sub = 0, tax = 0;
-    lines.forEach(l => {
-      const amt = (Number(l.Qty) || 0) * (Number(l.Rate) || 0);
-      const t = amt * (Number(l.GstPercent) || 0) / 100;
-      sub += amt;
-      tax += t;
-    });
-    const total = sub + tax;
-    const round = Math.round(total) - total;
-    setTotals({ subTotal: sub, tax: tax, total: total + round, roundOff: round });
-  };
-
-
-  // ========= UPDATE LINE =========
-  const updateLine = (i, key, val) => {
-    const copy = [...lines];
-    copy[i][key] = val;
-
-    const qty = Number(copy[i].Qty) || 0;
-    const rate = Number(copy[i].Rate) || 0;
-    const discountPct = Number(copy[i].Discount) || 0;
-    const gstPct = Number(copy[i].GstPercent) || 0;
-
-    // base
-    const base = qty * rate;
-    const discount = (base * discountPct) / 100;
-    const amount = base - discount;
-
-    copy[i].Amount = amount;
-
-    const gstValue = +(amount * gstPct / 100).toFixed(2);
-    copy[i].GstValue = gstValue;
-    copy[i].TaxAmount = gstValue;
-
-    // GST Split
-    if (gstPct > 0) {
-      if (isInterState()) {
-        copy[i].IgstPercent = gstPct;
-        copy[i].IgstValue = gstValue;
-
-        copy[i].CgstPercent = 0;
-        copy[i].SgstPercent = 0;
-        copy[i].CgstValue = 0;
-        copy[i].SgstValue = 0;
-
-      } else {
-
-        let halfPct = gstPct / 2;
-        let halfVal = +(gstValue / 2).toFixed(2);
-        let remainder = +(gstValue - (halfVal * 2)).toFixed(2);
-
-        copy[i].CgstPercent = halfPct;
-        copy[i].SgstPercent = halfPct;
-        copy[i].IgstPercent = 0;
-
-        copy[i].CgstValue = +(halfVal + remainder).toFixed(2);
-        copy[i].SgstValue = halfVal;
-        copy[i].IgstValue = 0;
-      }
-    }
-
-    setLines(copy);
-  };
-
-
-  const addLine = () => setLines(prev => [...prev, blankLine()]);
-  const removeLine = (i) => setLines(prev => prev.filter((_,j)=>j!==i));
+ const recalc = () => {
+  let sub = 0, tax = 0;
+  lines.forEach(l => {
+    const netamt = Number(l.netamount) || 0;         // use netamount (Qty * netrate)
+    const g = Number(l.GstValue) || 0;               // gst already computed on netamount
+    sub += netamt;
+    tax += g;
+  });
+  const total = sub + tax;
+  const round = Math.round(total) - total;
+  setTotals({ subTotal: sub, tax: tax, total: total + round, roundOff: round });
+};
 
 
   // ========= SAVE PURCHASE INVOICE =========
@@ -167,36 +275,59 @@ export default function PurchaseInvoiceEditor({ user }) {
     }
 
     const Items = lines.map(l => ({
-      ItemId: l.ItemId,
-      ItemName: l.ItemName,
-      HsnCode: l.HsnCode,
-      BatchNo: l.BatchNo,
-      Qty: Number(l.Qty),
-      Rate: Number(l.Rate),
-      DiscountPercent: Number(l.Discount),
-      GstPercent: Number(l.GstPercent),
-      GstValue: Number(l.GstValue),
+  ItemId: l.ItemId,
+  ItemName: l.ItemName,
+  HsnCode: l.HsnCode,
+  BatchNo: l.BatchNo,
 
-      CgstPercent: Number(l.CgstPercent),
-      CgstValue: Number(l.CgstValue),
-      SgstPercent: Number(l.SgstPercent),
-      SgstValue: Number(l.SgstValue),
-      IgstPercent: Number(l.IgstPercent),
-      IgstValue: Number(l.IgstValue),
+  Qty: Number(l.Qty),
+  Rate: Number(l.Rate),
+  DiscountPercent: Number(l.Discount),
 
-      LineSubTotal: Number(l.Amount),
-      LineTotal: Number(l.Amount) + Number(l.GstValue)
-    }));
+  NetRate: Number(l.netrate) || 0,
+  NetAmount: Number(l.netamount) || 0,
+
+  GstPercent: Number(l.GstPercent) || 0,
+  GstValue: Number(l.GstValue) || 0,
+
+  CgstPercent: Number(l.CgstPercent) || 0,
+  CgstValue: Number(l.CgstValue) || 0,
+  SgstPercent: Number(l.SgstPercent) || 0,
+  SgstValue: Number(l.SgstValue) || 0,
+  IgstPercent: Number(l.IgstPercent) || 0,
+  IgstValue: Number(l.IgstValue) || 0,
+
+  LineSubTotal: Number(l.netamount) || 0,
+  LineTotal: (Number(l.netamount) || 0) + (Number(l.GstValue) || 0),
+
+  SalesPrice: l.salesPrice,
+  Mrp: l.mrp,
+  Description: l.description,
+  MfgDate: l.mfgdate,
+  ExpDate: l.expdate,
+  ModelNo: l.modelno,
+  Brand: l.brand,
+  Size: l.size,
+  Color: l.color,
+  Weight: l.weight,
+  Dimension: l.dimension,
+  Notes: l.Notes || ""
+}));
+
+
 
     window.chrome.webview.postMessage({
       Action: "SavePurchaseInvoice",
       Payload: {
         SupplierId: supplierInfo.SupplierId,
-        PurchaseDate: purchaseDate,
+       InvoiceNum: Number(invoiceNum),
+    InvoiceNo: invoiceNo,
+        InvoiceDate: purchaseDate,
         SubTotal: totals.subTotal,
         TotalTax: totals.tax,
         TotalAmount: totals.total,
         RoundOff: totals.roundOff,
+        Notes: notes,
         Items,
         CreatedBy: user?.email
       }
@@ -213,16 +344,17 @@ export default function PurchaseInvoiceEditor({ user }) {
   };
 
 
-  const printInvoice = () => {
-    if (!selectedInvoiceId) {
-      alert("Select an invoice first");
-      return;
-    }
-    window.chrome.webview.postMessage({
-      Action: "PrintPurchaseInvoice",
-      Payload: { PurchaseId: selectedInvoiceId }
-    });
-  };
+ const printInvoice = () => {
+  if (!selectedInvoiceId) {
+    alert("Select an invoice first");
+    return;
+  }
+  window.chrome.webview.postMessage({
+    Action: "PrintPurchaseInvoice",
+    Payload: { PurchaseId: selectedInvoiceId }
+  });
+};
+
 
 
   // ========= MESSAGE LISTENER =========
@@ -233,7 +365,11 @@ export default function PurchaseInvoiceEditor({ user }) {
       try { if (typeof msg === "string") msg = JSON.parse(msg); } catch {}
 
       if (!msg) return;
-
+if (msg.action === "GetNextPurchaseInvoiceNumResponse") {
+     setInvoiceNum(msg.nextNum);
+    setInvoiceFY(msg.fy);
+    setInvoiceNo(msg.invoiceNo)
+}
       // Company
       if (msg.action === "GetCompanyProfileResponse") {
         setCompany(msg.profile);
@@ -246,47 +382,116 @@ export default function PurchaseInvoiceEditor({ user }) {
 
       // Items
       if (msg?.Type === "GetItemsForPurchaseInvoice") {
-    if (msg.Status === "Success") {
-        console.log("Items received:", msg.Data);
-        setItemList(msg.Data || []);
-    } else {
-        console.warn("GetItemsForPurchaseInvoice failed:", msg.Message);
-    }
-}
-// Auto batch number response  GetNextBatchNumForItemResponse
-if (msg.action === "GetNextBatchNumResponse") {
-  if (msg.success) {
-    const lineIndex = msg.LineIndex ?? msg.lineIndex;
-    const batchNum = msg.batchNum;
-
-    setLines(prev => {
-      const copy = [...prev];
-      if (copy[lineIndex]) {
-        copy[lineIndex].BatchNo = "BATCH-" + batchNum; // format as you like
+        if (msg.Status === "Success") {
+          setItemList(msg.Data || []);
+        }
       }
-      return copy;
-    });
+
+      // Auto Batch
+      if (msg.action === "GetNextBatchNumResponse") {
+        if (msg.success) {
+          const lineIndex = msg.LineIndex ?? msg.lineIndex;
+          const batchNum = msg.batchNum;
+
+          setLines(prev => {
+            const copy = [...prev];
+            if (copy[lineIndex]) {
+              copy[lineIndex].BatchNo = "BATCH-" + batchNum;
+            }
+            return copy;
+          });
+        }
+      }
+
+
+      // Save response
+   if (msg.action === "SavePurchaseInvoiceResponse") {
+  if (msg.success) {
+
+
+    alert("Purchase Invoice : " + msg.invoiceNo + " Saved Successfully");
+    
+    // Auto-select invoice in dropdown
+    setSelectedInvoiceId(msg.purchaseId);
+
+    // Refresh dropdown for today's date
+    fetchInvoiceNumbers(purchaseDate);
+
+    setLines([ blankLine() ]);
+    setNotes("");
+ 
+window.chrome.webview.postMessage({ Action: "GetNextPurchaseInvoiceNum" });
+  } 
+  else {
+    alert("Error: " + msg.message);
   }
 }
 
 
-      // Save response
-      if (msg.action === "SavePurchaseInvoiceResponse") {
-        if (msg.success) {
-          alert("Purchase Invoice Saved Successfully");
-          setInvoiceId(msg.purchaseId);
-          setLines([ blankLine() ]);
-        } else {
-          alert("Error: " + msg.message);
+      // Supplier details
+  if (msg.action === "GetSupplierByIdResponse") {
+  if (msg.success) {
+    setSupplierInfo(msg.data);
+
+    const supplierState = msg.data.State.trim().toLowerCase();
+    const companyState = company?.State?.trim().toLowerCase();
+
+    const interstate = supplierState !== companyState;
+
+    // Recalculate GST split for ALL lines using NET AMOUNT (correct)
+    setLines(prev =>
+      prev.map(line => {
+        const gstPct = Number(line.GstPercent) || 0;
+        const netamount = Number(line.netamount) || 0;
+
+        const gstValue = +(netamount * gstPct / 100).toFixed(2);
+
+        let igstValue = 0,
+          cgstValue = 0,
+          sgstValue = 0;
+
+        let igstPct = 0,
+          cgstPct = 0,
+          sgstPct = 0;
+
+        if (gstPct > 0) {
+          if (interstate) {
+            // IGST
+            igstPct = gstPct;
+            igstValue = gstValue;
+          } else {
+            // CGST + SGST
+            cgstPct = gstPct / 2;
+            sgstPct = gstPct / 2;
+
+            const cg = Number((gstValue / 2).toFixed(2));
+            const sg = +(gstValue - cg).toFixed(2);
+
+            cgstValue = cg;
+            sgstValue = sg;
+          }
         }
-      }
-      if (msg.action === "GetSupplierByIdResponse") {
-    if (msg.success) {
-        setSupplierInfo(msg.data);
-    } else {
-        alert("Failed to load supplier details");
-    }
+
+        return {
+          ...line,
+
+          GstValue: gstValue,
+          TaxAmount: gstValue,
+
+          IgstPercent: igstPct,
+          IgstValue: igstValue,
+
+          CgstPercent: cgstPct,
+          CgstValue: cgstValue,
+
+          SgstPercent: sgstPct,
+          SgstValue: sgstValue
+        };
+      })
+    );
+  }
 }
+
 
 
       // Invoice number list
@@ -295,20 +500,16 @@ if (msg.action === "GetNextBatchNumResponse") {
       }
 
       // Print invoice
-      if (msg.action === "PrintPurchaseInvoiceResponse") {
-        if (msg.success) {
+   if (msg.action === "PrintPurchaseInvoiceResponse") {
+  if (msg.success) {
+    const fileName = msg.pdfPath.split("\\").pop();
+const url = "https://invoices.local/" + fileName;
+setPdfPath(url);
+    setDownloadPath(msg.pdfPath);
+    setShowPdfModal(true);
+  }
+}
 
-          const fileName = msg.pdfPath.split("\\").pop();
-          const url = "https://invoices.local/" + fileName;
-
-          setPdfPath(url);
-          setDownloadPath(msg.pdfPath);
-          setShowPdfModal(true);
-
-        } else {
-          alert("Print failed: " + msg.message);
-        }
-      }
     };
 
     window.chrome.webview.addEventListener("message", handler);
@@ -325,14 +526,18 @@ if (msg.action === "GetNextBatchNumResponse") {
 <div className="top-sections">
 <div className="print-section">
 
-<input 
+<input
   type="date"
+  value={printDate}
   onChange={(e) => {
-    fetchInvoiceNumbers(e.target.value);
+    setPrintDate(e.target.value);
+    fetchInvoiceNumbers(e.target.value);   // load invoices for selected date
   }}
 />
 
+
 <select
+   value={selectedInvoiceId}
   onChange={(e) => setSelectedInvoiceId(e.target.value)}
 >
   <option value="">Select Purchase Invoice</option>
@@ -358,12 +563,10 @@ if (msg.action === "GetNextBatchNumResponse") {
       const id = e.target.value;
       setSupplierId(id);
 
-   setSupplierId(id);
-
-window.chrome.webview.postMessage({
-  Action: "GetSupplierById",
-  Payload: { SupplierId: id }
-});
+      window.chrome.webview.postMessage({
+        Action: "GetSupplierById",
+        Payload: { SupplierId: id }
+      });
 
     }}
   >
@@ -393,15 +596,24 @@ window.chrome.webview.postMessage({
 {/* ================= DATE ================= */}
 <div className="form-row">
   <div className="form-group">
-    <label>Purchase Date</label>
+    <label>Purchase Invoice Date</label>
     <input 
       type="date"
       value={purchaseDate}
       onChange={e => setPurchaseDate(e.target.value)}
     />
   </div>
-</div>
 
+<div className="form-group">
+  <label className="invoice-no-label">Invoice No</label>
+  <input 
+    type="text"
+    value={invoiceNo}
+    readOnly
+    style={{ background: "#f1ecff", width:"150px" }}
+  />
+</div>
+</div>
 
 {/* ================= ITEM TABLE ================= */}
 <table className="data-table" style={{ tableLayout: "fixed" }}>
@@ -413,7 +625,8 @@ window.chrome.webview.postMessage({
       <th style={{ width: "70px" }}>Qty</th>
       <th style={{ width: "90px" }}>Purchase Rate</th>
       <th style={{ width: "70px" }}>Disc %</th>
-
+      <th style={{ width: "100px" }}>Net Rate</th>
+      <th style={{ width: "100px" }}>Net Amount</th>
       <th style={{ width: "70px" }}>GST %</th>
       <th style={{ width: "90px" }}>GST Amt</th>
 
@@ -427,188 +640,381 @@ window.chrome.webview.postMessage({
       <th style={{ width: "90px" }}>IGST Amt</th>
 
       <th style={{ width: "110px" }}>Total</th>
-      <th style={{ width: "40px" }}></th>
+      <th style={{ width: "90px" }}></th>
     </tr>
   </thead>
 
   <tbody>
+
     {lines.map((l,i)=>(
-      <tr key={i}>
+      <React.Fragment key={i}>
 
-        {/* ITEM NAME */}
-        <td style={{ width:"220px", position:"relative" }}>
-          <div className="cell-box">
-            <input
-  value={l.ItemName}
-  onChange={(e) => {
-    updateLine(i, "ItemName", e.target.value);
-    setItemSearchIndex(i);          // open suggestions while typing
-  }}
-  onFocus={() => setItemSearchIndex(i)}   // open suggestions on focus
-  onBlur={() => {
-    // small timeout so onMouseDown selection still runs before hiding
-    setTimeout(() => setItemSearchIndex(null), 150);
-  }}
-/>
+        {/* ================= MAIN ROW ================= */}
+        <tr ref={rowRefs.current[i]}>
 
-          </div>
+          {/* ITEM NAME */}
+          <td style={{ width:"220px", position:"relative" }}>
+            <div className="cell-box">
+              <input
+                value={l.ItemName}
+                onChange={(e) => {
+                  updateLine(i, "ItemName", e.target.value);
+                  setItemSearchIndex(i);
+                }}
+                onFocus={() => setItemSearchIndex(i)}
+                onBlur={() => setTimeout(() => setItemSearchIndex(null), 150)}
+              />
+            </div>
 
-          {/* suggestions */}
-         {itemSearchIndex === i && l.ItemName.trim() !== "" && (
-  <div className="suggestions-box" style={{ width: "320px" }}>
-    {itemList
-      .filter(it =>
-        (it.Name || "").toLowerCase().includes(l.ItemName.toLowerCase()) ||
-        (it.ItemCode || "").toLowerCase().includes(l.ItemName.toLowerCase())
-      )
-      .slice(0, 12)
-      .map(it => (
-        <div
-          key={it.Id}
-          className="suggestion-row"
-          onMouseDown={() => {
-            updateLine(i, "ItemId", it.Id);
-            updateLine(i, "ItemName", it.Name);
-            updateLine(i, "HsnCode", it.HsnCode || "");
-            updateLine(i, "Unit", it.UnitName || "pcs");
-            updateLine(i, "GstPercent", Number(it.GstPercent) || 0);
+            {/* suggestions */}
+            {itemSearchIndex === i && l.ItemName.trim() !== "" && (
+              <div className="suggestions-box" style={{ width: "320px" }}>
+                {itemList
+                  .filter(it =>
+                    (it.Name || "").toLowerCase().includes(l.ItemName.toLowerCase()) ||
+                    (it.ItemCode || "").toLowerCase().includes(l.ItemName.toLowerCase())
+                  )
+                  .slice(0, 12)
+                  .map(it => (
+                    <div
+                      key={it.Id}
+                      className="suggestion-row"
+                      onMouseDown={() => {
+                        updateLine(i, "ItemId", it.Id);
+                        updateLine(i, "ItemName", it.Name);
+                        updateLine(i, "HsnCode", it.HsnCode || "");
+                        updateLine(i, "Unit", it.UnitName || "pcs");
+                        updateLine(i, "GstPercent", Number(it.GstPercent) || 0);
 
-            // NEW: BatchNo empty by default for fresh purchase entry
-            window.chrome.webview.postMessage({
-        Action: "GetNextBatchNum",
-        Payload: { ItemId: it.Id, LineIndex: i }
-    });
+                        window.chrome.webview.postMessage({
+                          Action: "GetNextBatchNum",
+                          Payload: { ItemId: it.Id, LineIndex: i }
+                        });
 
-            // NEW: Rate is NOT provided by backend — user must enter
-            updateLine(i, "Rate", "");
-
-            setItemSearchIndex(null);
-          }}
-        >
-          <div className="suggestion-line">
-            <span className="item-name">{it.Name}</span>
-            <span className="item-code">[{it.ItemCode}]</span>
-            {it.UnitName && (
-              <span className="item-unit">Unit: {it.UnitName}</span>
+                        updateLine(i, "Rate", "");
+                        setItemSearchIndex(null);
+                      }}
+                    >
+                      <div className="suggestion-line">
+                        <span className="item-name">{it.Name}</span>
+                        <span className="item-code">[{it.ItemCode}]</span>
+                        {it.UnitName && (
+                          <span className="item-unit">Unit: {it.UnitName}</span>
+                        )}
+                        <span className="item-gst">GST: {it.GstPercent}%</span>
+                      </div>
+                    </div>
+                  ))}
+              </div>
             )}
-            <span className="item-gst">GST: {it.GstPercent}%</span>
-          </div>
-        </div>
-      ))}
+
+          </td>
+
+          <td style={{ width:"90px" }}>
+            <div className="cell-box">
+              <input value={l.BatchNo} readOnly
+                     onChange={e=>updateLine(i,"BatchNo",e.target.value)} 
+                     style={{ background: "#eee" }} />
+            </div>
+          </td>
+
+          <td style={{ width:"85px" }}>
+            <div className="cell-box">
+              <input value={l.HsnCode} readOnly style={{background:"#eee"}} />
+            </div>
+          </td>
+
+          <td style={{ width:"70px" }}>
+            <div className="cell-box">
+              <input value={l.Qty}
+                     onChange={e=>updateLine(i,"Qty",e.target.value)} />
+            </div>
+          </td>
+
+          <td style={{ width:"90px" }}>
+            <div className="cell-box">
+              <input value={l.Rate}
+                     onChange={e=>updateLine(i,"Rate",e.target.value)} />
+            </div>
+          </td>
+
+          <td style={{ width:"70px" }}>
+            <div className="cell-box">
+              <input value={l.Discount}
+                     onChange={e=>updateLine(i,"Discount",e.target.value)} />
+            </div>
+          </td>
+
+            <td style={{ width:"100px" }}>
+  <div className="cell-box">
+    <input
+      value={l.netrate ?? ""}
+      readOnly
+      style={{ background: "#eee" }}
+    />
+  </div>
+</td>
+
+
+          <td style={{ width:"100px" }}>
+  <div className="cell-box" style={{ background:"#eee" }}>
+    {Number(l.netamount).toFixed(2)}
+  </div>
+</td>
+
+          <td style={{ width:"70px" }}>
+            <div className="cell-box">
+              <input value={l.GstPercent} readOnly style={{background:"#eee"}} />
+            </div>
+          </td>
+
+          <td style={{ width:"90px" }}>
+            <div className="cell-box">
+              <input value={Number(l.GstValue).toFixed(2)} readOnly style={{background:"#eee"}} />
+            </div>
+          </td>
+
+          <td style={{ width:"70px" }}>
+            <div className="cell-box">
+              <input value={l.CgstPercent} readOnly style={{background:"#eee"}} />
+            </div>
+          </td>
+
+          <td style={{ width:"90px" }}>
+            <div className="cell-box">
+              <input value={Number(l.CgstValue).toFixed(2)} readOnly style={{background:"#eee"}} />
+            </div>
+          </td>
+
+          <td style={{ width:"70px" }}>
+            <div className="cell-box">
+              <input value={l.SgstPercent} readOnly style={{background:"#eee"}} />
+            </div>
+          </td>
+
+          <td style={{ width:"90px" }}>
+            <div className="cell-box">
+              <input value={Number(l.SgstValue).toFixed(2)} readOnly style={{background:"#eee"}} />
+            </div>
+          </td>
+
+          <td style={{ width:"70px" }}>
+            <div className="cell-box">
+              <input value={l.IgstPercent} readOnly style={{background:"#eee"}} />
+            </div>
+          </td>
+
+          <td style={{ width:"90px" }}>
+            <div className="cell-box">
+              <input value={Number(l.IgstValue).toFixed(2)} readOnly style={{background:"#eee"}} />
+            </div>
+          </td>
+
+          <td style={{ width:"110px" }}>
+            <div className="cell-box" style={{background:"#eee"}}>
+              {Number(l.netamount + l.GstValue).toFixed(2)}
+
+            </div>
+          </td>
+
+          {/* MORE + REMOVE */}
+          <td style={{ width:"90px" }}>
+            
+            <button
+    className="invaction-btn invaction-add"
+  onClick={() => {
+    setBackupLine({ ...lines[i] });   // store original line
+    toggleItemDetails(i);             // open modal
+}}
+            >
+             
+       
+        <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="invaction-icon"
+    >
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+    {/*Add Inventory*/}
+  </button>
+            
+            {/*<button
+              className="invaction-btn"
+              style={{ background: "#2980b9", color: "white", marginBottom: "4px" }}
+              onClick={() => {
+    setBackupLine({ ...lines[i] });   // store original line
+    toggleItemDetails(i);             // open modal
+}}
+            >
+              {l.showDetails ? "Hide" : "More"}
+            </button>*/}
+
+            <button
+              className="invaction-btn invaction-modify"
+              onClick={() => removeLine(i)}
+            >
+              X
+            </button>
+          </td>
+
+        </tr>
+
+        {/* ================= OPTIONAL DETAILS ROW ================= */}
+        
+        
+
+
+
+      </React.Fragment>  
+    ))}
+
+  </tbody>
+</table>
+{/* FLOATING DETAILS PANEL */}
+{activeDetailIndex !== null && (
+  <div className="details-overlay">
+
+    <div className="details-modal">
+
+      <div className="details-modal-header">
+        <strong>Add Additional Details For Item</strong>
+       <div className="details-modal-actions">
+
+  {/* SAVE changes */}
+  <button
+    className="save-btn"
+    onClick={() => setActiveDetailIndex(null)}
+  >
+    Save & Proceed
+  </button>
+
+  {/* CANCEL changes */}
+  <button
+    className="cancel-btn"
+    onClick={() => {
+      setLines(prev => {
+        const copy = [...prev];
+        copy[activeDetailIndex] = { ...backupLine };   // restore original values
+        return copy;
+      });
+      setActiveDetailIndex(null);   // close modal
+    }}
+  >
+    Cancel
+  </button>
+
+</div>
+
+      </div>
+
+      <div className="details-modal-body">
+        {(() => {
+          const l = lines[activeDetailIndex];
+          if (!l) return null;
+
+          return (
+            <div className="details-grid">
+<div className="item-info-bar">
+      <div><strong>Item:</strong> {l.ItemName || "-"}</div>
+      <div><strong>Batch:</strong> {l.BatchNo || "-"}</div>
+    </div>
+              <div className="detail-row">
+                <label>Sales Price</label>
+                <input type="number" value={l.salesPrice || ""} onChange={(e)=>updateLine(activeDetailIndex, "salesPrice", e.target.value)} />
+              </div>
+
+              <div className="detail-row">
+                <label>MRP</label>
+                <input type="number" value={l.mrp || ""} onChange={(e)=>updateLine(activeDetailIndex, "mrp", e.target.value)} />
+              </div>
+
+              <div className="detail-row">
+                <label>Description</label>
+                <input type="text" value={l.description || ""} onChange={(e)=>updateLine(activeDetailIndex, "description", e.target.value)} />
+              </div>
+
+              <div className="detail-row">
+                <label>MFG Date</label>
+                <input type="date" value={l.mfgdate || ""} onChange={(e)=>updateLine(activeDetailIndex, "mfgdate", e.target.value)} />
+              </div>
+
+              <div className="detail-row">
+                <label>EXP Date</label>
+                <input type="date" value={l.expdate || ""} onChange={(e)=>updateLine(activeDetailIndex, "expdate", e.target.value)} />
+              </div>
+
+              <div className="detail-row">
+                <label>Model No</label>
+                <input type="text" value={l.modelno || ""} onChange={(e)=>updateLine(activeDetailIndex, "modelno", e.target.value)} />
+              </div>
+
+              <div className="detail-row">
+                <label>Brand</label>
+                <input type="text" value={l.brand || ""} onChange={(e)=>updateLine(activeDetailIndex, "brand", e.target.value)} />
+              </div>
+
+              <div className="detail-row">
+                <label>Size</label>
+                <input type="text" value={l.size || ""} onChange={(e)=>updateLine(activeDetailIndex, "size", e.target.value)} />
+              </div>
+
+              <div className="detail-row">
+                <label>Color</label>
+                <input type="text" value={l.color || ""} onChange={(e)=>updateLine(activeDetailIndex, "color", e.target.value)} />
+              </div>
+
+              <div className="detail-row">
+                <label>Weight</label>
+                <input type="number" value={l.weight || ""} onChange={(e)=>updateLine(activeDetailIndex, "weight", e.target.value)} />
+              </div>
+
+              <div className="detail-row">
+                <label>Dimension</label>
+                <input type="text" value={l.dimension || ""} onChange={(e)=>updateLine(activeDetailIndex, "dimension", e.target.value)} />
+              </div>
+
+            </div>
+          );
+        })()}
+      </div>
+
+    </div>
   </div>
 )}
 
-
-        </td>
-
-        <td style={{ width:"90px" }}>
-          <div className="cell-box">
-            <input value={l.BatchNo} 
-                   onChange={e=>updateLine(i,"BatchNo",e.target.value)} />
-          </div>
-        </td>
-
-        <td style={{ width:"85px" }}>
-          <div className="cell-box">
-            <input value={l.HsnCode} readOnly style={{background:"#eee"}} />
-          </div>
-        </td>
-
-        <td style={{ width:"70px" }}>
-          <div className="cell-box">
-            <input value={l.Qty}
-                   onChange={e=>updateLine(i,"Qty",e.target.value)} />
-          </div>
-        </td>
-
-        <td style={{ width:"90px" }}>
-          <div className="cell-box">
-            <input value={l.Rate}
-                   onChange={e=>updateLine(i,"Rate",e.target.value)} />
-          </div>
-        </td>
-
-        <td style={{ width:"70px" }}>
-          <div className="cell-box">
-            <input value={l.Discount}
-                   onChange={e=>updateLine(i,"Discount",e.target.value)} />
-          </div>
-        </td>
-
-        <td style={{ width:"70px" }}>
-          <div className="cell-box">
-            <input value={l.GstPercent} readOnly style={{background:"#eee"}} />
-          </div>
-        </td>
-
-        <td style={{ width:"90px" }}>
-          <div className="cell-box">
-            <input value={Number(l.GstValue).toFixed(2)} readOnly style={{background:"#eee"}} />
-          </div>
-        </td>
-
-        <td style={{ width:"70px" }}>
-          <div className="cell-box">
-            <input value={l.CgstPercent} readOnly style={{background:"#eee"}} />
-          </div>
-        </td>
-
-        <td style={{ width:"90px" }}>
-          <div className="cell-box">
-            <input value={Number(l.CgstValue).toFixed(2)} readOnly style={{background:"#eee"}} />
-          </div>
-        </td>
-
-        <td style={{ width:"70px" }}>
-          <div className="cell-box">
-            <input value={l.SgstPercent} readOnly style={{background:"#eee"}} />
-          </div>
-        </td>
-
-        <td style={{ width:"90px" }}>
-          <div className="cell-box">
-            <input value={Number(l.SgstValue).toFixed(2)} readOnly style={{background:"#eee"}} />
-          </div>
-        </td>
-
-        <td style={{ width:"70px" }}>
-          <div className="cell-box">
-            <input value={l.IgstPercent} readOnly style={{background:"#eee"}} />
-          </div>
-        </td>
-
-        <td style={{ width:"90px" }}>
-          <div className="cell-box">
-            <input value={Number(l.IgstValue).toFixed(2)} readOnly style={{background:"#eee"}} />
-          </div>
-        </td>
-
-        <td style={{ width:"110px" }}>
-          <div className="cell-box" style={{background:"#eee"}}>
-            {Number(l.Amount + l.GstValue).toFixed(2)}
-          </div>
-        </td>
-
-        <td style={{ width:"40px" }}>
-          <button
-            className="invaction-btn invaction-modify"
-            onClick={() => removeLine(i)}
-          >
-            X
-          </button>
-        </td>
-
-      </tr>
-    ))}
-  </tbody>
-</table>
+<div className="form-row">
+  <div className="form-group" style={{ width: "100%" }}>
+    <label>Purchase Invoice Notes</label>
+    <textarea
+      value={notes}
+      onChange={(e) => setNotes(e.target.value)}
+      rows={3}
+      style={{
+        width: "100%",
+        padding: "8px",
+        borderRadius: "6px",
+        border: "1px solid #ccc",
+        resize: "vertical",
+        fontSize: "14px",
+      }}
+      placeholder="Enter additional notes or remarks (optional)"
+    />
+  </div>
+</div>
 
 
 {/* ================= BUTTONS ================= */}
 <div className="button-row">
   <button className="btn-submit small" onClick={addLine}>Add Item</button>
   <button className="btn-submit small" onClick={saveInvoice}>Save Invoice</button>
-  <button className="btn-submit small" onClick={printInvoice}>Print Invoice</button>
+  {/*<button className="btn-submit small" onClick={printInvoice}>Print Invoice</button>*/}
 </div>
 
 

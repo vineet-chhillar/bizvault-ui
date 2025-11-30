@@ -517,3 +517,284 @@
   border: 2px solid red !important;
   background: #ffe6e6 !important;
 }
+/* Make container a positioning context */
+.invoice-editor {
+  position: relative;
+}
+
+/* Floating details panel (popup) */
+.floating-details-panel {
+  position: absolute;
+  background: #ffffff;
+  border: 1px solid #dcdcdc;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  border-radius: 8px;
+  padding: 16px;
+  z-index: 9999;
+  max-height: 400px;
+  overflow-y: auto;
+  animation: fadeSlideIn 0.15s ease-out;
+}
+
+/* Small fade / slide animation */
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header row of the panel */
+.floating-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 12px;
+}
+
+.floating-panel-header strong {
+  font-size: 15px;
+  color: #333;
+}
+
+/* Use your existing button theme */
+.floating-panel-header button {
+  
+  color: white;
+  border: none;
+  padding: 5px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.floating-panel-header button:hover {
+  opacity: 0.85;
+}
+
+/* Inputs grid, consistent with other forms */
+.item-details-panel {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3 columns like your form rows */
+  gap: 14px;
+}
+
+/* Label + input wrapper */
+.detail-row {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Match your label style */
+.detail-row label {
+  font-size: 13px;
+  color: #444;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+/* Match your existing input box theme */
+.detail-row input {
+  padding: 7px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 13px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.detail-row input:focus {
+  border-color: #007bff;
+  outline: none;
+  box-shadow: 0 0 3px rgba(0, 123, 255, 0.4);
+}
+
+.floating-details-panel {
+  width: 700px !important;        /* ← compact, clean width */
+  max-width: 700px !important;
+}
+
+/* Dark background overlay */
+.details-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+/* Modal box */
+.details-modal {
+  background: #fff;
+  width: 500px;
+  max-width: 95vw;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0px 6px 25px rgba(0,0,0,0.25);
+  animation: fadeInScale 0.15s ease-out;
+}
+
+/* Modal animation */
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Header */
+.details-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 8px;
+  margin-bottom: 14px;
+}
+
+.details-modal-header strong {
+  font-size: 16px;
+  color: #333;
+}
+
+/* Close button matches your theme */
+.close-btn {
+  background: #d9534f;
+  color: white;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.close-btn:hover {
+  opacity: 0.85;
+}
+
+/* Compact grid layout */
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+/* Label and input style aligned with your table inputs */
+.detail-row label {
+  font-size: 13px;
+  margin-bottom: 4px;
+  color: #444;
+}
+
+.detail-row input {
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 13px;
+  width: 95%;
+}
+.detail-row input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 3px rgba(0,123,255,0.4);
+  outline: none;
+}
+
+.item-info-bar {
+  background: #f5f7fa;
+  border: 1px solid #dcdcdc;
+  padding: 8px 10px;
+  border-radius: 6px;
+  margin-bottom: 14px;
+
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #333;
+}
+
+.item-info-bar strong {
+  color: #000;
+}
+.details-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.save-btn {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.cancel-btn {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.save-btn:hover,
+.cancel-btn:hover {
+  opacity: 0.85;
+}
+/* Wrap the invoice number inside the existing form-group */
+.invoice-no-wrapper {
+  margin: 12px 0;
+  width: 100%; 
+  max-width: 240px;                /* ensures full width */
+}
+
+.invoice-no-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #4a3fbf;
+  margin-bottom: 4px;
+}
+
+/* WIDE BEAUTIFUL BAR */
+.invoice-no-display {
+  background: #f1ecff;                 /* soft lavender */
+  border: 1px solid #c4b6ff;
+  padding: 12px 20px;
+  border-radius: 8px;
+
+  font-size: 20px;
+  font-weight: 700;
+  color: #32256e;
+
+  width: 100%;                          /* full row width */
+  max-width: 600px;                     /* << adjust here for exact width */
+  display: block;
+
+  letter-spacing: 0.6px;
+  box-shadow: 0 2px 5px rgba(110, 90, 200, 0.2);
+
+  user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  transition: 0.2s ease;
+}
+
+/* Hover effect for interaction */
+.invoice-no-display:hover {
+  background: #e9e1ff;
+  border-color: #a899ff;
+  box-shadow: 0 3px 8px rgba(110, 90, 200, 0.3);
+  transform: translateY(-1px);
+}
+
