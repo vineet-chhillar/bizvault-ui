@@ -8,6 +8,7 @@ import EditPurchaseInvoice from "./components/Item/EditPurchaseInvoice";
 import InvoiceEditor from "./components/Item/InvoiceEditor";
 import SupplierPage from "./components/Item/SupplierPage";
 import SalesReturn from "./components/Item/SalesReturn";
+import SalesReturnNew from "./components/Item/SalesReturnNew";
 import PurchaseReturn from "./components/Item/PurchaseReturn";
 
 import {
@@ -269,7 +270,7 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
 
 
 
-{/* --- Invoice MENU (Grouped Tab Style) --- */}
+{/* ---Purchase Invoice MENU (Grouped Tab Style) --- */}
 <div className="nav-section">
   {/* Parent Link */}
   <div
@@ -278,7 +279,7 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
     style={{ cursor: "pointer" }}
   >
     <span className="icon"><FaCubes /></span>
-    <span className="label">Invoice</span>
+    <span className="label">Purchase Invoice</span>
     <span className="arrow">{isItemOpen ? "▲" : "▼"}</span>
   </div>
 
@@ -305,6 +306,47 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
     </NavLink>
 
     
+   
+
+
+    <NavLink
+      to="/item/PurchaseReturn"
+      onClick={() => isMobile && setMobileOpen(false)}
+      className={({ isActive }) =>
+        "nav-tab-link" + (isActive ? " active" : "")
+      }
+    >
+     Purchase Return
+    </NavLink>
+
+    
+  </div>
+</div>
+
+
+
+
+
+{/* ---Sales Invoice MENU (Grouped Tab Style) --- */}
+<div className="nav-section">
+  {/* Parent Link */}
+  <div
+    className="nav-link item-parent"
+    onClick={() => setIsItemOpen(!isItemOpen)}
+    style={{ cursor: "pointer" }}
+  >
+    <span className="icon"><FaCubes /></span>
+    <span className="label">Sales Invoice</span>
+    <span className="arrow">{isItemOpen ? "▲" : "▼"}</span>
+  </div>
+
+  {/* Collapsible Children */}
+  <div className={`nav-children-tabs ${isItemOpen ? "open" : ""}`}>
+    
+
+   
+
+    
     <NavLink
       to="/item/InvoiceEditor"
       onClick={() => isMobile && setMobileOpen(false)}
@@ -324,20 +366,19 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
     >
       Sales Return
     </NavLink>
-    <NavLink
-      to="/item/PurchaseReturn"
+   <NavLink
+      to="/item/SalesReturnNew"
       onClick={() => isMobile && setMobileOpen(false)}
       className={({ isActive }) =>
         "nav-tab-link" + (isActive ? " active" : "")
       }
     >
-     Purchase Return
+      Sales Return New
     </NavLink>
 
     
   </div>
 </div>
-
 
 
 
@@ -439,6 +480,7 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
   <Route path="/Item/EditPurchaseInvoice" element={<EditPurchaseInvoice user={user} />} />
   <Route path="/Item/InvoiceEditor" element={<InvoiceEditor user={user} />} />
   <Route path="/Item/SalesReturn" element={<SalesReturn user={user} />} />
+  <Route path="/Item/SalesReturnNew" element={<SalesReturnNew user={user} />} />
   <Route path="/Item/PurchaseReturn" element={<PurchaseReturn user={user} />} />
   <Route path="/Item/SupplierPage" element={<SupplierPage user={user} />} />
 </Routes>

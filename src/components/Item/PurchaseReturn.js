@@ -1,700 +1,708 @@
-import React, { useState, useEffect } from "react";
-import "./SalesReturn.css";
+// EditPurchaseInvoice.js
+import React, { useEffect, useState } from "react";
+import "./Invoice.css";
+import "./ItemForms.css";
 
-export default function PurchaseReturn({ user }) {
-  const [activeTab, setActiveTab] = useState("CREATE");
+const blankLine = () => ({
+  ItemId: 0,
+  ItemName: "",
+  HsnCode: "",
+  BatchNo: "",
+  BatchNum:0,
+  Qty: 1,
+  Rate: "",
+  DiscountPercent: 0,
+  NetRate: 0,
+  LineSubTotal: 0,
+  GstPercent: 0,
+  GstValue: 0,
+  CgstPercent: 0,
+  CgstValue: 0,
+  SgstPercent: 0,
+  SgstValue: 0,
+  IgstPercent: 0,
+  IgstValue: 0,
+  LineSubTotal: 0,
+  LineTotal: 0,
+  Notes: "",
+  SalesPrice: "",
+  Mrp: "",
+  Description: "",
+  MfgDate: "",
+  ExpDate: "",
+  ModelNo: "",
+  Brand: "",
+  Size: "",
+  Color: "",
+  Weight: "",
+  Dimension: "",
+  showDetails: false
+});
 
-  const [showPdfModal, setShowPdfModal] = useState(false);
-  const [downloadPath, setDownloadPath] = useState("");
-  const [pdfPath, setPdfPath] = useState("");
+export default function EditPurchaseInvoice({ user }) {
+  const [invoiceId, setInvoiceId] = useState("");
+  const [invoiceList, setInvoiceList] = useState([]);
+const [detailsModal, setDetailsModal] = useState({ open: false, index: null });
 
-  // ---------------- CREATE TAB ----------------
-  const [purchaseDate, setPurchaseDate] = useState("");
-  const [purchaseResults, setPurchaseResults] = useState([]);
-  const [purchaseInfo, setPurchaseInfo] = useState(null);
-  const [newReturnDate, setNewReturnDate] = useState(
-    new Date().toISOString().slice(0, 10)
-  );
-  const [newNotes, setNewNotes] = useState("");
-  const [newItems, setNewItems] = useState([]);
-  const [newTotals, setNewTotals] = useState({
-    sub: 0,
-    tax: 0,
-    total: 0,
-    roundOff: 0,
-  });
-  const [newError, setNewError] = useState("");
+  const [company, setCompany] = useState(null);
+  const [supplierList, setSupplierList] = useState([]);
+  const [supplierId, setSupplierId] = useState("");
+  const [supplierInfo, setSupplierInfo] = useState(null);
 
-  // ---------------- VIEW TAB ----------------
-  const [prDate, setPrDate] = useState("");
-  const [prResults, setPrResults] = useState([]);
-  const [currentReturnId, setCurrentReturnId] = useState(null);
-  const [viewReturnNo, setViewReturnNo] = useState("");
-  const [viewReturnDate, setViewReturnDate] = useState("");
-  const [viewNotes, setViewNotes] = useState("");
-  const [viewPurchaseInfo, setViewPurchaseInfo] = useState(null);
-  const [viewItems, setViewItems] = useState([]);
-  const [viewTotals, setViewTotals] = useState({
-    sub: 0,
-    tax: 0,
-    total: 0,
-    roundOff: 0,
-  });
-  const [viewError, setViewError] = useState("");
+  const [purchaseDate, setPurchaseDate] = useState(
+  new Date().toISOString().slice(0, 10)
+);
+  const [invoiceNo, setInvoiceNo] = useState("");
+  const [invoiceNum, setInvoiceNum] = useState();
 
-  // ---------------- WEBVIEW LISTENER ----------------
-  useEffect(() => {
-    const handler = (event) => {
-  let msg = event.data;
+  const [itemList, setItemList] = useState([]);
+  const [lines, setLines] = useState([blankLine()]);
+  const [totals, setTotals] = useState({ subTotal: 0, tax: 0, total: 0, roundOff: 0 });
 
-  if (!msg) return;
+  const [notes, setNotes] = useState("");
 
-  if (typeof msg === "string") {
-    try { msg = JSON.parse(msg); } catch { return; }
+  const [confirmModal, setConfirmModal] = useState(false);
+const [filterDate, setFilterDate] = useState(
+  new Date().toISOString().slice(0, 10)
+);
+
+  // ---------- VALIDATION ----------
+  function validateUpdate(data) {
+  let errors = [];
+
+  if (!data.SupplierId) errors.push("Supplier is required.");
+  if (!data.InvoiceDate) errors.push("Invoice date is required.");
+  if (!data.InvoiceNo)  errors.push("Invoice number missing.");
+
+  if (!data.Items || data.Items.length === 0) {
+    errors.push("Add at least 1 item.");
+    return errors;
   }
 
-  if (typeof msg !== "object") return;
+  const seen = new Set();
+  data.Items.forEach((it, idx) => {
 
-  // SUPPORT BOTH action and Action
-  const action = msg.action || msg.Action;
-  if (!action) return;
+    if (!it.ItemId) errors.push(`Line ${idx + 1}: Item is required.`);
 
-  switch (action) {
-    case "SearchPurchaseItemsByDateResponse":
-  setPurchaseResults(msg.items || []);
-  break;
+    if (Number(it.Qty) <= 0)
+      errors.push(`Line ${idx + 1}: Qty must be > 0`);
 
-    case "LoadPurchaseForReturnResponse":
-      handlePurchaseLoadedForNewReturn(msg.item || msg.Item || msg.data);
-      break;
+    // 🚨 NEW VALIDATION 🚨
+    if (Number(it.Qty) > Number(it.AvailableQty)) {
+      errors.push(`Line ${idx + 1}: Qty cannot exceed available qty (${it.AvailableQty})`);
+    }
 
-   case "SavePurchaseReturnResponse":
-{
-  if (msg.success) {
-    const rn = msg.data?.returnNo || msg.data?.ReturnNo;
-    const rid = msg.data?.returnId || msg.data?.ReturnId;
+  });
 
-    alert(`Purchase return saved successfully${rn ? " — " + rn : ""}.`);
-
-    // Reset screen
-    setNewItems([]);
-    setPurchaseInfo(null);
-    setNewNotes("");
-    setNewReturnDate(new Date().toISOString().slice(0, 10));
-    setNewTotals({ sub: 0, tax: 0, total: 0, roundOff: 0 });
-    setPurchaseResults([]);
-
-    // OPTIONAL: Show ReturnNo in UI instantly
-    // setViewReturnNo(rn);
-    // setViewReturnDate(new Date().toISOString().slice(0, 10));
-
-  } else {
-    alert("Failed to save purchase return: " + msg.error);
-  }
-  break;
+  return errors;
 }
 
 
-    case "SearchPurchaseReturnsResponse":
-      setPrResults(msg.returns || msg.Returns || msg.data || []);
-      break;
-
-    case "LoadPurchaseReturnDetailResponse":
-      console.log("sdfdfgfgfg");
-      handlePurchaseReturnLoadedForView(msg.returnData || msg.ReturnData || msg.data);
-      break;
-
-        case "PrintPurchaseReturnResponse":
-          if (msg.success) {
-            const fileName = msg.pdfPath.split("\\").pop();
-            const url = "https://invoices.local/" + fileName;
-            setPdfPath(url);
-            setDownloadPath(msg.pdfPath);
-            setShowPdfModal(true);
-          } else {
-            alert("Print failed: " + msg.message);
-          }
-          break;
-
-        default:
-          break;
-      }
-    };
-
-    window.chrome.webview.addEventListener("message", handler);
-    return () =>
-      window.chrome.webview.removeEventListener("message", handler);
+  // ---------- FETCH SUPPLIERS + ITEMS ----------
+  useEffect(() => {
+    window.chrome.webview.postMessage({ Action: "GetAllSuppliers" });
+    window.chrome.webview.postMessage({ Action: "GetItemsForPurchaseInvoice" });
+     window.chrome?.webview?.postMessage({ Action: "GetCompanyProfile" });
   }, []);
 
-  // ---------------- TOTAL CALC ----------------
-  const recalcNewTotals = (rows) => {
-    let sub = 0;
-    let tax = 0;
-    rows.forEach((r) => {
-      sub += r.lineSubTotal || 0;
-      tax += r.gstValue || 0;
+  // ---------- LOAD INVOICE LIST ----------
+ useEffect(() => {
+  window.chrome.webview.postMessage({
+    Action: "GetPurchaseInvoiceNumbersByDate",
+    Payload: { Date: filterDate }
+  });
+}, [filterDate]);
+
+
+  // ---------- CALCULATIONS ----------
+  const recalc = () => {
+    let sub = 0, tax = 0;
+    lines.forEach(l => {
+      sub += Number(l.LineSubTotal || 0);
+      tax += Number(l.GstValue || 0);
     });
-    const raw = sub + tax;
-    const total = Math.round(raw);
-    const roundOff = total - raw;
-    setNewTotals({ sub, tax, total, roundOff });
-  };
+    const totalBeforeRound = sub + tax;
+    const round = Math.round(totalBeforeRound) - totalBeforeRound;
 
-  const recalcViewTotals = (rows) => {
-    let sub = 0;
-    let tax = 0;
-    rows.forEach((r) => {
-      sub += r.lineSubTotal || 0;
-      tax += r.gstValue || 0;
+    setTotals({
+      subTotal: sub,
+      tax: tax,
+      total: totalBeforeRound + round,
+      roundOff: round
     });
-    const raw = sub + tax;
-    const total = Math.round(raw);
-    const roundOff = total - raw;
-    setViewTotals({ sub, tax, total, roundOff });
   };
 
-  // ---------------- CREATE MODE: LOAD PURCHASE ITEM ----------------
-  const handlePurchaseLoadedForNewReturn = (item) => {
-    if (!item) return;
+  useEffect(() => recalc(), [lines]);
+const isInterState = () => {
+    //console.log(company.State)
+    //console.log(supplierInfo.State)
+    const seller = company?.State?.toLowerCase().trim();
+    const buyer  = supplierInfo?.State?.toLowerCase().trim();
 
-    // purchaseInfo is the header (invoice/refno/supplier)
-    setPurchaseInfo({
-      id: item.ItemDetailsId,
-      invoiceNo: item.InvoiceNo, // refno
-      supplierId: item.SupplierId,
-      supplierName: item.SupplierName,
+    if (!seller || !buyer) return false;
+    return seller !== buyer;
+  };
+
+  // ---------- UPDATE LINE ----------
+  const updateLine = (i, key, val) => {
+    setLines(prev => {
+      const copy = [...prev];
+      const line = { ...copy[i], [key]: val };
+
+      const qty = Number(line.Qty) || 0;
+      const rate = Number(line.Rate) || 0;
+      const disc = Number(line.DiscountPercent) || 0;
+
+      const netrate = +(rate - (rate * disc / 100)).toFixed(2);
+      line.NetRate = netrate;
+
+      const netamount = +(qty * netrate).toFixed(2);
+      
+      line.LineSubTotal = netamount;
+
+      const gst = Number(line.GstPercent) || 0;
+      const gstValue = +(netamount * gst / 100).toFixed(2);
+      line.GstValue = gstValue;
+
+      // Correct split
+      {/*if (gst > 0) {
+        // At edit time: supplier/company may be available or not
+        line.IgstPercent = gst;
+        line.IgstValue = gstValue;
+        line.CgstPercent = 0;
+        line.CgstValue = 0;
+        line.SgstPercent = 0;
+        line.SgstValue = 0;
+      }*/}
+      if (gst > 0) {
+  if (isInterState()) {
+    // IGST only
+    line.IgstPercent = gst;
+    line.IgstValue = gstValue;
+
+    line.CgstPercent = 0;
+    line.CgstValue = 0;
+    line.SgstPercent = 0;
+    line.SgstValue = 0;
+  } else {
+    // CGST + SGST (split exactly to match gstValue with rounding)
+    const halfPct = gst / 2;
+    line.CgstPercent = halfPct;
+    line.SgstPercent = halfPct;
+    line.IgstPercent = 0;
+
+    const cg = Number((gstValue / 2).toFixed(2));   // first half rounded
+    const sg = +(gstValue - cg).toFixed(2);         // remainder so cg+sg = gstValue
+
+    line.CgstValue = cg;
+    line.SgstValue = sg;
+    line.IgstValue = 0;
+  }
+} else {
+  // zero GST — clear all
+  line.IgstPercent = 0;
+  line.IgstValue   = 0;
+  line.CgstPercent = 0;
+  line.CgstValue   = 0;
+  line.SgstPercent = 0;
+  line.SgstValue   = 0;
+}
+
+      line.LineTotal = netamount + gstValue;
+
+      copy[i] = line;
+      return copy;
     });
-
-    setNewNotes("");
-    setNewReturnDate(new Date().toISOString().slice(0, 10));
-
-    const mapped = [
-      {
-        itemDetailsId: item.ItemDetailsId,
-        itemId: item.ItemId,
-        itemName: item.ItemName,
-        batchNo: item.BatchNo,
-        originalQty: item.Quantity || 0,
-        returnedQty: item.AlreadyReturnedQty || 0,
-        availableReturnQty:
-          (item.Quantity || 0) - (item.AlreadyReturnedQty || 0),
-
-        rate: item.PurchasePrice,
-        discountPercent: item.DiscountPercent,
-        gstPercent: item.GstPercent,
-
-        // base numbers for calculations: use NetPurchasePrice as taxable unit
-        taxableUnit: item.NetPurchasePrice || item.PurchasePrice || 0,
-        gstUnit:
-          (item.NetPurchasePrice || item.PurchasePrice || 0) *
-          ((item.GstPercent || 0) / 100),
-
-        returnQty: 0,
-        lineSubTotal: 0,
-        gstValue: 0,
-        lineTotal: 0,
-      },
-    ];
-
-    setNewItems(mapped);
-    recalcNewTotals(mapped);
   };
 
-  // ---------------- CREATE MODE: CHANGE QTY ----------------
-  const handleNewQtyChange = (index, qtyInput) => {
-    let qty = parseFloat(qtyInput) || 0;
+// Whenever supplierInfo changes → recalc gst split for all rows
+useEffect(() => {
+  if (!supplierInfo || !company) return;
 
-    const rows = [...newItems];
-    const r = rows[index];
+  setLines(prev => {
+    return prev.map(line => {
+      const gst = Number(line.GstPercent) || 0;
+      const gstValue = +(line.LineSubTotal * gst / 100).toFixed(2);
 
-    if (qty < 0) qty = 0;
-    if (qty > r.availableReturnQty) qty = r.availableReturnQty;
+      if (gst <= 0) {
+        return {
+          ...line,
+          IgstPercent: 0, IgstValue: 0,
+          CgstPercent: 0, CgstValue: 0,
+          SgstPercent: 0, SgstValue: 0,
+          LineTotal: line.LineSubTotal
+        };
+      }
 
-    r.returnQty = qty;
-    r.lineSubTotal = r.taxableUnit * qty;
-    r.gstValue = r.gstUnit * qty;
-    r.lineTotal = r.lineSubTotal + r.gstValue;
+      if (isInterState()) {
+        return {
+          ...line,
+          IgstPercent: gst,
+          IgstValue: gstValue,
+          CgstPercent: 0,
+          CgstValue: 0,
+          SgstPercent: 0,
+          SgstValue: 0,
+          LineTotal: line.LineSubTotal + gstValue
+        };
+      } else {
+        // Split exactly and ensure correct rounding
+        const halfPct = gst / 2;
+        const cg = +((gstValue / 2).toFixed(2));
+        const sg = +(gstValue - cg).toFixed(2);
 
-    setNewItems(rows);
-    recalcNewTotals(rows);
-  };
+        return {
+          ...line,
+          IgstPercent: 0,
+          IgstValue: 0,
+          CgstPercent: halfPct,
+          CgstValue: cg,
+          SgstPercent: halfPct,
+          SgstValue: sg,
+          LineTotal: line.LineSubTotal + gstValue
+        };
+      }
+    });
+  });
+}, [supplierInfo, company]);
 
-  // ---------------- CREATE MODE: SAVE ----------------
-  const savePurchaseReturn = () => {
-    if (!purchaseInfo) {
-      setNewError("Select a purchase item first.");
+  // ---------- LOAD SELECTED INVOICE ----------
+  const loadInvoice = () => {
+    if (!invoiceId) {
+      alert("Select an invoice first.");
       return;
     }
-    const any = newItems.some((i) => i.returnQty > 0);
-    if (!any) {
-      setNewError("Enter quantity for at least one item.");
+ window.chrome.webview.postMessage({
+          Action: "LoadPurchaseInvoice",
+          Payload: { PurchaseId: invoiceId }
+        });
+    {/*window.chrome.webview.postMessage({
+      Action: "CanEditPurchaseInvoice",
+      Payload: { PurchaseId: invoiceId }
+    });*/}
+  };
+
+  // ---------- SEND UPDATE REQUEST ----------
+  const saveUpdate = () => {
+    const payload = {
+      PurchaseId: invoiceId,
+      SupplierId: supplierId,
+      InvoiceNo: invoiceNo,
+      InvoiceNum: invoiceNum,
+      InvoiceDate: purchaseDate,
+      TotalAmount: totals.total,
+      TotalTax: totals.tax,
+      RoundOff: totals.roundOff,
+      SubTotal: totals.subTotal,
+      Notes: notes,
+      CreatedBy: user?.email || "system",
+      Items: lines
+    };
+
+    const errors = validateUpdate(payload);
+    if (errors.length > 0) {
+      alert("Fix these issues:\n\n" + errors.join("\n"));
       return;
     }
-    setNewError("");
 
-   const x = newItems[0];  // single row
+    setConfirmModal(true);
+  };
 
-const dto = {
-  ReturnId: 0,
-  ReturnNo: "",      // backend will generate
-  ReturnNum: 0,      // backend will generate
-  ItemDetailsId: x.itemDetailsId,
-  ItemId: x.itemId,
-  SupplierId: purchaseInfo.supplierId,
-  ReturnDate: newReturnDate,
+  const confirmUpdate = () => {
+    setConfirmModal(false);
 
-  Qty: x.returnQty,
-  Rate: x.rate,
-  DiscountPercent: x.discountPercent,
-
-  NetRate: x.taxableUnit,     // rate - discount
-  BatchNo: x.batchNo,
-
-  GstPercent: x.gstPercent,
-  Amount: x.lineSubTotal,
-  Cgst: x.gstValue / 2,
-  Sgst: x.gstValue / 2,
-  Igst: 0,
-  TotalAmount: x.lineTotal,
-
-  Remarks: newNotes,
-  CreatedBy: user?.email
-};
-
-
+    const payload = {
+      PurchaseId: invoiceId,
+      SupplierId: supplierId,
+      InvoiceNo: invoiceNo,
+      InvoiceNum: invoiceNum,
+      InvoiceDate: purchaseDate,
+      TotalAmount: totals.total,
+      TotalTax: totals.tax,
+      RoundOff: totals.roundOff,
+      SubTotal: totals.subTotal,
+      Notes: notes,
+      CreatedBy: user?.email,
+      Items: lines
+    };
 
     window.chrome.webview.postMessage({
       Action: "SavePurchaseReturn",
-      Payload: dto,
+      Payload: payload
     });
   };
 
-  // ---------------- VIEW MODE: LOAD PURCHASE RETURN ----------------
-const handlePurchaseReturnLoadedForView = (data) => {
-  if (!data) return;
-console.log("data received in handlePurchaseReturnLoadedForView");
-  setCurrentReturnId(data.Id);
-  setViewReturnNo(data.ReturnNo);
-  setViewReturnDate(data.ReturnDate?.slice(0, 10) || "");
-  setViewNotes(data.Notes || "");
+  // ---------- MESSAGE LISTENER ----------
+  useEffect(() => {
+    const handler = evt => {
+      let msg = evt.data;
+      try { if (typeof msg === "string") msg = JSON.parse(msg); } catch { }
 
-  setViewPurchaseInfo({
-    invoiceNo: data.InvoiceNo || "",
-    supplierName: data.SupplierName || ""
-  });
+      if (!msg) return;
 
-  // Purchase Return is ALWAYS single-item, but backend returns Items[] for UI consistency
-  //const items = data.Items || [];
-  const rows = [
-  {
-    itemName: data.ItemName,
-    batchNo: data.BatchNo,
-    returnQty: data.Qty,
-    rate: data.Rate,
-    gstPercent: data.GstPercent,
-    lineSubTotal: data.LineSubTotal,
-    gstValue: data.GstValue,
-    lineTotal: data.LineTotal
+      if (msg.action === "GetAllSuppliers") {
+        setSupplierList(msg.data || []);
+      }
+ if (msg.action === "GetCompanyProfileResponse") {
+        setCompany(msg.profile);
+      }
+      if (msg.Type === "GetItemsForPurchaseInvoice") {
+        if (msg.Status === "Success") setItemList(msg.Data || []);
+      }
+
+      if (msg.action === "GetPurchaseInvoiceNumbersByDateResponse") {
+        setInvoiceList(msg.data || []);
+      }
+
+      // --------------- CAN EDIT RESPONSE ---------------
+    
+
+      // --------------- LOAD INVOICE ---------------
+      if (msg.action === "LoadPurchaseInvoiceResponse") {
+        const data = msg.data;
+        if (!data) {
+          alert("Invoice not found.");
+          return;
+        }
+
+        setSupplierId(data.SupplierId);
+        setPurchaseDate(data.InvoiceDate);
+        setInvoiceNo(data.InvoiceNo);
+        setInvoiceNum(data.InvoiceNum);
+        setNotes(data.Notes || "");
+        setLines((data.Items || []).map(item => ({
+  PurchaseItemId: item.PurchaseItemId,          
+  ItemId: item.ItemId,
+  ItemName: item.ItemName,
+  HsnCode: item.HsnCode,
+  BatchNo: item.BatchNo,
+  BatchNum: item.BatchNum,
+  Qty: item.Qty,
+  Rate: item.Rate,
+  DiscountPercent: item.DiscountPercent,
+  NetRate: item.NetRate,
+  LineSubTotal: item.LineSubTotal,
+  GstPercent: item.GstPercent,
+  GstValue: item.GstValue,
+  CgstPercent: item.CgstPercent,
+  CgstValue: item.CgstValue,
+  SgstPercent: item.SgstPercent,
+  SgstValue: item.SgstValue,
+  IgstPercent: item.IgstPercent,
+  IgstValue: item.IgstValue,
+  LineTotal: item.LineTotal,
+
+  // NEW DETAILS FIELDS
+  SalesPrice: item.SalesPrice || "",
+  Mrp: item.Mrp || "",
+  Description: item.Description || "",
+  MfgDate: item.MfgDate || "",
+  ExpDate: item.ExpDate || "",
+  ModelNo: item.ModelNo || "",
+  Brand: item.Brand || "",
+  Size: item.Size || "",
+  Color: item.Color || "",
+  Weight: item.Weight || "",
+  Dimension: item.Dimension || "",
+AvailableQty: item.AvailableQty || 0,
+  showDetails: false
+})));
+
+      }
+
+      // --------------- SUPPLIER INFO ---------------
+      if (msg.action === "GetSupplierByIdResponse") {
+        if (msg.success) setSupplierInfo(msg.data);
+      }
+
+      // --------------- UPDATE RESPONSE ---------------
+      if (msg.action === "SavePurchaseReturnResponse") {
+  if (msg.success) {
+    alert("Purchase return saved. ReturnId = " + msg.newReturnId);
+  } else {
+    alert("Failed to save return: " + msg.message);
   }
-];
+}
+    };
 
-setViewItems(rows);
-recalcViewTotals(rows);
-};
+    window.chrome.webview.addEventListener("message", handler);
+    return () => window.chrome.webview.removeEventListener("message", handler);
+  }, [invoiceId, supplierId, lines]);
 
-
-  // ---------------- SEARCH ACTIONS ----------------
-  const searchPurchaseItemsForReturn = () => {
-    if (!purchaseDate) {
-      setNewError("Select purchase date.");
-      return;
-    }
-    window.chrome.webview.postMessage({
-      Action: "SearchPurchaseItemsByDate",
-      Payload: { Date: purchaseDate },
-    });
-  };
-
-  const searchPurchaseReturns = () => {
-    if (!prDate) {
-      setViewError("Select return date.");
-      return;
-    }
-    window.chrome.webview.postMessage({
-      Action: "SearchPurchaseReturns",
-      Payload: { Date: prDate },
-    });
-  };
-
-  const clickPurchaseRow = (inv) =>
-    window.chrome.webview.postMessage({
-      Action: "LoadPurchaseForReturn",
-      Payload: { ItemDetailsId: inv.ItemDetailsId || inv.id || inv.ItemDetailsId },
-    });
-
-  const clickPurchaseReturnRow = (sr) =>
-    window.chrome.webview.postMessage({
-      Action: "LoadPurchaseReturnDetail",
-      Payload: { ReturnId: sr.Id },
-    });
-
-  const printPurchaseReturn = () =>
-    currentReturnId &&
-    window.chrome.webview.postMessage({
-      Action: "PrintPurchaseReturn",
-      Payload: { ReturnId: currentReturnId },
-    });
-
-  // ==========================================================
-  // ======================== UI ==============================
-  // ==========================================================
-
+  // ---------- UI ----------
   return (
-    <div className="sales-return">
-      <h2>Purchase Return</h2>
+    <div className="invoice-editor">
 
-      <div className="sr-tabs">
-        <button
-          className={`btn-submit small ${activeTab === "CREATE" ? "active" : ""}`}
-          onClick={() => setActiveTab("CREATE")}
+      {/* INVOICE SELECTION */}
+     <div className="top-section row-flex">
+    <div className="print-section">
+        <input
+    type="date"
+    value={filterDate}
+    onChange={(e) => setFilterDate(e.target.value)}
+  />
+        <select
+          value={invoiceId}
+          onChange={(e) => setInvoiceId(e.target.value)}
         >
-          Create Purchase Return
-        </button>
+          <option value="">Select Purchase Invoice</option>
+          {invoiceList.map(i => (
+            <option key={i.Id} value={i.Id}>{i.PurchaseNo}</option>
+          ))}
+        </select>
 
-        <button
-          className={`btn-submit small ${activeTab === "VIEW" ? "active" : ""}`}
-          onClick={() => setActiveTab("VIEW")}
-        >
-          View / Print Purchase Return
+        <button className="btn-submit" onClick={loadInvoice}>
+          Load Invoice
         </button>
+        </div>
+   
+
+      {/* SUPPLIER SECTION */}
+      <div className="customer-section">
+        <label>Supplier</label>
+        <select 
+          value={supplierId}
+          disabled={true}
+          onChange={(e) => {
+            setSupplierId(e.target.value);
+            window.chrome.webview.postMessage({
+              Action: "GetSupplierById",
+              Payload: { SupplierId: e.target.value }
+            });
+          }}
+        >
+          <option value="">Select Supplier</option>
+          {supplierList.map(s => (
+            <option key={s.SupplierId} value={s.SupplierId}>
+              {s.SupplierName}
+            </option>
+          ))}
+          readOnly
+        </select>
+
+        {supplierInfo && (
+          <div className="supplier-details-box">
+            <div><b>Name:</b> {supplierInfo.SupplierName}</div>
+            <div><b>GSTIN:</b> {supplierInfo.GSTIN}</div>
+            <div><b>State:</b> {supplierInfo.State}</div>
+          </div>
+        )}
+      </div>
+   </div>
+      {/* DATE + INVOICE NO */}
+      <div className="form-row">
+        <div className="form-group">
+          <label>Purchase Date</label>
+          <input type="date" readOnly value={purchaseDate} style={{ background: "#f1ecff", width:"150px" }} onChange={e => setPurchaseDate(e.target.value)} />
+        </div>
+
+        <div className="form-group">
+          <label className="invoice-no-label">Invoice No</label>
+          <input type="text" value={invoiceNo} readOnly style={{ background: "#f1ecff", width:"150px" }} />
+        </div>
       </div>
 
-      {/* CREATE TAB */}
-      {activeTab === "CREATE" && (
-        <>
-          {/* SEARCH BLOCK */}
-          <div className="sr-search-block">
-            <h3>Select Purchase Item (by Date)</h3>
-            <div className="sr-filters">
-              <div className="sr-date-box">
-                <label>Purchase Date:</label>
-                <input
-                  type="date"
-                  value={purchaseDate}
-                  onChange={(e) => setPurchaseDate(e.target.value)}
-                />
-              </div>
+      {/* ITEM TABLE */}
+      <table className="data-table" style={{ tableLayout: "fixed" }}>
+        <thead>
+          <tr>
+            <th style={{ width: "200px" }}>Item</th>
+            <th style={{ width: "110px" }}>Batch</th>
+            <th style={{ width: "85px" }}>HSN</th>
+            <th style={{ width: "70px" }}>Available Qty</th>
+            <th style={{ width: "90px" }}>Rate</th>
+            <th style={{ width: "70px" }}>Disc%</th>
+            <th style={{ width: "90px" }}>Net Rate</th>
+            <th style={{ width: "100px" }}>Net Amt</th>
+            <th style={{ width: "70px" }}>GST%</th>
+            <th style={{ width: "90px" }}>GST Amt</th>
+              <th style={{ width: "70px" }}>CGST%</th>
+            <th style={{ width: "90px" }}>CGST Amt</th>
+             <th style={{ width: "70px" }}>SGST%</th>
+            <th style={{ width: "90px" }}>SGST Amt</th>
+             <th style={{ width: "70px" }}>IGST%</th>
+            <th style={{ width: "90px" }}>IGST Amt</th>
+            <th style={{ width: "100px" }}>Total</th>
+            <th></th>
+          </tr>
+        </thead>
 
-              <button className="btn-submit small" onClick={searchPurchaseItemsForReturn}>
-                Search
-              </button>
-            </div>
+        <tbody>
+          {lines.map((l, i) => (
+  <React.Fragment key={i}>
+    <tr>
+      <td>
+        <div className="cell-box">
+        <input readOnly 
+          value={l.ItemName}
+          onChange={e => updateLine(i, "ItemName", e.target.value)}
+        />
+        </div>
+      </td>
+      <td><div className="cell-box"><input  value={l.BatchNo} readOnly /></div></td>
+      <td><div className="cell-box"><input value={l.HsnCode} readOnly /></div></td>
 
-            <div className="sr-list-container">
-              <table className="sr-list-table">
-                <thead>
-                  <tr>
-                    <th>Ref/Invoice</th>
-                    <th>Date</th>
-                    <th>ItemName</th>
-                    <th>Supplier</th>
-                    <th>Qty</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {purchaseResults.length === 0 && (
-                    <tr>
-                      <td colSpan="4" style={{ textAlign: "center" }}>
-                        No purchases found.
-                      </td>
-                    </tr>
-                  )}
-                  {purchaseResults.map((inv) => (
-                    <tr key={inv.ItemDetailsId} onClick={() => clickPurchaseRow(inv)}>
-                      <td>{inv.InvoiceNo}</td>
-                      <td>{inv.PurchaseDate}</td>
-                      <td>{inv.ItemName}</td>
-                      <td>{inv.SupplierName}</td>
-                      <td>{inv.Quantity}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+      <td>
+        <div className="cell-box">
+        <input value={l.AvailableQty} onChange={e => updateLine(i, "Qty", e.target.value)} />
+      </div>
+      </td>
+
+      <td>
+        <div className="cell-box">
+        <input value={l.Rate} readOnly  onChange={e => updateLine(i, "Rate", e.target.value)} />
+        </div>
+      </td>
+
+      <td>
+        <div className="cell-box">
+        <input value={l.DiscountPercent} readOnly  onChange={e => updateLine(i, "DiscountPercent", e.target.value)} />
+        </div>
+      </td>
+
+      <td>
+        <div className="cell-box">
+          <input value={l.NetRate} readOnly />
           </div>
+          </td>
+      <td>
+        <div className="cell-box">
+        <input value={l.LineSubTotal} readOnly />
+        </div>
+        </td>
+      <td>
+        <div className="cell-box">
+        <input value={l.GstPercent} readOnly />
+        </div>
+        </td>
+      <td>
+        <div className="cell-box">
+        <input value={l.GstValue} readOnly />
+        </div>
+        </td>
+      <td>
+        <div className="cell-box">
+        <input value={l.CgstPercent} readOnly />
+        </div>
+        </td>
+      <td>
+        <div className="cell-box">
+        <input value={l.CgstValue} readOnly />
+        </div>
+        </td>
+      <td>
+        <div className="cell-box">
+        <input value={l.SgstPercent} readOnly />
+        </div>
+        </td>
+      <td>
+        <div className="cell-box">
+        <input value={l.SgstValue} readOnly />
+        </div>
+        </td>
+      <td>
+        <div className="cell-box">
+        <input value={l.IgstPercent} readOnly />
+        </div>
+        </td>
+      <td>
+        <div className="cell-box">
+        <input value={l.IgstValue} readOnly />
+        </div>
+        </td>
+      <td>
+        <div className="cell-box">
+        <input value={l.LineTotal} readOnly />
+        </div>
+        </td>
 
-          {/* HEADER */}
-          <div className="sr-header-row">
-            <div>
-              {purchaseInfo && (
-                <>
-                  <div>
-                    <strong>Ref/Invoice:</strong> {purchaseInfo.invoiceNo}
-                  </div>
-                  <div>
-                    <strong>Supplier:</strong> {purchaseInfo.supplierName}
-                  </div>
-                </>
-              )}
-            </div>
-            <div>
-              <label>
-                Return Date:
-                <input
-                  type="date"
-                  value={newReturnDate}
-                  onChange={(e) => setNewReturnDate(e.target.value)}
-                />
-              </label>
-            </div>
-          </div>
 
-          {/* ITEMS TABLE */}
-          <div className="sr-items-section">
-            <table className="sr-items-table">
-              <thead>
-                <tr>
-                  <th>Item</th>
-                  <th>Batch</th>
-                  <th>Available</th>
-                  <th>Rate</th>
-                  <th>GST%</th>
-                  <th>Return Qty</th>
-                  <th>Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {newItems.length === 0 && (
-                  <tr>
-                    <td colSpan="7" style={{ textAlign: "center" }}>
-                      No items loaded.
-                    </td>
-                  </tr>
-                )}
-                {newItems.map((row, i) => (
-                  <tr key={i}>
-                    <td>{row.itemName}</td>
-                    <td>{row.batchNo}</td>
-                    <td>{row.availableReturnQty}</td>
-                    <td>{row.rate}</td>
-                    <td>{row.gstPercent}</td>
-                    <td>
-                      <input
-                        type="number"
-                        min="0"
-                        max={row.availableReturnQty}
-                        value={row.returnQty}
-                        onChange={(e) => handleNewQtyChange(i, e.target.value)}
-                      />
-                    </td>
-                    <td>{(row.lineTotal || 0).toFixed(2)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+ 
 
-          {newError && <div className="error">{newError}</div>}
+      {/*<td>
+        <button
+          onClick={() => setDetailsModal({ open: true, index: i })}
+        >
+          {l.showDetails ? "Hide" : "Details"}
+        </button>
 
-          {/* FOOTER */}
-          <div className="sr-footer-row">
-            <div className="sr-notes">
-              <label>
-                Notes:
-                <textarea
-                  value={newNotes}
-                  onChange={(e) => setNewNotes(e.target.value)}
-                />
-              </label>
-            </div>
+      </td>*/}
+    </tr>
 
-            <div className="sr-totals-and-actions">
-              <div className="sr-totals">
-                <div>SubTotal: {newTotals.sub.toFixed(2)}</div>
-                <div>Total Tax: {newTotals.tax.toFixed(2)}</div>
-                <div>Round Off: {newTotals.roundOff.toFixed(2)}</div>
-                <div>
-                  <strong>Grand Total: {newTotals.total.toFixed(2)}</strong>
-                </div>
-              </div>
+   
 
-              <div>
-                <button className="btn-submit small" onClick={savePurchaseReturn}>
-                  Save Purchase Return
-                </button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+  </React.Fragment>
+))}
 
-      {/* VIEW TAB */}
-      {activeTab === "VIEW" && (
-        <>
-          <div className="sr-search-block">
-            <h3>Select Purchase Return (by Date)</h3>
-            <div className="sr-filters">
-              <label>
-                Return Date:
-                <input
-                  type="date"
-                  value={prDate}
-                  onChange={(e) => setPrDate(e.target.value)}
-                />
-              </label>
-              <button className="btn-submit small" onClick={searchPurchaseReturns}>
-                Search
-              </button>
-            </div>
+        </tbody>
+      </table>
 
-            <div className="sr-list-container">
-              <table className="sr-list-table">
-                <thead>
-                  <tr>
-                    <th>Return No</th>
-                    <th>Date</th>
-                    <th>Ref/Invoice</th>
-                    <th>Supplier</th>
-                    <th>Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {prResults.length === 0 && (
-                    <tr>
-                      <td colSpan="5" style={{ textAlign: "center" }}>
-                        No purchase returns found.
-                      </td>
-                    </tr>
-                  )}
-                  {prResults.map((sr) => (
-                    <tr key={sr.Id} onClick={() => clickPurchaseReturnRow(sr)}>
-                      <td>{sr.ReturnNo}</td>
-                      <td>{sr.ReturnDate}</td>
-                      <td>{sr.InvoiceNo}</td>
-                      <td>{sr.SupplierName}</td>
-                      <td>{sr.TotalAmount?.toFixed(2)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+      {/* NOTES */}
+      <div className="form-row">
+         <div className="form-group" style={{ width: "100%" }}>
+    <label>Purchase Return Notes</label>
+    <textarea
+     value={notes}
+          onChange={e => setNotes(e.target.value)}
+          rows={3}
+      style={{
+        width: "100%",
+        padding: "8px",
+        borderRadius: "6px",
+        border: "1px solid #ccc",
+        resize: "vertical",
+        fontSize: "14px",
+      }}
+      placeholder="Enter additional notes or remarks (optional)"
+    />
+  </div>
+       
+        
+      </div>
 
-          <div className="sr-header-row">
-            <div>
-              {viewReturnNo && (
-                <div>
-                  <strong>Return No:</strong> {viewReturnNo}
-                </div>
-              )}
-              {viewPurchaseInfo && (
-                <>
-                  <div>
-                    <strong>Ref/Invoice:</strong> {viewPurchaseInfo.invoiceNo}
-                  </div>
-                  <div>
-                    <strong>Supplier:</strong> {viewPurchaseInfo.supplierName}
-                  </div>
-                </>
-              )}
-            </div>
+      {/* TOTALS */}
+      <div className="invoice-totals">
+        <div>Subtotal: {totals.subTotal.toFixed(2)}</div>
+        <div>Total Tax: {totals.tax.toFixed(2)}</div>
+        <div>Round Off: {totals.roundOff.toFixed(2)}</div>
+        <div className="total-final">Grand Total: {totals.total.toFixed(2)}</div>
+      </div>
 
-            <div>
-              <label>
-                Return Date:
-                <input type="date" value={viewReturnDate} disabled />
-              </label>
-            </div>
-          </div>
+      {/* UPDATE BUTTON */}
+      <div className="button-row">
+  
+      <button className="btn-submit" onClick={saveUpdate}>
+        Return Purchase
+      </button>
+      </div>
 
-          <div className="sr-items-section">
-            <table className="sr-items-table">
-              <thead>
-                <tr>
-                  <th>Item</th>
-                  <th>Batch</th>
-                  <th>Qty</th>
-                  <th>Rate</th>
-                  <th>GST%</th>
-                  <th>Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {viewItems.length === 0 && (
-                  <tr>
-                    <td colSpan="6" style={{ textAlign: "center" }}>
-                      No items.
-                    </td>
-                  </tr>
-                )}
-                {viewItems.map((row, i) => (
-                  <tr key={i}>
-                    <td>{row.itemName}</td>
-                    <td>{row.batchNo}</td>
-                    <td>{row.returnQty}</td>
-                    <td>{row.rate}</td>
-                    <td>{row.gstPercent}</td>
-                    <td>{row.lineTotal.toFixed(2)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {viewError && <div className="error">{viewError}</div>}
-
-          <div className="sr-footer-row">
-            <div className="sr-notes">
-              <label>
-                Notes:
-                <textarea value={viewNotes} readOnly />
-              </label>
-            </div>
-
-            <div className="sr-totals-and-actions">
-              <div className="sr-totals">
-                <div>SubTotal: {viewTotals.sub.toFixed(2)}</div>
-                <div>Total Tax: {viewTotals.tax.toFixed(2)}</div>
-                <div>Round Off: {viewTotals.roundOff.toFixed(2)}</div>
-                <div>
-                  <strong>Grand Total: {viewTotals.total.toFixed(2)}</strong>
-                </div>
-              </div>
-
-              <div className="sr-actions">
-                <button className="btn-submit small" onClick={printPurchaseReturn}>
-                  Print
-                </button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-
-      {showPdfModal && (
-        <div className="pdf-modal-overlay">
-          <div className="pdf-modal-box">
-            <div className="pdf-modal-header">
-              <h3>Purchase Return PDF Preview</h3>
-              <p>
-                Saved to: <b>{downloadPath}</b>
-              </p>
-              <button className="btn-submit small" onClick={() => setShowPdfModal(false)}>
-                X
-              </button>
-            </div>
-
-            <iframe src={pdfPath} style={{ width: "100%", height: "80vh", border: "none" }}></iframe>
+      {/* CONFIRM MODAL */}
+      {confirmModal && (
+        <div className="modal-overlay">
+          <div className="modal-box">
+            <h3>Confirm Update</h3>
+            <p>
+              Updating this invoice will mark the original invoice as rejected
+              and create a new updated one.
+            </p>
 
             <button
-              className="btn-submit small"
-              onClick={() => document.querySelector(".pdf-modal-box iframe").contentWindow.print()}
+              className="btn-cancel"
+              onClick={() => setConfirmModal(false)}
             >
-              Print
+              Cancel
+            </button>
+
+            <button
+              className="btn-submit"
+              onClick={confirmUpdate}
+            >
+              Yes, Update Invoice
             </button>
           </div>
         </div>
       )}
+
     </div>
   );
 }

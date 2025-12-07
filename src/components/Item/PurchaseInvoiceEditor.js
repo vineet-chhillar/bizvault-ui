@@ -47,58 +47,6 @@ NetRate:0,
 
 export default function PurchaseInvoiceEditor({ user }) {
 
-function validatePurchaseInvoice(purchaseInv) {
-  const errors = [];
-
-  // Supplier required
-  if (!purchaseInv.SupplierId) {
-    errors.push("Supplier selection is required.");
-  }
-
-  // Supplier detail must exist
-  if (!purchaseInv.SupplierInfo) {
-    errors.push("Supplier details could not be loaded. Please select a supplier again.");
-  }
-
-  // Invoice number
-  if (!purchaseInv.InvoiceNo || purchaseInv.InvoiceNo.trim() === "") {
-    errors.push("Invoice number is missing.");
-  }
-
-  // Date required
-  if (!purchaseInv.InvoiceDate) {
-    errors.push("Purchase invoice date is required.");
-  }
-
-  // Items required
-  if (!purchaseInv.Items || purchaseInv.Items.length === 0) {
-    errors.push("Please add at least one item.");
-  }
-// 🚨 Duplicate item + batch detection
-  const combos = new Set();
-
-  purchaseInv.Items.forEach((it, index) => {
-    const key = `${it.ItemId}__${it.BatchNo || ""}`; 
-
-    if (combos.has(key)) {
-      errors.push(`Duplicate Item + Batch found at line ${index + 1}`);
-    } else {
-      combos.add(key);
-    }
-  });
-  // Validate each item
-  purchaseInv.Items.forEach((it, index) => {
-    if (!it.ItemId) errors.push(`Item ${index + 1}: Item is required.`);
-    if (!it.Qty || it.Qty <= 0) errors.push(`Item ${index + 1}: Quantity must be > 0`);
-    if (it.Rate < 0) errors.push(`Item ${index + 1}: Rate cannot be negative`);
-    if (it.NetRate < 0) errors.push(`Item ${index + 1}: Net rate cannot be negative`);
-    if (it.NetAmount < 0) errors.push(`Item ${index + 1}: Net amount is invalid`);
-    if (it.GstPercent < 0) errors.push(`Item ${index + 1}: GST% cannot be negative`);
-  });
-
-  return errors;
-}
-
   // ========= STATE =========
   const [notes, setNotes] = useState("");
 const [backupLine, setBackupLine] = useState(null);
@@ -143,14 +91,6 @@ const [invoiceNo, setInvoiceNo] = useState("");
   const [showPdfModal, setShowPdfModal] = useState(false);
 
   const [company, setCompany] = useState(null);
-
-const purchaseInv = {
-  SupplierId: supplierId,
-  SupplierInfo: supplierInfo,  // optional to send
-  InvoiceNo: invoiceNo,
-  InvoiceDate: purchaseDate,
-  Items: lines
-};
 
 useEffect(() => {
   fetchInvoiceNumbers(printDate);
@@ -329,10 +269,10 @@ if (gstPct > 0) {
   // ========= SAVE PURCHASE INVOICE =========
   const saveInvoice = () => {
 
-    {/*if (!supplierInfo) {
+    if (!supplierInfo) {
       alert("Select a supplier");
       return;
-    }*/}
+    }
 
     const Items = lines.map(l => ({
   ItemId: l.ItemId,
@@ -374,20 +314,7 @@ if (gstPct > 0) {
   Notes: l.Notes || ""
 }));
 
-const purchaseInv = {
-    SupplierId: supplierId,
-    SupplierInfo: supplierInfo,
-    InvoiceNo: invoiceNo,
-    InvoiceDate: purchaseDate,
-    Items: lines
-  };
 
-  const errors = validatePurchaseInvoice(purchaseInv);
-
-  if (errors.length > 0) {
-    alert("Fix the following errors:\n\n" + errors.join("\n"));
-    return;
-  }
 
     window.chrome.webview.postMessage({
       Action: "SavePurchaseInvoice",
@@ -632,7 +559,7 @@ setPdfPath(url);
 
   <select
     value={supplierId}
-    onChange={(e) => {
+    onChange={(e) => {  
       const id = e.target.value;
       setSupplierId(id);
 
@@ -821,7 +748,7 @@ setPdfPath(url);
             <td style={{ width:"100px" }}>
   <div className="cell-box">
     <input
-      value={l.netrate ?? ""}
+      value={l.NetRate ?? ""}
       readOnly
       style={{ background: "#eee" }}
     />

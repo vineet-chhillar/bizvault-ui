@@ -48,6 +48,8 @@ const [invoiceId, setInvoiceId] = useState(0);
   Address: ""
 });
 const [validationErrors, setValidationErrors] = useState({});
+const [invoiceNum, setInvoiceNum] = useState("");
+const [invoiceFY, setInvoiceFY] = useState("");
 
 const [modalMessage, setModalMessage] = useState("");
 const [showErrorModal, setShowErrorModal] = useState(false);
@@ -130,7 +132,9 @@ const isInterState = () => {
         }
     });
 }*/}
-
+useEffect(() => {
+  window.chrome.webview.postMessage({ Action: "GetNextSalesInvoiceNum" });
+}, []);
 
 useEffect(() => {
   if (window.chrome?.webview) {
@@ -404,6 +408,8 @@ const Items = lines.map(l => ({
   const payload = {
     Action: "CreateInvoice",
     Payload: {
+       InvoiceNum: Number(invoiceNum),
+    InvoiceNo: invoiceNo,
       InvoiceDate: invoiceDate,
       Customer: Customer,
       CompanyId: company?.Id ?? 1,
@@ -463,12 +469,16 @@ useEffect(() => {
     resetInvoiceForm();
     // OPTIONAL → reset invoice form after save
     // resetInvoiceForm();
-
+window.chrome.webview.postMessage({ Action: "GetNextSalesInvoiceNum" });
   } else {
     alert("Save failed: " + msg.message);
   }
 }
-
+if (msg.action === "GetNextSalesInvoiceNumResponse") {
+     setInvoiceNum(msg.nextNum);
+    setInvoiceFY(msg.fy);
+    setInvoiceNo(msg.invoiceNo)
+}
 
 
       if (msg.action === "GetCustomersResponse") {
@@ -767,6 +777,16 @@ type="button"
       onChange={(e) => setInvoiceDate(e.target.value)} 
     />
   </div>
+
+<div className="form-group">
+  <label className="invoice-no-label">Invoice No</label>
+  <input 
+    type="text"
+    value={invoiceNo}
+    readOnly
+    style={{ background: "#f1ecff", width:"150px" }}
+  />
+</div>
 
   <div className="item-stock-display">
     {selectedItemBalance !== null && (

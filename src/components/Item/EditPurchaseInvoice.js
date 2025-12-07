@@ -8,11 +8,12 @@ const blankLine = () => ({
   ItemName: "",
   HsnCode: "",
   BatchNo: "",
+  BatchNum:0,
   Qty: 1,
   Rate: "",
-  Discount: 0,
+  DiscountPercent: 0,
   NetRate: 0,
-  NetAmount: 0,
+  LineSubTotal: 0,
   GstPercent: 0,
   GstValue: 0,
   CgstPercent: 0,
@@ -24,24 +25,26 @@ const blankLine = () => ({
   LineSubTotal: 0,
   LineTotal: 0,
   Notes: "",
-  salesPrice: "",
-  mrp: "",
-  description: "",
-  mfgdate: "",
-  expdate: "",
-  modelno: "",
-  brand: "",
-  size: "",
-  color: "",
-  weight: "",
-  dimension: "",
+  SalesPrice: "",
+  Mrp: "",
+  Description: "",
+  MfgDate: "",
+  ExpDate: "",
+  ModelNo: "",
+  Brand: "",
+  Size: "",
+  Color: "",
+  Weight: "",
+  Dimension: "",
   showDetails: false
 });
 
 export default function EditPurchaseInvoice({ user }) {
   const [invoiceId, setInvoiceId] = useState("");
   const [invoiceList, setInvoiceList] = useState([]);
+const [detailsModal, setDetailsModal] = useState({ open: false, index: null });
 
+  const [company, setCompany] = useState(null);
   const [supplierList, setSupplierList] = useState([]);
   const [supplierId, setSupplierId] = useState("");
   const [supplierInfo, setSupplierInfo] = useState(null);
@@ -50,6 +53,7 @@ export default function EditPurchaseInvoice({ user }) {
   new Date().toISOString().slice(0, 10)
 );
   const [invoiceNo, setInvoiceNo] = useState("");
+  const [invoiceNum, setInvoiceNum] = useState();
 
   const [itemList, setItemList] = useState([]);
   const [lines, setLines] = useState([blankLine()]);
@@ -94,6 +98,7 @@ const [filterDate, setFilterDate] = useState(
   useEffect(() => {
     window.chrome.webview.postMessage({ Action: "GetAllSuppliers" });
     window.chrome.webview.postMessage({ Action: "GetItemsForPurchaseInvoice" });
+     window.chrome?.webview?.postMessage({ Action: "GetCompanyProfile" });
   }, []);
 
   // ---------- LOAD INVOICE LIST ----------
@@ -109,7 +114,7 @@ const [filterDate, setFilterDate] = useState(
   const recalc = () => {
     let sub = 0, tax = 0;
     lines.forEach(l => {
-      sub += Number(l.NetAmount || 0);
+      sub += Number(l.LineSubTotal || 0);
       tax += Number(l.GstValue || 0);
     });
     const totalBeforeRound = sub + tax;
@@ -124,6 +129,15 @@ const [filterDate, setFilterDate] = useState(
   };
 
   useEffect(() => recalc(), [lines]);
+const isInterState = () => {
+    //console.log(company.State)
+    //console.log(supplierInfo.State)
+    const seller = company?.State?.toLowerCase().trim();
+    const buyer  = supplierInfo?.State?.toLowerCase().trim();
+
+    if (!seller || !buyer) return false;
+    return seller !== buyer;
+  };
 
   // ---------- UPDATE LINE ----------
   const updateLine = (i, key, val) => {
@@ -133,13 +147,13 @@ const [filterDate, setFilterDate] = useState(
 
       const qty = Number(line.Qty) || 0;
       const rate = Number(line.Rate) || 0;
-      const disc = Number(line.Discount) || 0;
+      const disc = Number(line.DiscountPercent) || 0;
 
       const netrate = +(rate - (rate * disc / 100)).toFixed(2);
       line.NetRate = netrate;
 
       const netamount = +(qty * netrate).toFixed(2);
-      line.NetAmount = netamount;
+      
       line.LineSubTotal = netamount;
 
       const gst = Number(line.GstPercent) || 0;
@@ -147,7 +161,7 @@ const [filterDate, setFilterDate] = useState(
       line.GstValue = gstValue;
 
       // Correct split
-      if (gst > 0) {
+      {/*if (gst > 0) {
         // At edit time: supplier/company may be available or not
         line.IgstPercent = gst;
         line.IgstValue = gstValue;
@@ -155,7 +169,40 @@ const [filterDate, setFilterDate] = useState(
         line.CgstValue = 0;
         line.SgstPercent = 0;
         line.SgstValue = 0;
-      }
+      }*/}
+      if (gst > 0) {
+  if (isInterState()) {
+    // IGST only
+    line.IgstPercent = gst;
+    line.IgstValue = gstValue;
+
+    line.CgstPercent = 0;
+    line.CgstValue = 0;
+    line.SgstPercent = 0;
+    line.SgstValue = 0;
+  } else {
+    // CGST + SGST (split exactly to match gstValue with rounding)
+    const halfPct = gst / 2;
+    line.CgstPercent = halfPct;
+    line.SgstPercent = halfPct;
+    line.IgstPercent = 0;
+
+    const cg = Number((gstValue / 2).toFixed(2));   // first half rounded
+    const sg = +(gstValue - cg).toFixed(2);         // remainder so cg+sg = gstValue
+
+    line.CgstValue = cg;
+    line.SgstValue = sg;
+    line.IgstValue = 0;
+  }
+} else {
+  // zero GST — clear all
+  line.IgstPercent = 0;
+  line.IgstValue   = 0;
+  line.CgstPercent = 0;
+  line.CgstValue   = 0;
+  line.SgstPercent = 0;
+  line.SgstValue   = 0;
+}
 
       line.LineTotal = netamount + gstValue;
 
@@ -163,6 +210,67 @@ const [filterDate, setFilterDate] = useState(
       return copy;
     });
   };
+const addLine = () => setLines(prev => [...prev, blankLine()]);
+    const removeLine = (i) => {
+  setLines(prev => {
+    if (prev.length === 1) {
+      alert("At least one item is required in the invoice.");
+      return prev; // do NOT delete
+    }
+
+    return prev.filter((_, j) => j !== i);
+  });
+};
+// Whenever supplierInfo changes → recalc gst split for all rows
+useEffect(() => {
+  if (!supplierInfo || !company) return;
+
+  setLines(prev => {
+    return prev.map(line => {
+      const gst = Number(line.GstPercent) || 0;
+      const gstValue = +(line.LineSubTotal * gst / 100).toFixed(2);
+
+      if (gst <= 0) {
+        return {
+          ...line,
+          IgstPercent: 0, IgstValue: 0,
+          CgstPercent: 0, CgstValue: 0,
+          SgstPercent: 0, SgstValue: 0,
+          LineTotal: line.LineSubTotal
+        };
+      }
+
+      if (isInterState()) {
+        return {
+          ...line,
+          IgstPercent: gst,
+          IgstValue: gstValue,
+          CgstPercent: 0,
+          CgstValue: 0,
+          SgstPercent: 0,
+          SgstValue: 0,
+          LineTotal: line.LineSubTotal + gstValue
+        };
+      } else {
+        // Split exactly and ensure correct rounding
+        const halfPct = gst / 2;
+        const cg = +((gstValue / 2).toFixed(2));
+        const sg = +(gstValue - cg).toFixed(2);
+
+        return {
+          ...line,
+          IgstPercent: 0,
+          IgstValue: 0,
+          CgstPercent: halfPct,
+          CgstValue: cg,
+          SgstPercent: halfPct,
+          SgstValue: sg,
+          LineTotal: line.LineSubTotal + gstValue
+        };
+      }
+    });
+  });
+}, [supplierInfo, company]);
 
   // ---------- LOAD SELECTED INVOICE ----------
   const loadInvoice = () => {
@@ -183,6 +291,7 @@ const [filterDate, setFilterDate] = useState(
       PurchaseId: invoiceId,
       SupplierId: supplierId,
       InvoiceNo: invoiceNo,
+      InvoiceNum: invoiceNum,
       InvoiceDate: purchaseDate,
       TotalAmount: totals.total,
       TotalTax: totals.tax,
@@ -209,6 +318,7 @@ const [filterDate, setFilterDate] = useState(
       PurchaseId: invoiceId,
       SupplierId: supplierId,
       InvoiceNo: invoiceNo,
+      InvoiceNum: invoiceNum,
       InvoiceDate: purchaseDate,
       TotalAmount: totals.total,
       TotalTax: totals.tax,
@@ -236,7 +346,9 @@ const [filterDate, setFilterDate] = useState(
       if (msg.action === "GetAllSuppliers") {
         setSupplierList(msg.data || []);
       }
-
+ if (msg.action === "GetCompanyProfileResponse") {
+        setCompany(msg.profile);
+      }
       if (msg.Type === "GetItemsForPurchaseInvoice") {
         if (msg.Status === "Success") setItemList(msg.Data || []);
       }
@@ -270,8 +382,45 @@ const [filterDate, setFilterDate] = useState(
         setSupplierId(data.SupplierId);
         setPurchaseDate(data.InvoiceDate);
         setInvoiceNo(data.InvoiceNo);
+        setInvoiceNum(data.InvoiceNum);
         setNotes(data.Notes || "");
-        setLines(data.Items || []);
+        setLines((data.Items || []).map(item => ({
+  ItemId: item.ItemId,
+  ItemName: item.ItemName,
+  HsnCode: item.HsnCode,
+  BatchNo: item.BatchNo,
+  BatchNum: item.BatchNum,
+  Qty: item.Qty,
+  Rate: item.Rate,
+  DiscountPercent: item.DiscountPercent,
+  NetRate: item.NetRate,
+  LineSubTotal: item.LineSubTotal,
+  GstPercent: item.GstPercent,
+  GstValue: item.GstValue,
+  CgstPercent: item.CgstPercent,
+  CgstValue: item.CgstValue,
+  SgstPercent: item.SgstPercent,
+  SgstValue: item.SgstValue,
+  IgstPercent: item.IgstPercent,
+  IgstValue: item.IgstValue,
+  LineTotal: item.LineTotal,
+
+  // NEW DETAILS FIELDS
+  SalesPrice: item.SalesPrice || "",
+  Mrp: item.Mrp || "",
+  Description: item.Description || "",
+  MfgDate: item.MfgDate || "",
+  ExpDate: item.ExpDate || "",
+  ModelNo: item.ModelNo || "",
+  Brand: item.Brand || "",
+  Size: item.Size || "",
+  Color: item.Color || "",
+  Weight: item.Weight || "",
+  Dimension: item.Dimension || "",
+
+  showDetails: false
+})));
+
       }
 
       // --------------- SUPPLIER INFO ---------------
@@ -298,7 +447,8 @@ const [filterDate, setFilterDate] = useState(
     <div className="invoice-editor">
 
       {/* INVOICE SELECTION */}
-      <div className="top-section">
+     <div className="top-section row-flex">
+    <div className="print-section">
         <input
     type="date"
     value={filterDate}
@@ -317,7 +467,8 @@ const [filterDate, setFilterDate] = useState(
         <button className="btn-submit" onClick={loadInvoice}>
           Load Invoice
         </button>
-      </div>
+        </div>
+   
 
       {/* SUPPLIER SECTION */}
       <div className="customer-section">
@@ -348,89 +499,327 @@ const [filterDate, setFilterDate] = useState(
           </div>
         )}
       </div>
-
+   </div>
       {/* DATE + INVOICE NO */}
       <div className="form-row">
         <div className="form-group">
           <label>Purchase Date</label>
-          <input type="date" value={purchaseDate} onChange={e => setPurchaseDate(e.target.value)} />
+          <input type="date" readOnly value={purchaseDate} style={{ background: "#f1ecff", width:"150px" }} onChange={e => setPurchaseDate(e.target.value)} />
         </div>
 
         <div className="form-group">
-          <label>Invoice No</label>
-          <input type="text" value={invoiceNo} readOnly />
+          <label className="invoice-no-label">Invoice No</label>
+          <input type="text" value={invoiceNo} readOnly style={{ background: "#f1ecff", width:"150px" }} />
         </div>
       </div>
 
       {/* ITEM TABLE */}
-      <table className="data-table">
+      <table className="data-table" style={{ tableLayout: "fixed" }}>
         <thead>
           <tr>
-            <th>Item</th>
-            <th>Batch</th>
-            <th>HSN</th>
-            <th>Qty</th>
-            <th>Rate</th>
-            <th>Disc%</th>
-            <th>Net Rate</th>
-            <th>Net Amt</th>
-            <th>GST%</th>
-            <th>GST Amt</th>
-            <th>Total</th>
+            <th style={{ width: "200px" }}>Item</th>
+            <th style={{ width: "110px" }}>Batch</th>
+            <th style={{ width: "85px" }}>HSN</th>
+            <th style={{ width: "70px" }}>Qty</th>
+            <th style={{ width: "90px" }}>Rate</th>
+            <th style={{ width: "70px" }}>Disc%</th>
+            <th style={{ width: "90px" }}>Net Rate</th>
+            <th style={{ width: "100px" }}>Net Amt</th>
+            <th style={{ width: "70px" }}>GST%</th>
+            <th style={{ width: "90px" }}>GST Amt</th>
+              <th style={{ width: "70px" }}>CGST%</th>
+            <th style={{ width: "90px" }}>CGST Amt</th>
+             <th style={{ width: "70px" }}>SGST%</th>
+            <th style={{ width: "90px" }}>SGST Amt</th>
+             <th style={{ width: "70px" }}>IGST%</th>
+            <th style={{ width: "90px" }}>IGST Amt</th>
+            <th style={{ width: "100px" }}>Total</th>
+            <th></th>
           </tr>
         </thead>
 
         <tbody>
           {lines.map((l, i) => (
-            <tr key={i}>
-              <td>
-                <input
-                  value={l.ItemName}
-                  onChange={e => updateLine(i, "ItemName", e.target.value)}
-                />
-              </td>
-              <td><input value={l.BatchNo} readOnly /></td>
-              <td><input value={l.HsnCode} readOnly /></td>
+  <React.Fragment key={i}>
+    <tr>
+      <td>
+        <div className="cell-box">
+        <input
+          value={l.ItemName}
+          onChange={e => updateLine(i, "ItemName", e.target.value)}
+        />
+        </div>
+      </td>
+      <td><div className="cell-box"><input value={l.BatchNo} readOnly /></div></td>
+      <td><div className="cell-box"><input value={l.HsnCode} readOnly /></div></td>
 
-              <td>
-                <input
-                  value={l.Qty}
-                  onChange={e => updateLine(i, "Qty", e.target.value)}
-                />
-              </td>
+      <td>
+        <div className="cell-box">
+        <input value={l.Qty} onChange={e => updateLine(i, "Qty", e.target.value)} />
+      </div>
+      </td>
 
-              <td>
-                <input
-                  value={l.Rate}
-                  onChange={e => updateLine(i, "Rate", e.target.value)}
-                />
-              </td>
+      <td>
+        <div className="cell-box">
+        <input value={l.Rate} onChange={e => updateLine(i, "Rate", e.target.value)} />
+        </div>
+      </td>
 
-              <td>
-                <input
-                  value={l.Discount}
-                  onChange={e => updateLine(i, "Discount", e.target.value)}
-                />
-              </td>
+      <td>
+        <div className="cell-box">
+        <input value={l.DiscountPercent} onChange={e => updateLine(i, "DiscountPercent", e.target.value)} />
+        </div>
+      </td>
 
-              <td><input value={l.NetRate} readOnly /></td>
-              <td><input value={l.NetAmount} readOnly /></td>
-              <td><input value={l.GstPercent} readOnly /></td>
-              <td><input value={l.GstValue} readOnly /></td>
-              <td><input value={l.LineTotal} readOnly /></td>
-            </tr>
-          ))}
+      <td>
+        <div className="cell-box">
+          <input value={l.NetRate} readOnly />
+          </div>
+          </td>
+      <td>
+        <div className="cell-box">
+        <input value={l.LineSubTotal} readOnly />
+        </div>
+        </td>
+      <td>
+        <div className="cell-box">
+        <input value={l.GstPercent} readOnly />
+        </div>
+        </td>
+      <td>
+        <div className="cell-box">
+        <input value={l.GstValue} readOnly />
+        </div>
+        </td>
+      <td>
+        <div className="cell-box">
+        <input value={l.CgstPercent} readOnly />
+        </div>
+        </td>
+      <td>
+        <div className="cell-box">
+        <input value={l.CgstValue} readOnly />
+        </div>
+        </td>
+      <td>
+        <div className="cell-box">
+        <input value={l.SgstPercent} readOnly />
+        </div>
+        </td>
+      <td>
+        <div className="cell-box">
+        <input value={l.SgstValue} readOnly />
+        </div>
+        </td>
+      <td>
+        <div className="cell-box">
+        <input value={l.IgstPercent} readOnly />
+        </div>
+        </td>
+      <td>
+        <div className="cell-box">
+        <input value={l.IgstValue} readOnly />
+        </div>
+        </td>
+      <td>
+        <div className="cell-box">
+        <input value={l.LineTotal} readOnly />
+        </div>
+        </td>
+
+
+ <td style={{ width:"90px" }}>
+            
+            <button
+    className="invaction-btn invaction-add"
+   onClick={() => setDetailsModal({ open: true, index: i })}
+        >
+          {l.showDetails ? "Hide" : ""}
+             
+            
+        <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="invaction-icon"
+    >
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+    {/*Add Inventory*/}
+  </button>
+              <button
+              className="invaction-btn invaction-modify"
+              onClick={() => removeLine(i)}
+            >
+              X
+            </button>
+          </td>
+
+
+      {/*<td>
+        <button
+          onClick={() => setDetailsModal({ open: true, index: i })}
+        >
+          {l.showDetails ? "Hide" : "Details"}
+        </button>
+
+      </td>*/}
+    </tr>
+
+   {detailsModal.open && (
+  <div className="modal-overlay">
+    <div className="modal-box big-modal">
+
+      <h3>Item Details</h3>
+
+      <div className="details-modal-body">
+        {(() => {
+          const l = lines[detailsModal.index];
+          if (!l) return null;
+
+          return (
+            <div className="details-grid">
+
+                {/* Top summary bar */}
+                {/*<div className="item-info-bar">
+                  <div><strong>Item:</strong> {l.ItemName || "-"}</div>
+                  <div><strong>Batch:</strong> {l.BatchNo || "-"}</div>
+                </div>*/}
+
+                {/* ROWS START */}
+                <div className="detail-row">
+                  <label>Sales Price</label>
+                  <input type="number" value={l.SalesPrice || ""} 
+                         onChange={(e)=>updateLine(detailsModal.index, "SalesPrice", e.target.value)} />
+                </div>
+
+                <div className="detail-row">
+                  <label>MRP</label>
+                  <input type="number" value={l.Mrp || ""} 
+                         onChange={(e)=>updateLine(detailsModal.index, "Mrp", e.target.value)} />
+                </div>
+
+                <div className="detail-row">
+                  <label>Description</label>
+                  <input type="text" value={l.Description || ""} 
+                         onChange={(e)=>updateLine(detailsModal.index, "Description", e.target.value)} />
+                </div>
+
+                <div className="detail-row">
+                  <label>MFG Date</label>
+                  <input type="date" value={l.MfgDate ? l.MfgDate.slice(0,10) : ""} 
+                         onChange={(e)=>updateLine(detailsModal.index, "MfgDate", e.target.value)} />
+                </div>
+
+                <div className="detail-row">
+                  <label>EXP Date</label>
+                  <input type="date" value={l.ExpDate ? l.ExpDate.slice(0,10) : ""} 
+                         onChange={(e)=>updateLine(detailsModal.index, "ExpDate", e.target.value)} />
+                </div>
+
+                <div className="detail-row">
+                  <label>Model No</label>
+                  <input type="text" value={l.ModelNo || ""} 
+                         onChange={(e)=>updateLine(detailsModal.index, "ModelNo", e.target.value)} />
+                </div>
+
+                <div className="detail-row">
+                  <label>Brand</label>
+                  <input type="text" value={l.Brand || ""} 
+                         onChange={(e)=>updateLine(detailsModal.index, "Brand", e.target.value)} />
+                </div>
+
+                <div className="detail-row">
+                  <label>Size</label>
+                  <input type="text" value={l.Size || ""} 
+                         onChange={(e)=>updateLine(detailsModal.index, "Size", e.target.value)} />
+                </div>
+
+                <div className="detail-row">
+                  <label>Color</label>
+                  <input type="text" value={l.Color || ""} 
+                         onChange={(e)=>updateLine(detailsModal.index, "Color", e.target.value)} />
+                </div>
+
+                <div className="detail-row">
+                  <label>Weight</label>
+                  <input type="number" value={l.Weight || ""} 
+                         onChange={(e)=>updateLine(detailsModal.index, "Weight", e.target.value)} />
+                </div>
+
+                <div className="detail-row">
+                  <label>Dimension</label>
+                  <input type="text" value={l.Dimension || ""} 
+                         onChange={(e)=>updateLine(detailsModal.index, "Dimension", e.target.value)} />
+                </div>
+
+            </div>
+          );
+        })()}
+      </div>
+
+     <div className="modal-actions">
+
+  <button
+    className="btn-submit"
+    onClick={() => {
+      setLines(prev => [...prev]);   // force rerender
+      setDetailsModal({ open: false, index: null });
+    }}
+  >
+    Save & Proceed
+  </button>
+
+  <button
+    className="btn-cancel"
+    onClick={() => setDetailsModal({ open: false, index: null })}
+  >
+    Close
+  </button>
+
+</div>
+
+
+
+    </div>
+  </div>
+)}
+
+
+
+
+  </React.Fragment>
+))}
+
         </tbody>
       </table>
 
       {/* NOTES */}
       <div className="form-row">
-        <label>Notes</label>
-        <textarea
-          value={notes}
+         <div className="form-group" style={{ width: "100%" }}>
+    <label>Purchase Invoice Notes</label>
+    <textarea
+     value={notes}
           onChange={e => setNotes(e.target.value)}
           rows={3}
-        />
+      style={{
+        width: "100%",
+        padding: "8px",
+        borderRadius: "6px",
+        border: "1px solid #ccc",
+        resize: "vertical",
+        fontSize: "14px",
+      }}
+      placeholder="Enter additional notes or remarks (optional)"
+    />
+  </div>
+       
+        
       </div>
 
       {/* TOTALS */}
@@ -442,9 +831,12 @@ const [filterDate, setFilterDate] = useState(
       </div>
 
       {/* UPDATE BUTTON */}
+      <div className="button-row">
+  <button className="btn-submit small" onClick={addLine}>Add Item</button>
       <button className="btn-submit" onClick={saveUpdate}>
         Update Invoice
       </button>
+      </div>
 
       {/* CONFIRM MODAL */}
       {confirmModal && (
