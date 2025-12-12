@@ -19,7 +19,7 @@ export default function validateInvoiceForm(lines, customer, invoiceDate, totals
   // -----------------------------
   // 2. Customer State (required)
   // -----------------------------
-  if (!customer.State || customer.State.trim() === "") {
+  if (!customer.BillingState || customer.BillingState.trim() === "") {
     pushErr("customerState", "Customer state is required.");
   }
 

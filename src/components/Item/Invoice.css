@@ -911,6 +911,7 @@
   align-items: flex-end;
   gap: 20px;
 }
-
-
-
+.inv-error {
+  border: 2px solid red !important;
+  background: #ffe7e7;
+}

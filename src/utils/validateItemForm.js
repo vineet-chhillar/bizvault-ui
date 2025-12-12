@@ -1,7 +1,8 @@
 import {
   validateString,
   validateDropdown,
-  isValidInvoiceDate
+  isValidInvoiceDate,
+  validateDecimal
 } from "./validators";
 
 export function validateItemForm(data) {
@@ -16,6 +17,7 @@ export function validateItemForm(data) {
   const Description = data.Description || data.description;
   const UnitId = data.UnitId || data.unitid;
   const GstId = data.GstId || data.gstid;
+  const ReorderLevel = data.ReorderLevel || data.reorderlevel;
 
   // 1. Name
   let r = validateString(Name, "Item Name");
@@ -50,6 +52,15 @@ export function validateItemForm(data) {
   // 7. GST
   r = validateDropdown(GstId, "GST");
   if (!r.valid) errors.push({ field: "gstid", message: r.message });
+
+    r = validateDecimal(ReorderLevel, "ReorderLevel");
+  if (!r.valid) errors.push({ field: "reorderlevel", message: r.message });
+
+
+
+
+
+
 
   return errors;
 }

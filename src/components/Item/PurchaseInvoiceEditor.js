@@ -10,9 +10,9 @@ const blankLine = () => ({
   Unit: "",
   BatchNo: "",
   Qty: 1,
-  Rate: "",
+  Rate: 0,
   Discount: 0,
-NetRate:0,
+  NetRate: 0,
    netamount: 0,
   GstPercent: 0,
   GstValue: 0,
@@ -166,7 +166,7 @@ const toggleItemDetails = (i) => {
     // ---------- N E T   R A T E ----------
     let netrate = rate - (rate * discountPct / 100);   // numeric
     netrate = +netrate.toFixed(2);
-    line.netrate = netrate;                            // <-- assign to line
+    line.NetRate = netrate;                            // <-- assign to line
 
     // ---------- N E T   A M O U N T ----------
     const netamount = qty * netrate;
@@ -284,7 +284,7 @@ if (gstPct > 0) {
   Rate: Number(l.Rate),
   DiscountPercent: Number(l.Discount),
 
-  NetRate: Number(l.netrate) || 0,
+  NetRate: Number(l.NetRate) || 0,
   NetAmount: Number(l.netamount) || 0,
 
   GstPercent: Number(l.GstPercent) || 0,

@@ -8,6 +8,8 @@ import validateInvoiceForm from "../../utils/validateInvoiceForm";
 
 import { validateString, validateDecimal, validatePositiveDecimal, validateInteger,validateDropdown,isValidInvoiceDate} from "../../utils/validators";
 
+
+
 const blankLine = () => ({
   ItemId: 0,
   ItemName: "",
@@ -41,12 +43,13 @@ const [invoiceId, setInvoiceId] = useState(0);
   const [company, setCompany] = useState(null);
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().slice(0,10));
   const [customer, setCustomer] = useState({
-  Id: 0,
-  Name: "",
-  Phone: "",
-  State: "",
-  Address: ""
+  CustomerId: 0,
+  CustomerName: "",
+  Mobile: "",
+  BillingState: "",
+  BillingAddress: ""
 });
+
 const [validationErrors, setValidationErrors] = useState({});
 const [invoiceNum, setInvoiceNum] = useState("");
 const [invoiceFY, setInvoiceFY] = useState("");
@@ -91,7 +94,7 @@ const blockInvalidNumberKeys = (e) => {
 
 const isInterState = () => {
   const seller = company?.State?.toLowerCase().trim();
-  const buyer = customer?.State?.toLowerCase().trim();
+  const buyer = customer?.BillingState?.toLowerCase().trim();
 
   // If buyer has selected a state manually (new customer)
   if (buyer) {
@@ -334,6 +337,13 @@ if (copy[idx].BalanceBatchWise != null && Number(val) > Number(copy[idx].Balance
 
   const handleSave = async () => {
 
+
+if (!customer.CustomerId) {
+  alert("Please select a customer before saving invoice");
+  return;
+}
+
+
   const errors = validateInvoiceForm(lines, customer, invoiceDate, totals);
 
   if (errors.length > 0) {
@@ -367,11 +377,11 @@ if (copy[idx].BalanceBatchWise != null && Number(val) > Number(copy[idx].Balance
   
   // Fix bug: Customer object
   const Customer = {
-    Id: customer.Id || 0,
-    Name: customer.Name?.trim() || "",
-    Phone: customer.Phone?.trim() || "",
-    State: customer.State?.trim() || "",
-    Address: customer.Address?.trim() || ""
+    CustomerId: customer.CustomerId || 0,
+    CustomerName: customer.CustomerName?.trim() || "",
+    Mobile: customer.Mobile?.trim() || "",
+    BillingState: customer.BillingState?.trim() || "",
+    BillingAddress: customer.BillingAddress?.trim() || ""
   };
 
   // Prepare clean line items payload
@@ -444,13 +454,13 @@ useEffect(() => {
   if (!company.State) return;
 
   const seller = company.State;
-  const buyer  = customer.State || "";
+  const buyer  = customer.BillingState || "";
 
   setLines(prev =>
     prev.map(l => recomputeLineForState(l, seller, buyer))
   );
 
-}, [company, company?.State, customer.State]);
+}, [company, company?.State, customer.BillingState]);
 
   // listen feedback
   useEffect(() => {
@@ -571,27 +581,32 @@ if (msg?.Type === "GetItemsForInvoice") {
       return () => window.chrome.webview.removeEventListener("message", handler);
     }
   }, []);
-  useEffect(() => {
-  if (company?.State && !customer.State) {
-    setCustomer(prev => ({ ...prev, State: company.State }));
+ useEffect(() => {
+  if (!company?.State) return;
 
-    // recompute lines using default buyer + seller state
-    setLines(prevLines =>
-      prevLines.map(l => recomputeLineForState(l, company.State, company.State))
-    );
+  // Apply only on new invoice
+  if (customer.CustomerId === 0 && !customer.BillingState) {
+    setCustomer(prev => ({
+      ...prev,
+      BillingState: company.State
+    }));
   }
-}, [company, customer.State]);
+
+}, [company, customerList]); // 👈 THIS IS IMPORTANT
+
+
 
 
 
 const resetInvoiceForm = () => {
   setCustomer({
-    Id: 0,
-    Name: "",
-    Phone: "",
-    State: "",
-    Address: ""
-  });
+  CustomerId: 0,
+  CustomerName: "",
+  Mobile: "",
+  BillingState: company?.State || "", // auto default again
+  BillingAddress: ""
+});
+
 
   setCustomerSearch("");
 
@@ -654,114 +669,67 @@ type="button"
 
 </div>
 
-      <div className="customer-section">
+      {/* ================= CUSTOMER SECTION ================= */}
+<div className="customer-section">
   <label>Customer</label>
 
-  <input
-    type="text"
-    value={customerSearch}
-    onChange={(e) => {
-      setCustomerSearch(e.target.value);
-      setShowSuggestions(true);
-    }}
-    placeholder="Search customer by name or phone"
-  />
-
-  {showSuggestions && customerSearch.trim() !== "" && (
-    <div className="suggestions-box">
-      {customerList
-        .filter(c =>
-          (c.Name?.toLowerCase() || "").includes(customerSearch.toLowerCase()) ||
-          (c.Phone || "").includes(customerSearch)
-        )
-        .slice(0, 10)
-        .map(c => (
-          <div
-            key={c.Id}
-            className="suggestion-row"
-            onClick={() => {
-              // select customer
-              setCustomer({
-                Id: c.Id,
-                Name: c.Name,
-                Phone: c.Phone,
-                State: c.State,
-                Address: c.Address
-              });
-
-              setCustomerSearch(c.Name); // show name in search box
-              setShowSuggestions(false);
-            }}
-          >
-            {c.Name} — {c.Phone}
-          </div>
-        ))
-      }
-    </div>
-  )}
-
-  {/* Optional fields (editable) */}
-  <div className="customer-fields">
-    <input
-      type="text"
-      value={customer.Name}
-      onChange={(e) =>
-        setCustomer(prev => ({ ...prev, Name: e.target.value }))
-      }
-      placeholder="Customer Name (optional)"
-    />
-    <input
-      type="text"
-      value={customer.Phone}
-      onChange={(e) =>
-        setCustomer(prev => ({ ...prev, Phone: e.target.value }))
-      }
-      placeholder="Phone (optional)"
-    />
-
-
-    <input
-      type="text"
-      value={customer.Address}
-      onChange={(e) =>
-        setCustomer(prev => ({ ...prev, Address: e.target.value }))
-      }
-      placeholder="Address (optional)"
-    />
-
- <div className="form-group">
   <select
-  value={customer.State || ""}
+  id="CustomerId"
+  className={!customer.CustomerId ? "inv-error" : ""}
+  value={customer.CustomerId || ""}
   onChange={(e) => {
-    const newState = e.target.value;
+    const selectedId = Number(e.target.value);
 
-    // Update customer state
-    setCustomer(prev => ({ ...prev, State: newState }));
+    if (!selectedId || selectedId === 0 || isNaN(selectedId)) {
+      setCustomer({
+        CustomerId: 0,
+        CustomerName: "",
+        Mobile: "",
+        BillingAddress: "",
+        BillingState: company?.State || ""
+      });
+      return;
+    }
 
-    // seller state = company state
-    const sellerState = company?.State || "";
+    const selectedCustomer = customerList.find(c => c.CustomerId === selectedId);
 
-    // Recompute lines once only
-    setLines(prevLines =>
-      prevLines.map(l => recomputeLineForState(l, sellerState, newState))
-    );
-  }}
-  required
-  style={{
-    borderColor: !customer.State ? "purple" : "#ccc",
-    marginTop: "6px"
+    if (selectedCustomer) {
+      setCustomer({
+        CustomerId: selectedCustomer.CustomerId,
+        CustomerName: selectedCustomer.CustomerName,
+        Mobile: selectedCustomer.Mobile,
+        BillingAddress: selectedCustomer.BillingAddress,
+        BillingState: selectedCustomer.BillingState
+      });
+
+      const sellerState = company?.State || "";
+      const buyerState = selectedCustomer.BillingState || "";
+
+      setLines(prev =>
+        prev.map(l => recomputeLineForState(l, sellerState, buyerState))
+      );
+    }
   }}
 >
-  <option value="">-- Select State (required) --</option>
-  {INDIAN_STATES.map(s => (
-    <option key={s} value={s}>{s}</option>
+  <option value="">-- Select Customer --</option>
+  {customerList.map(c => (
+    <option key={c.CustomerId} value={c.CustomerId}>
+      {c.CustomerName} ({c.Mobile})
+    </option>
   ))}
 </select>
 
 
+  {customer.CustomerId !== 0 && (
+    <div className="supplier-details-box">
+      <div><b>Name:</b> {customer.CustomerName}</div>
+      <div><b>Mobile:</b> {customer.Mobile}</div>
+      <div><b>Address:</b> {customer.BillingAddress}</div>
+      <div><b>State:</b> {customer.BillingState}</div>
+    </div>
+  )}
 </div>
-</div>
-  </div>
+
 </div>
 
 
@@ -1055,7 +1023,14 @@ window.chrome.webview.postMessage({
      <div className="button-row">
       <div className="inventory-btns">
   <button className="btn-submit small" onClick={addLine}>Add Item</button>
-  <button className="btn-submit small" onClick={handleSave}>Save Invoice</button>
+  <button
+  disabled={!customer.CustomerId}
+  className="btn-submit small"
+  onClick={handleSave}
+>
+  Save Invoice
+</button>
+
   <button 
     className="btn-submit small"
     onClick={() => {

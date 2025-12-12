@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useLayoutEffect } from "react";
 import "./ItemForms.css";
 import ItemNavBar from "./ItemNavBar";
-import AddInventoryDetails from "./AddInventoryDetails";
-import BillingAppLayout from "../../BillingAppLayout";
+
 import { User } from "lucide-react";
-import EditItem from "./EditItem";
+
 import { validateItemForm } from "../../utils/validateItemForm";
 
 
@@ -35,15 +34,16 @@ const formatted =
     gstpercent: "",
     createdby: "",
     createdat: "",
+     reorderlevel: "",  // ⭐ NEW FIELD
   });
 
   const [errors, setErrors] = useState({});
   const [items, setItems] = useState([]);
-  const [selectedItem, setSelectedItem] = useState(null);
+  
 
-  const [itemDetails, setItemDetails] = useState([]);
-  const [selectedItemForDetails, setSelectedItemForDetails] = useState(null);
-  const [selectedItemName, setSelectedItemName] = useState("");
+  
+  
+  
 
  
 
@@ -53,65 +53,21 @@ const formatted =
 const [categories, setCategories] = useState([]);
 
 
-const [gst, setGst] = useState(null);
-const [gstRates, setGstRates] = useState([]);
 
   const [unit, setUnit] = useState(null);
 const [units, setUnits] = useState([]);
 
 
-  const fetchItemDetails = (itemId) => {
-  console.log("📤 Fetching inventory for item:", itemId);
-  setSelectedItemForDetails(itemId);
-  if (window.chrome?.webview) {
-    window.chrome.webview.postMessage({
-      Action: "GetItemDetails",
-     Payload: { Item_Id: itemId } // ✅ send object with property name item_id
-    });
-  }
-};
-
-
-useEffect(() => {
-  const handleInventoryUpdate = (e) => {
-    const { itemId } = e.detail;
-    fetchItemDetails(itemId);
-  };
-
-  document.addEventListener("InventoryUpdated", handleInventoryUpdate);
-  return () => document.removeEventListener("InventoryUpdated", handleInventoryUpdate);
-}, []);
+ 
 
 
 
 
 
-useEffect(() => {
- if (window.chrome?.webview) {
-    const handler = (event) => {
-      let msg = event.data;
-
-if (msg.Type === "GetItemDetails") {
-  console.log("📦 Data received from C#:", msg);
-  setItemDetails(msg.Data || []);
-}
 
 
-      try {
-        msg = typeof msg === "string" ? JSON.parse(msg) : msg;
-      } catch {}
 
-      if (msg.Type === "GetItemDetails" && msg.Status === "Success") {
-        setItemDetails(msg.Data || []);
-      }
-    };
 
-    window.chrome.webview.addEventListener("message", handler);
-        return () => {window.chrome.webview.removeEventListener("message", handler);
-
-    }
-  }
-}, []);
 
 useLayoutEffect(() => {
   // Check height + overflow for parent containers
@@ -246,6 +202,7 @@ const finalDateTime = `${dateFromCalendar} ${timePart}`;
        GstPercent: itemData.gstpercent,
       CreatedBy: user.email, 
       CreatedAt: new Date().toISOString(),
+       ReorderLevel: Number(itemData.reorderlevel),   // ⭐ NEW FIELD TO SEND
     };
 
     if (window.chrome?.webview) {
@@ -266,70 +223,15 @@ const finalDateTime = `${dateFromCalendar} ${timePart}`;
       gstid: "",
       createdby: "",
       createdat: "",
+      reorderlevel: "",   // ⭐ RESET THIS TOO
     });
   };
 
-  const handleAddInventoryClick = (item) => {
-    console.log("🧾 Selected item for inventory:", item.Id || item.id);
-    setSelectedItem({
-    id: item.Id || item.id // normalize property name
-    
-  });
-  };
+  
 
-  const handleInventorySave = (updatedItem) => {
-  console.log("🧾 Selected item for inventory:", updatedItem.Id);
-    const payload = {
-    item_id: updatedItem.Id, // ✅ link to the Item table (foreign key)
-    ...updatedItem.inventory
-  };
+  
 
 
-
-
-console.log("📤 Sending AddItemDetails:", {
-  Item_Id: updatedItem.Id,
-  ...updatedItem.inventory
-});
-
-  if (window.chrome?.webview) {
-    window.chrome.webview.postMessage({
-      Action: "AddItemDetails",
-      Payload: payload
-    });
-    console.log("📤 Sent AddItemDetails to C#:", payload);
-  } else {
-    console.warn("⚠️ WebView2 bridge not available");
-  }
-
-  setSelectedItem(null);
-   
-};
-
-// ✅ Function to call C# method GetItemNameById(int id)
- async function getItemNameById(itemId) {
-    return new Promise((resolve, reject) => {
-      try {
-        window.chrome.webview.postMessage({
-          Action: "GetItemNameById",
-          Payload: { id: itemId },
-        });
-
-        const handler = (event) => {
-          const msg = event.data;
-          if (msg.Action === "GetItemNameByIdResponse") {
-            setSelectedItemName(msg.Result);
-            window.chrome.webview.removeEventListener("message", handler);
-            resolve(msg.Result);
-          }
-        };
-
-        window.chrome.webview.addEventListener("message", handler);
-      } catch (error) {
-        reject(error);
-      }
-    });
-}
 //---------------------category
 
 // ✅ Function to call C# method
@@ -355,9 +257,19 @@ console.log("📤 Sending AddItemDetails:", {
         if (typeof msg === "string") msg = JSON.parse(msg);
 
         if (msg.Type === "GetCategoryById" && msg.Status === "Success") {
-          console.log("📩 Received category:", msg.Data);
-          setCategory(msg.Data);
-        }
+  const c = msg.Data;  // Shortcut
+
+  setCategory(c);
+
+  setItemData(prev => ({
+    ...prev,
+    categoryid: c.Id,
+    categoryname: c.CategoryName,
+    hsncode: c.DefaultHsn,             // ⬅ Auto-fill HSN
+    gstid: c.DefaultGstId,             // ⬅ Auto-fill GST ID
+    gstpercent: c.DefaultGstPercent    // ⬅ Auto-fill GST percent
+  }));
+}
       } catch (err) {
         console.error("Error parsing message:", err);
       }
@@ -457,66 +369,12 @@ console.log("📤 Sending AddItemDetails:", {
   }, []);
 //---------------------------------------gst
 // ✅ Fetch units from C# on load
-  useEffect(() => {
-    if (window.chrome?.webview) {
-      window.chrome.webview.postMessage({
-        Action: "GetAllGstList",
-        Payload: {},
-      });
-    }
-
-    const handler = (event) => {
-      try {
-        let msg = event.data;
-        if (typeof msg === "string") msg = JSON.parse(msg);
-
-        if (msg.Type === "GetAllGst" && msg.Status === "Success") {
-           console.log("📩 Received Gst:", msg.Data);
-          setGstRates(msg.Data || []);
-        }
-      } catch (err) {
-        console.error("Error parsing message:", err);
-      }
-    };
-
-    window.chrome?.webview?.addEventListener("message", handler);
-    return () => window.chrome?.webview?.removeEventListener("message", handler);
-  }, []);
+ 
 
 // ✅ Function to call C# method
-  const GetGSTById = (id) => {
-    if (window.chrome?.webview) {
-      const payload = { Id: parseInt(id) };
-
-      window.chrome.webview.postMessage({
-        Action: "GetGSTByIdResponse",
-        Payload: payload,
-      });
-
-      console.log("📤 Sent to C#: GetGSTByIdResponse", payload);
-    } else {
-      console.warn("⚠️ WebView bridge not available");
-    }
-  };
+  
   // ✅ Listen for C# response
-  useEffect(() => {
-    const handler = (event) => {
-      try {
-        let msg = event.data;
-        if (typeof msg === "string") msg = JSON.parse(msg);
 
-        if (msg.Type === "GetGSTById" && msg.Status === "Success") {
-          console.log("📩 Received Gst:", msg.Data);
-          setGst(msg.Data);
-        }
-      } catch (err) {
-        console.error("Error parsing message:", err);
-      }
-    };
-
-    window.chrome?.webview?.addEventListener("message", handler);
-    return () => window.chrome?.webview?.removeEventListener("message", handler);
-  }, []);
 
 // ✅ Function to call C# DeleteItemIfNoInventory
   const deleteItem = (itemId) => {
@@ -540,6 +398,28 @@ console.log("📤 Sending AddItemDetails:", {
       <form className="form-body" onSubmit={handleSubmit}>
         <div className="form-row">
         
+
+        {/* CATEGORY */}
+<div className="form-group">
+  <label>Category</label>
+  <select
+  name="categoryid"
+  value={itemData.categoryid}
+  onChange={(e) => {
+    handleChange(e);
+    getCategoryById(e.target.value); // ⬅ Fetch defaults from C#
+  }}
+>
+    <option value="">-- Select Category --</option>
+    {categories.map((cat) => (
+      <option key={cat.Id} value={String(cat.Id)}>
+        {cat.CategoryName}
+      </option>
+    ))}
+  </select>
+  {errors.categoryid && <div className="error">{errors.categoryid}</div>}
+</div>
+
         {/* ITEM NAME */}
 <div className="form-group">
   <label>Item Name</label>
@@ -569,35 +449,17 @@ console.log("📤 Sending AddItemDetails:", {
 
 {/* HSN CODE */}
 <div className="form-group">
-  <label>HSN/SAC Code</label>
+  <label>HSN Code</label>
   <input
     name="hsncode"
     value={itemData.hsncode}
-    onChange={handleChange}
-    placeholder="Enter hsn code"
-    className={errors.hsncode ? "error-input" : ""}
+    readOnly
+    className="readonly-input"
+    placeholder="Auto-filled from category"
   />
-  {errors.hsncode && <div className="error">{errors.hsncode}</div>}
 </div>
 
-{/* CATEGORY */}
-<div className="form-group">
-  <label>Category</label>
-  <select
-    name="categoryid"
-    value={itemData.categoryid}
-    onChange={handleChange}
-    className={errors.categoryid ? "error-input" : ""}
-  >
-    <option value="">-- Select Category --</option>
-    {categories.map((cat) => (
-      <option key={cat.Id} value={String(cat.Id)}>
-        {cat.CategoryName}
-      </option>
-    ))}
-  </select>
-  {errors.categoryid && <div className="error">{errors.categoryid}</div>}
-</div>
+
 
 {/* DATE */}
 <div className="form-group">
@@ -646,22 +508,31 @@ console.log("📤 Sending AddItemDetails:", {
 </div>
 
 {/* GST */}
+{/* GST (Read-only) */}
 <div className="form-group">
   <label>GST (%)</label>
-  <select
-    name="gstid"
-    value={itemData.gstid}
+  <input
+    name="gstpercent"
+    value={itemData.gstpercent}
+    readOnly
+    className="readonly-input"
+    placeholder="Auto-filled from category"
+  />
+</div>
+
+
+{/* REORDER LEVEL */}
+<div className="form-group">
+  <label>Reorder Level</label>
+  <input 
+    type="number"
+    name="reorderlevel"
+    value={itemData.reorderlevel}
     onChange={handleChange}
-    className={errors.gstid ? "error-input" : ""}
-  >
-    <option value="">-- Select GST --</option>
-    {gstRates.map((g) => (
-      <option key={g.Id} value={String(g.Id)}>
-        {g.GstPercent}%
-      </option>
-    ))}
-  </select>
-  {errors.gstid && <div className="error">{errors.gstid}</div>}
+    placeholder="Enter reorder level"
+    className={errors.reorderlevel ? "error-input" : ""}
+  />
+  {errors.reorderlevel && <div className="error">{errors.reorderlevel}</div>}
 </div>
 
 
@@ -692,6 +563,7 @@ console.log("📤 Sending AddItemDetails:", {
                 <th>Description</th>
                 <th>Unit</th>
                 <th>GST %</th>
+                <th>Reorder Level</th>
                 <th>Add/View Inventory</th>
                 
               </tr>
@@ -707,84 +579,14 @@ console.log("📤 Sending AddItemDetails:", {
                   <td>{i.Description}</td>
                   <td>{i.UnitName}</td>
                   <td>{i.GstPercent}</td>
+                  <td>{i.ReorderLevel}</td>
                 
                  <td>  
-  <button
-    className="invaction-btn invaction-add"
-    onClick={() => {
-      handleAddInventoryClick(i);
-      getItemNameById(i.Id);
-      fetchItemDetails(i.Id);
-    }}
-      >
-        <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="invaction-icon"
-    >
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-    {/*Add Inventory*/}
-  </button>
+  
  
  
-  <button
-    className="invaction-btn invaction-view"
-    onClick={() => {
-  fetchItemDetails(i.Id);
-  getItemNameById(i.Id);
-  setSelectedItem(null); // hides the AddInventoryDetails form
-}}   
-  >
-  <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="invaction-icon"
-    >
-      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-
-   {/* View Inventory*/} 
-  </button>
-             
-             <button
-  className="invaction-btn invaction-modify"
-  onClick={() => {
-     if (window.confirm("Are you sure you want to modify this item?")) {
-      {/*deleteItem(i.Id); // your delete function*/}
-    }
-  }}
->
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="invaction-icon small-icon"
-  >
-    {/* Pencil/Edit Icon */}
-    <path d="M12 20h9" />
-    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
-  </svg>
-
-  {/* Modify Inventory */}
-</button>
-
+  
+     
 <button
             className="invaction-btn invaction-delete"
             onClick={() => {
@@ -831,75 +633,8 @@ console.log("📤 Sending AddItemDetails:", {
 
       
 
-{/* --- EXISTING INVENTORY DETAILS SECTION --- */}
-{itemDetails.length > 0 && (
-  <div className="item-table-container">
-    <h3 className="item-table-title">
-      📦 Inventory Details for Item : {selectedItemName}
-    </h3>
-
-    <table className="item-table">
-      <thead>
-        <tr>
-          <th>Item Name</th>
-          <th>Supplier</th>
-          <th>Batch No</th>
-          <th>Ref/Invoice No</th>
-          <th>Date</th>
-          <th>Quantity</th>
-          <th>Purchase Price</th>
-
-          <th>Discount Percent</th>
-          <th>Net Purchase Price</th>
-          <th>Amount</th>
 
 
-          <th>Sales Price</th>
-          <th>MRP</th>
-          <th>Goods/Services</th>
-          <th>Description</th>
-          
-        </tr>
-      </thead>
-      <tbody>
-        {itemDetails.map((d) => (
-          <tr key={d.id}>
-            <td>{selectedItemName}</td>
-            <td>{d.SupplierName}</td>
-    
-    <td>{d.BatchNo}</td>
-    <td>{d.refno}</td>
-    <td>{d.Date}</td>
-    <td>{d.Quantity}</td>
-    <td>{d.PurchasePrice}</td>
-
-    <td>{d.DiscountPercent}</td>
-    <td>{d.NetPurchasePrice}</td>
-    <td>{d.Amount}</td>
-
-    <td>{d.SalesPrice}</td>
-    <td>{d.Mrp}</td>
-    <td>{d.GoodsOrServices}</td>
-    <td>{d.Description}</td>
-            
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-)}
-{/* --- CONDITIONAL INVENTORY FORM --- */}
-      {selectedItem && (
-        <AddInventoryDetails 
-          selectedItem={selectedItem}
-          selectedItemName={selectedItemName}
-          onSave={handleInventorySave}
-          onCancel={() => setSelectedItem(null)}
-          selectedItemForDetails={selectedItemForDetails}
-          itemDetails={itemDetails}
-        />
-       
-      )}
 
 
     </div>

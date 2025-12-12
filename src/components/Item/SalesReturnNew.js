@@ -338,7 +338,9 @@ export default function EditSalesReturn({ user }) {
       // Sales invoice dropdown
       if (msg.action === "GetSalesInvoiceNumbersByDateResponse") {
         // Expecting [{ Id, InvoiceNo }] etc.
+        
         setInvoiceList(msg.data || []);
+        console.log(invoiceList);
       }
 
       // Load Sales Invoice
@@ -373,15 +375,15 @@ export default function EditSalesReturn({ user }) {
             DiscountPercent: item.DiscountPercent,
             NetRate: item.NetRate,
             GstPercent: item.GstPercent,
-            GstValue: 0,
+            GstValue: item.GstValue,
             CgstPercent: item.CgstPercent,
-            CgstValue: 0,
+            CgstValue: item.CgstValue,
             SgstPercent: item.SgstPercent,
-            SgstValue: 0,
+            SgstValue: item.SgstValue,
             IgstPercent: item.IgstPercent,
-            IgstValue: 0,
-            LineSubTotal: 0,
-            LineTotal: 0,
+            IgstValue: item.IgstValue,
+            LineSubTotal: item.LineSubTotal,
+            LineTotal: item.LineTotal,
             Notes: ""
           }))
         );
@@ -390,7 +392,27 @@ export default function EditSalesReturn({ user }) {
       // Save Sales Return result
       if (msg.action === "SaveSalesReturnResponse") {
         if (msg.success) {
-          alert("Sales return saved. ReturnId = " + msg.newReturnId);
+          alert("Sales return saved. ReturnId = " + msg.returnId);
+          
+    // 🔥 CLEAR ALL STATES
+    setInvoiceId("");
+    setCustomerId("");
+    setCustomerName("");
+    setCustomerPhone("");
+    setCustomerState("");
+    setInvoiceDate(new Date().toISOString().slice(0, 10));
+    setInvoiceNo("");
+    setInvoiceNum("");
+    setNotes("");
+
+    setLines([blankLine()]);  // Reset table rows
+
+    setTotals({
+      subTotal: 0,
+      tax: 0,
+      total: 0,
+      roundOff: 0
+    });
         } else {
           alert("Failed to save sales return: " + msg.message);
         }
@@ -414,17 +436,17 @@ export default function EditSalesReturn({ user }) {
             onChange={e => setFilterDate(e.target.value)}
           />
 
-          <select
-            value={invoiceId}
-            onChange={e => setInvoiceId(e.target.value)}
-          >
-            <option value="">Select Sales Invoice</option>
-            {invoiceList.map(i => (
-              <option key={i.Id} value={i.Id}>
-                {i.InvoiceNo}
-              </option>
-            ))}
-          </select>
+         <select
+  value={invoiceId}
+  onChange={e => setInvoiceId(e.target.value)}
+>
+  <option value="">Select Sales Invoice</option>
+  {invoiceList.map(i => (
+    <option key={i.InvoiceNum} value={i.InvoiceNum}>
+      {i.InvoiceNo} - {i.CustomerName} - ₹{i.TotalAmount}
+    </option>
+  ))}
+</select>
 
           <button className="btn-submit" onClick={loadInvoice}>
             Load Invoice

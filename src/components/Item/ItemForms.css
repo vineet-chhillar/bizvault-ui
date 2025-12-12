@@ -519,6 +519,103 @@ h1.form-title, h2.form-title, h3.form-title {
   
 }
 
+
+/* reduce space between form and table */
+.account-table-container {
+  margin-top: 7px;
+  padding-top: 0px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* remove h3’s top margin entirely */
+.account-table-title {
+  color: #4e1d7c;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0px !important;
+  padding: 0 !important;
+}
+
+.account-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  table-layout: fixed;
+  border: 1px solid #ddd; /* ✅ outer border */
+}
+
+.account-table th,
+.account-table td {
+  border: 1px solid #ddd; /* ✅ inner grid lines */
+  padding: 4px 8px;
+  line-height: 1.2;
+  font-size: 0.95rem;
+  vertical-align: middle;
+}
+
+.account-table th {
+  background-color: #f4e9ff;
+  color: #4e1d7c;
+  font-weight: 600;
+  text-align: center;
+}
+
+.account-table tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+/* Optional: make border lines a bit darker for better visibility */
+.account-table th,
+.account-table td {
+  border-color: #ccc;
+}
+
+
+/* --- Custom Column Widths --- */
+/* Column 1: Name (wide) */
+.account-table th:nth-child(1),
+.account-table td:nth-child(1) {
+  width: 40%;
+  text-align: center;
+}
+
+/* Column 2: Type */
+.account-table th:nth-child(2),
+.account-table td:nth-child(2) {
+  width: 18%;
+  text-align: center;
+}
+
+/* Column 3: Side */
+.account-table th:nth-child(3),
+.account-table td:nth-child(3) {
+  width: 12%;
+  text-align: center;
+}
+
+/* Column 4: Opening Balance */
+.account-table th:nth-child(4),
+.account-table td:nth-child(4) {
+  width: 15%;
+  text-align: center;
+}
+
+/* Column 5: Actions (VERY COMPACT) */
+.account-table th:nth-child(5),
+.account-table td:nth-child(5) {
+  width: 10%;
+  text-align: center;
+  white-space: nowrap;    /* ensures actions stay small */
+  padding: 2px 4px;       /* compact padding */
+}
+
+
+
+
 .add-inv-btn {
   background-color: #4e1d7c;
   color: white;

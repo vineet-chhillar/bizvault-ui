@@ -20,7 +20,7 @@ function LoginPage({ onLogin }) {
   return (
     <div className="login-container">
       <div className="login-card">
-        <h1 className="login-title">DhanSutra</h1>
+        <h1 className="login-title">jghgfgghf</h1>
         <p className="login-subtitle">Sign in to your account</p>
 
         <form className="login-form" onSubmit={handleSubmit}>

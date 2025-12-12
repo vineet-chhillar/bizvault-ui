@@ -7,46 +7,66 @@ const EditItem = () => {
   const [items, setItems] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [formData, setFormData] = useState(null);
-const [category, setCategory] = useState(null);
-const [categories, setCategories] = useState([]);
 
+  const [categories, setCategories] = useState([]);
+  const [units, setUnits] = useState([]);
 
-const [gst, setGst] = useState(null);
-const [gstRates, setGstRates] = useState([]);
+  const [errors, setErrors] = useState({});
 
-  const [unit, setUnit] = useState(null);
-const [units, setUnits] = useState([]);
+  // -----------------------------------------------------------
+  // Format date for <input type="date">
+  // -----------------------------------------------------------
+  function formatDateForInput(dateStr) {
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    if (isNaN(d)) return "";
+    return d.toISOString().split("T")[0];
+  }
 
- const [errors, setErrors] = useState({});
+  // -----------------------------------------------------------
+  // Auto-fill HSN + GST on selecting category
+  // -----------------------------------------------------------
+  const getCategoryById = (id) => {
+    if (window.chrome?.webview) {
+      window.chrome.webview.postMessage({
+        Action: "GetCategoryById",
+        Payload: { Id: parseInt(id) },
+      });
+    }
+  };
 
-
- // 🟢 Add this at the top of AddInventoryDetails.js or CreateItem.js
-function formatDateForInput(dateStr) {
-  if (!dateStr) return "";
-
-  const d = new Date(dateStr);
-  if (isNaN(d)) return "";
-
-  return d.toISOString().split("T")[0]; // yyyy-mm-dd
-}
-
-
- // ✅ Handle incoming messages from C#
+  // -----------------------------------------------------------
+  // HANDLE INCOMING MESSAGES FROM C#
+  // -----------------------------------------------------------
   useEffect(() => {
     const handleMessage = (event) => {
       let data = event.data;
+
       try {
         if (typeof data === "string") data = JSON.parse(data);
       } catch {
-        // ignore parse errors for non-JSON messages
+        return;
       }
 
+      // Search results
       if (data.action === "searchItemsResponse") {
         setItems(data.items);
       }
 
-  
+      // Auto-fill on category selection
+      if (data.Type === "GetCategoryById" && data.Status === "Success") {
+        const c = data.Data;
 
+        setFormData((prev) => ({
+          ...prev,
+          CategoryId: c.Id,
+          HsnCode: c.DefaultHsn,
+          GstId: c.DefaultGstId,
+          GstPercent: c.DefaultGstPercent,
+        }));
+      }
+
+      // Update response
       if (data.action === "updateItem") {
         alert(data.message);
         if (data.success) {
@@ -55,99 +75,87 @@ function formatDateForInput(dateStr) {
         }
       }
 
-      // ✅ Handle combined master responses
+      // Category master
       if (data.Type === "GetCategoryList" && data.Status === "Success") {
-        console.log("📩 Received Categories:", data.Data);
         setCategories(data.Data || []);
       }
 
+      // Unit master
       if (data.Type === "GetAllUnits" && data.Status === "Success") {
-        console.log("📩 Received Units:", data.Data);
         setUnits(data.Data || []);
-      }
-
-      if (data.Type === "GetAllGst" && data.Status === "Success") {
-        console.log("📩 Received GST Rates:", data.Data);
-        setGstRates(data.Data || []);
       }
     };
 
-    // ✅ Add listener
-    if (window.chrome && window.chrome.webview) {
+    // Add listener
+    if (window.chrome?.webview) {
       window.chrome.webview.addEventListener("message", handleMessage);
 
-      // ✅ Send all 3 master requests together
-      window.chrome.webview.postMessage({
-        Action: "GetCategoryList",
-        Payload: {},
-      });
-      window.chrome.webview.postMessage({
-        Action: "GetAllUnitsList",
-        Payload: {},
-      });
-      window.chrome.webview.postMessage({
-        Action: "GetAllGstList",
-        Payload: {},
-      });
+      // Fetch masters
+      window.chrome.webview.postMessage({ Action: "GetCategoryList", Payload: {} });
+      window.chrome.webview.postMessage({ Action: "GetAllUnitsList", Payload: {} });
+
+      // Load items
+      handleSearch("");
     }
 
-    handleSearch(""); // load items initially
-
-    // ✅ Cleanup listener
     return () => {
-      if (window.chrome && window.chrome.webview) {
-        window.chrome.webview.removeEventListener("message", handleMessage);
-      }
+      window.chrome?.webview?.removeEventListener("message", handleMessage);
     };
   }, []);
 
-  // ✅ Search request
+  // -----------------------------------------------------------
+  // Search items
+  // -----------------------------------------------------------
   const handleSearch = (query) => {
     setSearchQuery(query);
-    if (window.chrome && window.chrome.webview) {
+
+    if (window.chrome?.webview) {
       window.chrome.webview.postMessage({
         action: "searchItems",
-        payload: { query: query },
+        payload: { query },
       });
     }
   };
 
-const handleChange = (e) => {
-  const { name, value } = e.target;
+  // -----------------------------------------------------------
+  // Handle edit form changes
+  // -----------------------------------------------------------
+  const handleChange = (e) => {
+    const { name, value } = e.target;
 
-  setFormData(prev => ({
-    ...prev,
-    [name]: name === "Date" ? formatDateForInput(value) : value
-  }));
-};
+    setFormData((prev) => ({
+      ...prev,
+      [name]:
+        name === "ReorderLevel"
+          ? Number(value)
+          : name === "Date"
+          ? formatDateForInput(value)
+          : value,
+    }));
+  };
 
-
-
-
-
-
-  // ✅ Save updated item
+  // -----------------------------------------------------------
+  // Save updated item
+  // -----------------------------------------------------------
   const handleSave = (e) => {
-     e.preventDefault(); // prevents accidental page reload
+    e.preventDefault();
     if (!formData) return;
 
-    console.log(formData.CategoryName);
     const itemErrors = validateItemForm(formData);
 
-if (itemErrors.length > 0) {
-  const map = {};
-  itemErrors.forEach(e => (map[e.field] = e.message));
-  setErrors(map);
-  return;
-}
- 
-console.log("📩 item id is:", formData.Id +","+formData.CategoryName+""+formData.categoryId);
-    if (window.chrome && window.chrome.webview) {
+    if (itemErrors.length > 0) {
+      const map = {};
+      itemErrors.forEach((e) => (map[e.field] = e.message));
+      setErrors(map);
+      return;
+    }
+
+    if (window.chrome?.webview) {
       window.chrome.webview.postMessage({
         action: "updateItem",
         payload: {
           id: formData.Id,
-          hsncode:formData.HsnCode,
+          hsncode: formData.HsnCode,
           name: formData.Name,
           itemcode: formData.ItemCode,
           categoryid: formData.CategoryId,
@@ -155,58 +163,63 @@ console.log("📩 item id is:", formData.Id +","+formData.CategoryName+""+formDa
           description: formData.Description,
           unitid: formData.UnitId,
           gstid: formData.GstId,
+          reorderlevel: Number(formData.ReorderLevel),
         },
       });
     }
   };
-// ✅ Function to call C# DeleteItemIfNoInventory
+
+  // -----------------------------------------------------------
+  // Delete item
+  // -----------------------------------------------------------
   const deleteItem = (itemId) => {
+    if (!window.chrome?.webview) return;
+
     window.chrome.webview.postMessage({
       action: "deleteItem",
-      Payload: { Item_Id: FormData.itemId }
-      
+      Payload: { Item_Id: itemId },
     });
   };
 
-
+  // -----------------------------------------------------------
+  // UI Rendering
+  // -----------------------------------------------------------
   return (
-<div className="inventory-form">
-
-
+    <div className="inventory-form">
       <div className="item-nav-wrapper">
-                  <ItemNavBar />
-            </div>
-     
+        <ItemNavBar />
+      </div>
 
-      {/* 🔍 Search + Item Table */}
+      {/* Search + table */}
       <div className="table-container">
         <div className="table-header">
-          
           <h3 className="table-title">📋 Items List</h3>
+
           <input
             type="text"
-            placeholder="🔍 Search by name, code, or description..."
+            placeholder="🔍 Search items..."
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
             className="search-box"
           />
         </div>
-        <form className="inventory-body" onSubmit={handleSave}></form>
 
         <table className="data-table">
           <thead>
             <tr>
               <th>Name</th>
               <th>Item Code</th>
-              <th>HSN/SAC Code</th>
+              <th>HSN</th>
               <th>Category</th>
               <th>Date</th>
               <th>Description</th>
               <th>Unit</th>
-              <th>GST (%)</th>
+              <th>GST %</th>
+              <th>Reorder</th>
               <th>Actions</th>
             </tr>
           </thead>
+
           <tbody>
             {items.length > 0 ? (
               items.map((i) => (
@@ -219,81 +232,44 @@ console.log("📩 item id is:", formData.Id +","+formData.CategoryName+""+formDa
                   <td>{i.Description}</td>
                   <td>{i.UnitName}</td>
                   <td>{i.GstPercent}</td>
+                  <td>{i.ReorderLevel}</td>
+
                   <td>
-                    
-                    
-                    
+                    {/* Edit */}
+                    <button
+                      className="invaction-btn invaction-modify"
+                      onClick={() =>
+                        setFormData({
+                          ...i,
+                          CategoryId: String(i.CategoryId),
+                          UnitId: String(i.UnitId),
+                          GstId: String(i.GstId),
+                          GstPercent: i.GstPercent,
+                          Date: formatDateForInput(i.Date),
+                          ReorderLevel: i.ReorderLevel || "",
+                        })
+                      }
+                    >
+                      ✏️
+                    </button>
 
-            <button
-  className="invaction-btn invaction-modify"
-  onClick={() => {
-  console.log("DEBUG: Item clicked:", i);
-  setFormData({
-    ...i,
-    CategoryId: String(i.CategoryId),
-    UnitId: String(i.UnitId),
-    GstId: String(i.GstId),
-    Date: formatDateForInput(i.Date),
-  });
-}}
->
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="invaction-icon small-icon"
-  >
-    {/* Pencil/Edit Icon */}
-    <path d="M12 20h9" />
-    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
-  </svg>
-
-  {/* Modify Inventory */}
-</button>
-
-
-                        <button
-            className="invaction-btn invaction-delete"
-            onClick={() => {
-              if (
-                window.confirm(
-                  `Are you sure you want to delete "${i.Name}"?`
-                )
-              ) {
-                deleteItem(i.itemId);
-              }
-            }}
-          >
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="invaction-icon small-icon"
-  >
-    {/* Trash/Delete Icon */}
-    <polyline points="3 6 5 6 21 6" />
-    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m5 0V4a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v2" />
-    <line x1="10" y1="11" x2="10" y2="17" />
-    <line x1="14" y1="11" x2="14" y2="17" />
-  </svg>
-
-  {/* Delete Inventory */}
-</button>
+                    {/* Delete */}
+                    <button
+                      className="invaction-btn invaction-delete"
+                      onClick={() =>
+                        window.confirm(`Delete "${i.Name}"?`) &&
+                        deleteItem(i.Id)
+                      }
+                    >
+                      🗑️
+                    </button>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="8" style={{ textAlign: "center" }}>
-                  No matching items found.
+                <td colSpan="10" style={{ textAlign: "center" }}>
+                  No matching items.
                 </td>
               </tr>
             )}
@@ -301,165 +277,141 @@ console.log("📩 item id is:", formData.Id +","+formData.CategoryName+""+formDa
         </table>
       </div>
 
-      {/* ✏️ Edit Form Below Table */}
-       
+      {/* Edit form */}
       {formData && (
-  <div className="inventory-body">
-    <h3 className="inventory-title">
-      🏷️ Edit Item Details : <span>{formData.Name}</span>
-    </h3>
+        <div className="inventory-body">
+          <h3 className="inventory-title">
+            🏷️ Edit Item: <span>{formData.Name}</span>
+          </h3>
 
-    <div className="form-row-horizontal">
-      {/* Name */}
-      <div className="form-group">
-        <label>Name</label>
-        <input
-          type="text"
-          name="Name"
-          value={formData.Name || ""}
-          onChange={handleChange}
-          className={errors.name ? "error-input" : ""}
-        />
-        {errors.Name && <div className="error">{errors.Name}</div>}
-      </div>
+          <div className="form-row-horizontal">
+            {/* Name */}
+            <div className="form-group">
+              <label>Name</label>
+              <input
+                name="Name"
+                value={formData.Name || ""}
+                onChange={handleChange}
+              />
+            </div>
 
-      {/* Item Code */}
-      <div className="form-group">
-        <label>Item Code</label>
-        <input
-          type="text"
-          name="ItemCode"
-          value={formData.ItemCode || ""}
-          onChange={handleChange}
-           className={errors.itemcode ? "error-input" : ""}
-        />
-        {errors.ItemCode && <div className="error">{errors.ItemCode}</div>}
-      </div>
+            {/* Code */}
+            <div className="form-group">
+              <label>Item Code</label>
+              <input
+                name="ItemCode"
+                value={formData.ItemCode || ""}
+                onChange={handleChange}
+              />
+            </div>
 
-{/* HSN Code */}
-      <div className="form-group">
-        <label>HSN/SAC Code</label>
-        <input
-          type="text"
-          name="HsnCode"
-          value={formData.HsnCode || ""}
-          onChange={handleChange}
-           className={errors.hsncode ? "error-input" : ""}
-        />
-        {errors.HsnCode && <div className="error">{errors.HsnCode}</div>}
-      </div>
+            {/* HSN */}
+            <div className="form-group">
+              <label>HSN</label>
+              <input
+                name="HsnCode"
+                value={formData.HsnCode || ""}
+                readOnly
+              />
+            </div>
 
-      {/* Category */}
-      <div className="form-group">
-        <label>Category</label>
-      <select
-  name="CategoryId"
-  value={formData.CategoryId ? String(formData.CategoryId) : ""}
-  onChange={handleChange}
-  
->
-  <option value="">-- Select Category --</option>
+            {/* Category */}
+            <div className="form-group">
+              <label>Category</label>
+              <select
+                name="CategoryId"
+                value={formData.CategoryId || ""}
+                onChange={(e) => {
+                  handleChange(e);
+                  getCategoryById(e.target.value);
+                }}
+              >
+                <option value="">-- Select --</option>
+                {categories.map((c) => (
+                  <option key={c.Id} value={c.Id}>
+                    {c.CategoryName}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-  {categories.map((cat) => (
-    <option key={cat.Id} value={String(cat.Id)}>
-      {cat.CategoryName}
-    </option>
-  ))}
-</select>
-{errors.CategoryId && <div className="error">{errors.CategoryId}</div>}
-</div>
+            {/* Date */}
+            <div className="form-group">
+              <label>Date</label>
+              <input
+                type="date"
+                name="Date"
+                value={formData.Date || ""}
+                onChange={handleChange}
+              />
+            </div>
 
-      {/* Date */}
-      <div className="form-group">
-        <label>Date</label>
-        <input
-          type="date"
-          name="Date"
-          value={formData.Date || ""}
-          onChange={handleChange}
-          className={errors.date ? "error-input" : ""}
-        />
-        {errors.Date && <div className="error">{errors.Date}</div>}
-      </div>
+            {/* Description */}
+            <div className="form-group">
+              <label>Description</label>
+              <input
+                name="Description"
+                value={formData.Description || ""}
+                onChange={handleChange}
+              />
+            </div>
 
-      {/* Description */}
-      <div className="form-group">
-        <label>Description</label>
-        <input
-          type="text"
-          name="Description"
-          value={formData.Description || ""}
-          onChange={handleChange}
-          className={errors.description ? "error-input" : ""}
-        />
-        {errors.Description && <div className="error">{errors.Description}</div>}
-      </div>
+            {/* Unit */}
+            <div className="form-group">
+              <label>Unit</label>
+              <select
+                name="UnitId"
+                value={formData.UnitId || ""}
+                onChange={handleChange}
+              >
+                <option value="">-- Select --</option>
+                {units.map((u) => (
+                  <option key={u.Id} value={u.Id}>
+                    {u.UnitName}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-      {/* Unit */}
-      <div className="form-group">
-        <label>Unit</label>
-     <select
-  name="UnitId"
-  value={formData.UnitId ? String(formData.UnitId) : ""}
-  onChange={handleChange}
-  
->
-  <option value="">-- Select Unit --</option>
+            {/* GST - readonly */}
+            <div className="form-group">
+              <label>GST (%)</label>
+              <input
+                name="GstPercent"
+                value={formData.GstPercent || ""}
+                readOnly
+                className="readonly-input"
+              />
+            </div>
 
-  {units.map((u) => (
-    <option key={u.Id} value={String(u.Id)}>
-      {u.UnitName}
-    </option>
-  ))}
-</select>
-{errors.UnitId && <div className="error">{errors.UnitId}</div>}
-</div>
+            {/* Reorder */}
+            <div className="form-group">
+              <label>Reorder Level</label>
+              <input
+                type="number"
+                name="ReorderLevel"
+                value={formData.ReorderLevel || ""}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
 
-      {/* GST */}
-      <div className="form-group">
-        <label>GST (%)</label>
-        <select
-  name="GstId"
-  value={formData.GstId ? String(formData.GstId) : ""}
-  onChange={handleChange}
-  
->
-  <option value="">-- Select GST --</option>
+          {/* Buttons */}
+          <div className="inventory-btns" style={{ marginTop: "0" }}>
+            <button className="btn-submit small" onClick={handleSave}>
+              💾 Save
+            </button>
 
-  {gstRates.map((g) => (
-    <option key={g.Id} value={String(g.Id)}>
-      {g.GstPercent}%
-    </option>
-  ))}
-</select>
-{errors.GstId && <div className="error">{errors.GstId}</div>}
-
-      </div>
+            <button
+              className="btn-submit small"
+              onClick={() => setFormData(null)}
+            >
+              ❌ Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
-
-    <div className="form-actions" style={{ marginTop: "0px" }}>
-       <div className="inventory-btns">
-      <button
-        className="btn-submit small"
-        onClick={handleSave}
-        disabled={!formData}
-      >
-        💾 Save Changes
-      </button>
-      <button
-        className="btn-submit small"
-        onClick={() => setFormData(null)}
-      >
-        ❌ Cancel
-      </button>
-  
-      </div>
-    </div>
-  </div>
-)}
-
-    </div>
-    
   );
 };
 

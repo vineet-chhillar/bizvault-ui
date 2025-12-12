@@ -419,6 +419,12 @@ AvailableQty: item.AvailableQty || 0,
       if (msg.action === "SavePurchaseReturnResponse") {
   if (msg.success) {
     alert("Purchase return saved. ReturnId = " + msg.newReturnId);
+    setLines([ blankLine() ]);
+    setNotes("");
+     setPurchaseDate("");   // blank
+   setInvoiceNo("");      // blank
+   
+   setSupplierId("");
   } else {
     alert("Failed to save return: " + msg.message);
   }
@@ -510,6 +516,7 @@ AvailableQty: item.AvailableQty || 0,
             <th style={{ width: "110px" }}>Batch</th>
             <th style={{ width: "85px" }}>HSN</th>
             <th style={{ width: "70px" }}>Available Qty</th>
+            <th style={{ width: "70px" }}>Return Qty</th>
             <th style={{ width: "90px" }}>Rate</th>
             <th style={{ width: "70px" }}>Disc%</th>
             <th style={{ width: "90px" }}>Net Rate</th>
@@ -544,7 +551,13 @@ AvailableQty: item.AvailableQty || 0,
 
       <td>
         <div className="cell-box">
-        <input value={l.AvailableQty} onChange={e => updateLine(i, "Qty", e.target.value)} />
+        <input value={l.AvailableQty} readOnly onChange={e => updateLine(i, "Qty", e.target.value)} />
+      </div>
+      </td>
+
+      <td>
+        <div className="cell-box">
+        <input value={l.Qty} onChange={e => updateLine(i, "Qty", e.target.value)} />
       </div>
       </td>
 
