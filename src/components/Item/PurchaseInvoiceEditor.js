@@ -10,9 +10,9 @@ const blankLine = () => ({
   Unit: "",
   BatchNo: "",
   Qty: 1,
-  Rate: 0,
+  Rate: "",
   Discount: 0,
-  NetRate: 0,
+NetRate:0,
    netamount: 0,
   GstPercent: 0,
   GstValue: 0,
@@ -54,6 +54,45 @@ const [backupLine, setBackupLine] = useState(null);
 const [printDate, setPrintDate] = useState(
   new Date().toISOString().slice(0, 10)
 );
+const [supplierDraft, setSupplierDraft] = useState({
+  SupplierName: "",
+   Mobile: "",
+  GSTIN: ""
+});
+const modalRef = React.useRef(null);
+const dragRef = React.useRef({
+  startX: 0,
+  startY: 0,
+  x: 0,
+  y: 0,
+  dragging: false
+});
+const onMouseDown = (e) => {
+  dragRef.current.dragging = true;
+  dragRef.current.startX = e.clientX - dragRef.current.x;
+  dragRef.current.startY = e.clientY - dragRef.current.y;
+
+  document.addEventListener("mousemove", onMouseMove);
+  document.addEventListener("mouseup", onMouseUp);
+};
+
+const onMouseMove = (e) => {
+  if (!dragRef.current.dragging) return;
+
+  dragRef.current.x = e.clientX - dragRef.current.startX;
+  dragRef.current.y = e.clientY - dragRef.current.startY;
+
+  if (modalRef.current) {
+    modalRef.current.style.transform =
+      `translate(${dragRef.current.x}px, ${dragRef.current.y}px)`;
+  }
+};
+
+const onMouseUp = () => {
+  dragRef.current.dragging = false;
+  document.removeEventListener("mousemove", onMouseMove);
+  document.removeEventListener("mouseup", onMouseUp);
+};
 
   const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().slice(0,10));
   const [supplierList, setSupplierList] = useState([]);
@@ -77,6 +116,36 @@ rowRefs.current = lines.map((_, i) => rowRefs.current[i] ?? React.createRef());
     total: 0,
     roundOff: 0
   });
+
+
+const isValidMobile = (val) =>
+  /^[6-9]\d{9}$/.test(val.trim());
+
+const isValidGSTIN = (val) =>
+  /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(val.trim());
+const [supplierErrors, setSupplierErrors] = useState({});
+const validateSupplierDraft = () => {
+  const errors = {};
+
+  // NAME (mandatory)
+  if (!supplierDraft.SupplierName.trim()) {
+    errors.SupplierName = "Supplier name is required";
+  }
+
+
+  // MOBILE (optional but validated)
+  if (supplierDraft.Mobile.trim() && !isValidMobile(supplierDraft.Mobile)) {
+    errors.Mobile = "Enter valid 10-digit mobile number";
+  }
+
+  // GSTIN (optional but validated)
+  if (supplierDraft.GSTIN.trim() && !isValidGSTIN(supplierDraft.GSTIN.toUpperCase())) {
+    errors.GSTIN = "Enter valid GSTIN";
+  }
+
+  setSupplierErrors(errors);
+  return Object.keys(errors).length === 0;
+};
 
 const [invoiceNum, setInvoiceNum] = useState("");
 const [invoiceFY, setInvoiceFY] = useState("");
@@ -256,6 +325,7 @@ if (gstPct > 0) {
   let sub = 0, tax = 0;
   lines.forEach(l => {
     const netamt = Number(l.netamount) || 0;         // use netamount (Qty * netrate)
+    
     const g = Number(l.GstValue) || 0;               // gst already computed on netamount
     sub += netamt;
     tax += g;
@@ -269,11 +339,17 @@ if (gstPct > 0) {
   // ========= SAVE PURCHASE INVOICE =========
   const saveInvoice = () => {
 
-    if (!supplierInfo) {
-      alert("Select a supplier");
-      return;
-    }
-
+    
+ if (!supplierId && !supplierDraft.SupplierName.trim()) {
+  alert("Supplier name is required");
+  return;
+}
+if (!supplierId) {
+  const isValid = validateSupplierDraft();
+    
+  if (!isValid) return;
+}
+ 
     const Items = lines.map(l => ({
   ItemId: l.ItemId,
   ItemName: l.ItemName,
@@ -319,7 +395,9 @@ if (gstPct > 0) {
     window.chrome.webview.postMessage({
       Action: "SavePurchaseInvoice",
       Payload: {
-        SupplierId: supplierInfo.SupplierId,
+        SupplierId: supplierId ? Number(supplierId) : 0,
+SupplierDraft: supplierId ? null : supplierDraft,
+
        InvoiceNum: Number(invoiceNum),
     InvoiceNo: invoiceNo,
         InvoiceDate: purchaseDate,
@@ -559,16 +637,29 @@ setPdfPath(url);
 
   <select
     value={supplierId}
-    onChange={(e) => {  
-      const id = e.target.value;
-      setSupplierId(id);
+    onChange={(e) => {
+  const id = e.target.value;
+  setSupplierId(id);
 
-      window.chrome.webview.postMessage({
-        Action: "GetSupplierById",
-        Payload: { SupplierId: id }
-      });
+  if (id) {
+    // Existing supplier selected
+    setSupplierDraft({
+      SupplierName: "",
+      State: "",
+      Mobile: "",
+      GSTIN: ""
+    });
 
-    }}
+    window.chrome.webview.postMessage({
+      Action: "GetSupplierById",
+      Payload: { SupplierId: id }
+    });
+  } else {
+    // New supplier mode
+    setSupplierInfo(null);
+  }
+}}
+
   >
     <option value="">Select Supplier</option>
     {supplierList.map(s => (
@@ -588,6 +679,50 @@ setPdfPath(url);
       <div><b>Balance:</b> ₹{supplierInfo.Balance}</div>
   </div>
 )}
+{!supplierId && (
+  <div className="supplier-inline-box">
+
+    <input
+      type="text"
+      placeholder="Supplier Name *"
+      value={supplierDraft.SupplierName}
+      onChange={e =>
+        setSupplierDraft(d => ({ ...d, SupplierName: e.target.value }))
+      }
+    />
+    {supplierErrors.SupplierName && (
+      <div className="field-error">{supplierErrors.SupplierName}</div>
+    )}
+
+    
+
+    <input
+      type="text"
+      placeholder="Mobile"
+      value={supplierDraft.Mobile}
+      onChange={e =>
+        setSupplierDraft(d => ({ ...d, Mobile: e.target.value }))
+      }
+    />
+    {supplierErrors.Mobile && (
+      <div className="field-error">{supplierErrors.Mobile}</div>
+    )}
+
+    <input
+      type="text"
+      placeholder="GSTIN"
+      value={supplierDraft.GSTIN}
+      onChange={e =>
+        setSupplierDraft(d => ({ ...d, GSTIN: e.target.value.toUpperCase() }))
+      }
+    />
+    {supplierErrors.GSTIN && (
+      <div className="field-error">{supplierErrors.GSTIN}</div>
+    )}
+
+  </div>
+)}
+
 
 </div>
 </div>
@@ -845,16 +980,7 @@ setPdfPath(url);
     {/*Add Inventory*/}
   </button>
             
-            {/*<button
-              className="invaction-btn"
-              style={{ background: "#2980b9", color: "white", marginBottom: "4px" }}
-              onClick={() => {
-    setBackupLine({ ...lines[i] });   // store original line
-    toggleItemDetails(i);             // open modal
-}}
-            >
-              {l.showDetails ? "Hide" : "More"}
-            </button>*/}
+            
 
             <button
               className="invaction-btn invaction-modify"
@@ -881,9 +1007,9 @@ setPdfPath(url);
 {activeDetailIndex !== null && (
   <div className="details-overlay">
 
-    <div className="details-modal">
+    <div className="details-modal" ref={modalRef}>
 
-      <div className="details-modal-header">
+      <div  className="details-modal-header"  onMouseDown={onMouseDown}  style={{ cursor: "move" }}>
         <strong>Add Additional Details For Item</strong>
        <div className="details-modal-actions">
 

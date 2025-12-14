@@ -19,7 +19,8 @@ const blankLine = () => ({
   Unit: "pcs",
   Rate: 0,
   Discount: 0,
-
+  NetRate: 0,        // ✅ NEW
+  NetAmount: 0,      // ✅ NEW
   GstPercent: 0,
   GstValue: 0,
 
@@ -31,7 +32,7 @@ const blankLine = () => ({
   SgstValue: 0,
   IgstValue: 0,
 
-  Amount: 0,
+  //Amount: 0,
   TaxAmount: 0,
   Balance: null,
   BalanceBatchWise:null
@@ -49,6 +50,32 @@ const [invoiceId, setInvoiceId] = useState(0);
   BillingState: "",
   BillingAddress: ""
 });
+const [customerDraft, setCustomerDraft] = useState({
+  CustomerName: "",
+  Mobile: ""
+});
+
+const [customerErrors, setCustomerErrors] = useState({});
+const isValidMobile = (val) =>
+  /^[6-9]\d{9}$/.test(val.trim());
+
+const validateCustomerDraft = () => {
+  const errors = {};
+
+  if (!customerDraft.CustomerName.trim()) {
+    errors.CustomerName = "Customer name is required";
+  }
+
+  if (
+    customerDraft.Mobile.trim() &&
+    !isValidMobile(customerDraft.Mobile)
+  ) {
+    errors.Mobile = "Enter valid 10-digit mobile number";
+  }
+
+  setCustomerErrors(errors);
+  return Object.keys(errors).length === 0;
+};
 
 const [validationErrors, setValidationErrors] = useState({});
 const [invoiceNum, setInvoiceNum] = useState("");
@@ -59,7 +86,9 @@ const [showErrorModal, setShowErrorModal] = useState(false);
 const [downloadPath, setDownloadPath] = useState("");
 const [pdfPath, setPdfPath] = useState("");
 const [showPdfModal, setShowPdfModal] = useState(false);
-const [invoiceShowDate, setInvoiceShowDate] = useState("");
+const [invoiceShowDate, setInvoiceShowDate] = useState(
+  new Date().toISOString().slice(0, 10)
+);
 const [invoiceNumbers, setInvoiceNumbers] = useState([]);
 const [selectedInvoiceNo, setSelectedInvoiceNo] = useState("");
 const [selectedInvoiceId, setSelectedInvoiceId] = useState("");
@@ -111,6 +140,7 @@ const isInterState = () => {
   const [totals, setTotals] = useState({ subTotal:0, totalTax:0, total:0, roundOff:0 });
 
   function fetchInvoiceNumbers(date) {
+    
     window.chrome.webview.postMessage({
         action: "getInvoiceNumbersByDate",
         payload : {
@@ -135,6 +165,15 @@ const isInterState = () => {
         }
     });
 }*/}
+
+useEffect(() => {
+  if (!invoiceShowDate) return;
+
+  fetchInvoiceNumbers(invoiceShowDate);
+}, [invoiceShowDate]);
+
+
+
 useEffect(() => {
   window.chrome.webview.postMessage({ Action: "GetNextSalesInvoiceNum" });
 }, []);
@@ -164,10 +203,13 @@ useEffect(() => {
   const recalc = () => {
     let sub = 0, tax = 0;
     lines.forEach(l => {
-      const amt = (Number(l.Qty) || 0) * (Number(l.Rate) || 0);
-      const t = amt * (Number(l.GstPercent) || 0) / 100;
-      sub += amt;
-      tax += t;
+
+      const amt = Number(l.NetAmount) || 0;
+const t = Number(l.GstValue) || 0;
+
+sub += amt;
+tax += t;
+
     });
     const total = sub + tax;
     const roundOff = Math.round(total) - total;
@@ -182,21 +224,29 @@ const recomputeLineForState = (line, sellerState, buyerState) => {
   const discountPct = Number(line.Discount) || 0;
   const gstPct = Number(line.GstPercent) || 0;
 
-  const base = qty * rate;
-  const discountAmt = (base * discountPct) / 100;
-  const amount = Math.max(0, +(base - discountAmt).toFixed(2));
 
-  const gstValue = +(amount * gstPct / 100).toFixed(2);
+  const base = qty * rate;
+const discountAmt = (base * discountPct) / 100;
+const netAmount = +(base - discountAmt).toFixed(2);
+const netRate = qty > 0 ? +(netAmount / qty).toFixed(2) : 0;
+
+
+
+
+  const gstValue = +(netAmount * gstPct / 100).toFixed(2);
 
   const seller = (sellerState || "").toString().trim().toLowerCase();
   const buyer = (buyerState || "").toString().trim().toLowerCase();
   const inter = seller && buyer ? (seller !== buyer) : false;
 
   const updated = { ...line };
-  updated.Amount = amount;
+  updated.NetRate = netRate;
+updated.NetAmount = netAmount;
+
+ updated.LineTotal = +(netAmount + gstValue).toFixed(2);
   updated.GstValue = gstValue;
   updated.TaxAmount = gstValue;
-
+//updated.Amount = netAmount+gstValue; // optional
   if (gstPct > 0) {
     if (inter) {
       // IGST only
@@ -239,24 +289,35 @@ const recomputeLineForState = (line, sellerState, buyerState) => {
   copy[idx][key] = val;
 
   const qty = Number(copy[idx].Qty) || 0;
-  const rate = Number(copy[idx].Rate) || 0;
-  const discountPct = Number(copy[idx].Discount) || 0; // percentage
-  const gstPct = Number(copy[idx].GstPercent) || 0;
+const rate = Number(copy[idx].Rate) || 0;
+const discountPct = Number(copy[idx].Discount) || 0;
+const gstPct = Number(copy[idx].GstPercent) || 0;
 
-  // 1️⃣ Base Value
-  const base = qty * rate;
+// 1️⃣ Base
+const base = qty * rate;
 
-  // 2️⃣ Discount value (percentage)
-  const discountAmt = (base * discountPct) / 100;
+// 2️⃣ Discount
+const discountAmt = (base * discountPct) / 100;
 
-  // 3️⃣ Amount after discount
-  const amount = Math.max(0, base - discountAmt);
-  copy[idx].Amount = amount;
+// 3️⃣ Net Amount (after discount, before tax)
+const netAmount = +(base - discountAmt).toFixed(2);
 
-  // 4️⃣ GST Amount (Value)
-  const gstValue = +(amount * gstPct / 100).toFixed(2);
-  copy[idx].GstValue = gstValue;   // NEW FIELD
-  copy[idx].TaxAmount = gstValue;  // for totals
+// 4️⃣ Net Rate (per unit)
+const netRate = qty > 0 ? +(netAmount / qty).toFixed(2) : 0;
+
+// 5️⃣ Save explicitly
+copy[idx].NetRate = netRate;
+copy[idx].NetAmount = netAmount;
+
+// (optional – backward compatibility)
+//copy[idx].Amount = netAmount;
+
+
+// 6️⃣ GST
+const gstValue = +(netAmount * gstPct / 100).toFixed(2);
+copy[idx].GstValue = gstValue;
+copy[idx].TaxAmount = gstValue;
+copy[idx].LineTotal = +(netAmount + gstValue).toFixed(2);
 
   // 5️⃣ GST Split based on INTERSTATE or INTRASTATE
   if (gstPct > 0) {
@@ -336,13 +397,13 @@ if (copy[idx].BalanceBatchWise != null && Number(val) > Number(copy[idx].Balance
   const removeLine = (i) => setLines(prev => prev.filter((_,j)=>j!==i));
 
   const handleSave = async () => {
-
-
+console.log("📤 Sending invoice save payload:");
 if (!customer.CustomerId) {
-  alert("Please select a customer before saving invoice");
-  return;
+  const ok = validateCustomerDraft();
+  if (!ok) return;
 }
 
+console.log("📤 Sending invoice save payload:");
 
   const errors = validateInvoiceForm(lines, customer, invoiceDate, totals);
 
@@ -376,13 +437,17 @@ if (!customer.CustomerId) {
   setValidationErrors({});
   
   // Fix bug: Customer object
-  const Customer = {
-    CustomerId: customer.CustomerId || 0,
-    CustomerName: customer.CustomerName?.trim() || "",
-    Mobile: customer.Mobile?.trim() || "",
-    BillingState: customer.BillingState?.trim() || "",
-    BillingAddress: customer.BillingAddress?.trim() || ""
-  };
+  const Customer = customer.CustomerId
+  ? {
+      CustomerId: customer.CustomerId
+    }
+  : {
+      CustomerId: 0,
+      CustomerName: customerDraft.CustomerName.trim(),
+      Mobile: customerDraft.Mobile.trim(),
+      BillingState: company?.State || ""
+    };
+
 
   // Prepare clean line items payload
 const Items = lines.map(l => ({
@@ -393,7 +458,8 @@ const Items = lines.map(l => ({
     Qty: Number(l.Qty) || 0,
     Rate: Number(l.Rate) || 0,
     DiscountPercent: Number(l.Discount) || 0,
-
+ NetRate: Number(l.NetRate) || 0,        // ✅
+  NetAmount: Number(l.NetAmount) || 0,    // ✅
     GstPercent: Number(l.GstPercent) || 0,
     GstValue: Number(l.GstValue) || 0,
 
@@ -406,8 +472,9 @@ const Items = lines.map(l => ({
     IgstPercent: Number(l.IgstPercent) || 0,
     IgstValue: Number(l.IgstValue) || 0,
 
-    LineSubTotal: Number(l.Amount) || 0,          // BEFORE TAX
-    LineTotal: Number(l.Amount) + Number(l.GstValue) || 0 , // AFTER TAX
+ LineSubTotal: Number(l.NetAmount) || 0,
+LineTotal: Number(l.LineTotal) || 0,
+
 
     AvailableStock: Number(selectedItemBalance) || 0,
     BalanceBatchWise: Number(selectedBatchBalance) || 0,
@@ -421,7 +488,7 @@ const Items = lines.map(l => ({
        InvoiceNum: Number(invoiceNum),
     InvoiceNo: invoiceNo,
       InvoiceDate: invoiceDate,
-      Customer: Customer,
+       Customer: Customer,
       CompanyId: company?.Id ?? 1,
 
       SubTotal: totals.subTotal,
@@ -630,7 +697,7 @@ const resetInvoiceForm = () => {
     value={invoiceShowDate}
     onChange={(e) => {
         setInvoiceShowDate(e.target.value);
-        fetchInvoiceNumbers(e.target.value);
+        //fetchInvoiceNumbers(e.target.value);
     }}
 />
 <select
@@ -728,6 +795,36 @@ type="button"
       <div><b>State:</b> {customer.BillingState}</div>
     </div>
   )}
+  {customer.CustomerId === 0 && (
+  <div className="customer-inline-box">
+
+    <input
+      type="text"
+      placeholder="Customer Name *"
+      value={customerDraft.CustomerName}
+      onChange={e =>
+        setCustomerDraft(d => ({ ...d, CustomerName: e.target.value }))
+      }
+    />
+    {customerErrors.CustomerName && (
+      <div className="field-error">{customerErrors.CustomerName}</div>
+    )}
+
+    <input
+      type="text"
+      placeholder="Mobile"
+      value={customerDraft.Mobile}
+      onChange={e =>
+        setCustomerDraft(d => ({ ...d, Mobile: e.target.value }))
+      }
+    />
+    {customerErrors.Mobile && (
+      <div className="field-error">{customerErrors.Mobile}</div>
+    )}
+
+  </div>
+)}
+
 </div>
 
 </div>
@@ -782,8 +879,10 @@ type="button"
     <th>Batch</th>
     <th>HSN</th>
     <th>Qty</th>
-    <th>Rate</th>
+    <th>Sales Price</th>
     <th>Disc %</th>
+<th>Net Rate</th>
+      <th>Net Amount</th>
 
     <th>GST %</th>
     <th>GST Amt</th>
@@ -920,6 +1019,24 @@ window.chrome.webview.postMessage({
   </div>
 </td>
 
+ <td style={{ width:"100px" }}>
+  <div className="cell-box">
+    <input
+      value={l.NetRate ?? ""}
+      readOnly
+      style={{ background: "#eee" }}
+    />
+  </div>
+</td>
+
+
+          <td style={{ width:"100px" }}>
+  <div className="cell-box" style={{ background:"#eee" }}>
+    {Number(l.NetAmount).toFixed(2)}
+  </div>
+</td>
+
+
               <td> <div className="cell-box"><input
                id={`GstPercent_${i}`}
   className={validationErrors[`GstPercent_${i}`] ? "inv-error" : ""}
@@ -982,7 +1099,7 @@ window.chrome.webview.postMessage({
                 
                 </div></td>
 
-              <td> <div className="cell-box" style={{ width: "100%", background: "#eee" }}>{Number(l.Amount||0).toFixed(2)}
+              <td> <div className="cell-box" style={{ width: "100%", background: "#eee" }}>{Number(l.LineTotal||0).toFixed(2)}
                 
                 </div></td>
                  
@@ -1024,7 +1141,11 @@ window.chrome.webview.postMessage({
       <div className="inventory-btns">
   <button className="btn-submit small" onClick={addLine}>Add Item</button>
   <button
-  disabled={!customer.CustomerId}
+  disabled={
+  !customer.CustomerId &&
+  !customerDraft.CustomerName.trim()
+}
+
   className="btn-submit small"
   onClick={handleSave}
 >
