@@ -16,12 +16,7 @@ export default function validateInvoiceForm(lines, customer, invoiceDate, totals
   const dateCheck = isValidInvoiceDate(invoiceDate);
   if (!dateCheck.valid) pushErr("invoiceDate", dateCheck.message);
 
-  // -----------------------------
-  // 2. Customer State (required)
-  // -----------------------------
-  if (!customer.BillingState || customer.BillingState.trim() === "") {
-    pushErr("customerState", "Customer state is required.");
-  }
+  
 
   // -----------------------------
   // 3. At least one line item

@@ -35,7 +35,9 @@ const blankLine = () => ({
   //Amount: 0,
   TaxAmount: 0,
   Balance: null,
-  BalanceBatchWise:null
+  BalanceBatchWise:null,
+  RateBatchWise:null
+
 });
 
 
@@ -100,6 +102,9 @@ const [itemList, setItemList] = useState([]);       // will hold ItemForInvoice[
 const [itemSearchIndex, setItemSearchIndex] = useState(null); // which row is showing suggestions
 const [selectedItemBalance, setSelectedItemBalance] = useState(null);
 const [selectedBatchBalance, setSelectedBatchBalance] = useState(null);
+const [selectedBatchRate, setSelectedBatchRate] = useState(null);
+const [paymentMode, setPaymentMode] = useState("CASH");
+
 const INDIAN_STATES = [
   "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh",
   "Goa","Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka",
@@ -397,15 +402,28 @@ if (copy[idx].BalanceBatchWise != null && Number(val) > Number(copy[idx].Balance
   const removeLine = (i) => setLines(prev => prev.filter((_,j)=>j!==i));
 
   const handleSave = async () => {
+
+
+// 🔴 CUSTOMER VALIDATION BASED ON PAYMENT MODE
+if (paymentMode === "CREDIT") {
+  // CREDIT → customer is mandatory
+  if (!customer.CustomerId) {
+    const ok = validateCustomerDraft();
+    if (!ok) return;
+  }
+}
+// CASH / BANK → customer optional (no validation)
+
+
 console.log("📤 Sending invoice save payload:");
-if (!customer.CustomerId) {
-  const ok = validateCustomerDraft();
-  if (!ok) return;
+if (!paymentMode) {
+  alert("Please select payment mode");
+  return;
 }
 
-console.log("📤 Sending invoice save payload:");
-
   const errors = validateInvoiceForm(lines, customer, invoiceDate, totals);
+
+
 
   if (errors.length > 0) {
     // Convert array → object for quick lookup
@@ -437,16 +455,19 @@ console.log("📤 Sending invoice save payload:");
   setValidationErrors({});
   
   // Fix bug: Customer object
-  const Customer = customer.CustomerId
-  ? {
-      CustomerId: customer.CustomerId
-    }
-  : {
-      CustomerId: 0,
-      CustomerName: customerDraft.CustomerName.trim(),
-      Mobile: customerDraft.Mobile.trim(),
-      BillingState: company?.State || ""
-    };
+  let Customer = null;
+
+if (paymentMode === "CREDIT") {
+  Customer = customer.CustomerId
+    ? { CustomerId: customer.CustomerId }
+    : {
+        CustomerId: 0,
+        CustomerName: customerDraft.CustomerName.trim(),
+        Mobile: customerDraft.Mobile.trim(),
+        BillingState: company?.State || ""
+      };
+}
+
 
 
   // Prepare clean line items payload
@@ -478,6 +499,7 @@ LineTotal: Number(l.LineTotal) || 0,
 
     AvailableStock: Number(selectedItemBalance) || 0,
     BalanceBatchWise: Number(selectedBatchBalance) || 0,
+    BalanceBatchRate: Number(selectedBatchRate) || 0,
 
 }));
 
@@ -490,7 +512,7 @@ LineTotal: Number(l.LineTotal) || 0,
       InvoiceDate: invoiceDate,
        Customer: Customer,
       CompanyId: company?.Id ?? 1,
-
+PaymentMode: paymentMode,   // ✅ ADD THIS
       SubTotal: totals.subTotal,
       TotalTax: totals.totalTax,
       TotalAmount: totals.total,
@@ -510,7 +532,15 @@ ItemName:Items.ItemName,
   }
   setSelectedItemBalance(null);
   setSelectedBatchBalance(null);
+  setSelectedBatchRate(null);
 };
+
+useEffect(() => {
+  if (paymentMode !== "CREDIT") {
+    setCustomerDraft({ CustomerName: "", Mobile: "" });
+    setCustomerErrors({});
+  }
+}, [paymentMode]);
 
 
 useEffect(() => {
@@ -621,6 +651,18 @@ console.log("📥 Batch-wise balance for line", idx, "is", balbatchwise);
   setLines(prev => {
     const copy = [...prev];
     if (copy[idx]) copy[idx].BalanceBatchWise = balbatchwise;
+    return copy;
+  });
+}
+
+if (msg.action === "getPurchaseNetRateResult") {
+  const idx = msg.lineIndex;
+  const ratebatchwise = msg.netRate;
+setSelectedBatchRate(msg.netRate);
+console.log("📥 Batch-wise Net Purchase Rate for line", idx, "is", ratebatchwise);
+  setLines(prev => {
+    const copy = [...prev];
+    if (copy[idx]) copy[idx].RateBatchWise = ratebatchwise;
     return copy;
   });
 }
@@ -742,7 +784,7 @@ type="button"
 
   <select
   id="CustomerId"
-  className={!customer.CustomerId ? "inv-error" : ""}
+  disabled={paymentMode !== "CREDIT"}
   value={customer.CustomerId || ""}
   onChange={(e) => {
     const selectedId = Number(e.target.value);
@@ -795,7 +837,7 @@ type="button"
       <div><b>State:</b> {customer.BillingState}</div>
     </div>
   )}
-  {customer.CustomerId === 0 && (
+  {paymentMode === "CREDIT" && customer.CustomerId === 0 && (
   <div className="customer-inline-box">
 
     <input
@@ -825,6 +867,7 @@ type="button"
   </div>
 )}
 
+
 </div>
 
 </div>
@@ -841,6 +884,18 @@ type="button"
       value={invoiceDate} 
       onChange={(e) => setInvoiceDate(e.target.value)} 
     />
+    <div className="form-group">
+  <label>Payment Mode</label>
+  <select
+    value={paymentMode}
+    onChange={(e) => setPaymentMode(e.target.value)}
+  >
+    <option value="CASH">Cash</option>
+    <option value="BANK">Bank</option>
+    <option value="CREDIT">Credit</option>
+  </select>
+</div>
+
   </div>
 
 <div className="form-group">
@@ -863,6 +918,11 @@ type="button"
     {selectedBatchBalance !== null && (
       <div className="stock-line">
         Batch Stock: <b>{selectedBatchBalance}</b>
+      </div>
+    )}
+    {selectedBatchRate !== null && (
+      <div className="stock-line">
+        Batch Net Rate: <b>{selectedBatchRate}</b>
       </div>
     )}
   </div>
@@ -956,6 +1016,14 @@ window.chrome.webview.postMessage({
   // 🔥 NEW — Fetch item balance (correct payload format)
 window.chrome.webview.postMessage({
   Action: "GetItemBalanceBatchWise",
+  Payload: {
+    ItemId: it.Id,
+    BatchNo: it.BatchNo || "",
+    LineIndex: i
+  }
+});
+window.chrome.webview.postMessage({
+  Action: "getPurchaseNetRate",
   Payload: {
     ItemId: it.Id,
     BatchNo: it.BatchNo || "",
@@ -1140,17 +1208,18 @@ window.chrome.webview.postMessage({
      <div className="button-row">
       <div className="inventory-btns">
   <button className="btn-submit small" onClick={addLine}>Add Item</button>
-  <button
+ <button
   disabled={
-  !customer.CustomerId &&
-  !customerDraft.CustomerName.trim()
-}
-
+    paymentMode === "CREDIT" &&
+    !customer.CustomerId &&
+    !customerDraft.CustomerName.trim()
+  }
   className="btn-submit small"
   onClick={handleSave}
 >
   Save Invoice
 </button>
+
 
   <button 
     className="btn-submit small"

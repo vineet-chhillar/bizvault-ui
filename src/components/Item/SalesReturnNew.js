@@ -30,6 +30,7 @@ const blankLine = () => ({
 export default function EditSalesReturn({ user }) {
   // ---------- STATE ----------
   const [invoiceId, setInvoiceId] = useState("");
+  const [paymentMode, setPaymentMode] = useState("CASH");
   const [invoiceList, setInvoiceList] = useState([]);
 
   const [company, setCompany] = useState(null);
@@ -38,6 +39,7 @@ export default function EditSalesReturn({ user }) {
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerState, setCustomerState] = useState("");
+const [refundMode, setRefundMode] = useState("AUTO");
 
   const [invoiceDate, setInvoiceDate] = useState(
     new Date().toISOString().slice(0, 10)
@@ -278,6 +280,7 @@ export default function EditSalesReturn({ user }) {
       InvoiceNo: invoiceNo,
       InvoiceNum: invoiceNum,
       InvoiceDate: invoiceDate,
+        RefundMode: refundMode, // ✅ ADD
       TotalAmount: totals.total,
       TotalTax: totals.tax,
       RoundOff: totals.roundOff,
@@ -305,6 +308,7 @@ export default function EditSalesReturn({ user }) {
       InvoiceNo: invoiceNo,
       InvoiceNum: invoiceNum,
       InvoiceDate: invoiceDate,
+      RefundMode: refundMode, // ✅ ADD
       TotalAmount: totals.total,
       TotalTax: totals.tax,
       RoundOff: totals.roundOff,
@@ -352,6 +356,7 @@ export default function EditSalesReturn({ user }) {
         }
 
         setInvoiceId(data.InvoiceId);
+        setPaymentMode(data.RefundMode || "CASH");
         setCustomerId(data.CustomerId);
         setCustomerName(data.CustomerName || "");
         setCustomerPhone(data.CustomerPhone || "");
@@ -492,6 +497,33 @@ export default function EditSalesReturn({ user }) {
             style={{ background: "#f1ecff", width: "150px" }}
           />
         </div>
+        <div className="form-group">
+          <label className="invoice-no-label">Original Payment</label>
+          <input
+            type="text"
+            value={paymentMode}
+            readOnly
+            style={{ background: "#f1ecff", width: "150px" }}
+          />
+        </div>
+
+
+
+       
+  <div className="form-group">
+    <label>Refund Mode</label>
+    <select
+      value={refundMode}
+      onChange={e => setRefundMode(e.target.value)}
+    >
+      <option value="AUTO">Same as Invoice</option>
+      <option value="CASH">Cash Refund</option>
+      <option value="BANK">Bank Refund</option>
+      <option value="ADJUST">Adjust Against Dues</option>
+    </select>
+  </div>
+
+
       </div>
 
       {/* ITEM TABLE */}
