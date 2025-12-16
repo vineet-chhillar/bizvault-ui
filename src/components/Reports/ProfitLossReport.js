@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 
 export default function ProfitLossReport() {
-  const [from, setFrom] = useState("2024-04-01");
+  const [from, setFrom] = useState("2025-04-01");
   const [to, setTo] = useState(new Date().toISOString().slice(0, 10));
   const [report, setReport] = useState(null);
 
