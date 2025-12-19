@@ -562,7 +562,10 @@ window.chrome.webview.postMessage({ Action: "GetNextPurchaseInvoiceNum" });
     const supplierState = msg.data.State.trim().toLowerCase();
     const companyState = company?.State?.trim().toLowerCase();
 
-    const interstate = supplierState !== companyState;
+    const interstate =
+  !companyState || !supplierState
+    ? false                 // treat as INTRA-state
+    : supplierState !== companyState;
 
     // Recalculate GST split for ALL lines using NET AMOUNT (correct)
     setLines(prev =>
