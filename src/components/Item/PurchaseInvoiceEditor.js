@@ -98,6 +98,7 @@ const onMouseUp = () => {
   const [supplierList, setSupplierList] = useState([]);
   const [supplierId, setSupplierId] = useState("");
   const [supplierInfo, setSupplierInfo] = useState(null);
+const [paidVia, setPaidVia] = useState("CASH");
 
   const [itemList, setItemList] = useState([]);
   const [itemSearchIndex, setItemSearchIndex] = useState(null);
@@ -116,6 +117,7 @@ rowRefs.current = lines.map((_, i) => rowRefs.current[i] ?? React.createRef());
     total: 0,
     roundOff: 0
   });
+const [paidTouched, setPaidTouched] = useState(false);
 
 
 const isValidMobile = (val) =>
@@ -151,6 +153,9 @@ const [invoiceNum, setInvoiceNum] = useState("");
 const [invoiceFY, setInvoiceFY] = useState("");
 const [invoiceNo, setInvoiceNo] = useState("");
 
+const [paymentMode, setPaymentMode] = useState("CREDIT");
+const [paidAmount, setPaidAmount] = useState(0);
+
   const [invoiceId, setInvoiceId] = useState(null);
   const [invoiceNumbers, setInvoiceNumbers] = useState([]);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState("");
@@ -160,6 +165,12 @@ const [invoiceNo, setInvoiceNo] = useState("");
   const [showPdfModal, setShowPdfModal] = useState(false);
 
   const [company, setCompany] = useState(null);
+
+ const balanceAmount = Math.max(
+  0,
+  Number(totals.total) - Number(paidAmount)
+);
+
 
 useEffect(() => {
   fetchInvoiceNumbers(printDate);
@@ -185,8 +196,27 @@ useEffect(() => {
     window.chrome?.webview?.postMessage({ Action: "GetItemsForPurchaseInvoice" });
   }, []);
 
+{/*useEffect(() => {
+  if (paymentMode !== "CREDIT") {
+    setPaidAmount(totals.total);
+  } else {
+    setPaidAmount(0);
+  }
+}, [paymentMode, totals.total]);*/}
 
-  
+  useEffect(() => {
+  if (paymentMode === "CREDIT") {
+    setPaidAmount(0);
+    setPaidTouched(false);
+    return;
+  }
+
+  // CASH / BANK
+  if (!paidTouched) {
+    setPaidAmount(totals.total);
+  }
+}, [paymentMode]); // 🔒 intentionally NOT totals.total
+
 
 
   // ========= TOGGLE DETAILS =========
@@ -344,7 +374,13 @@ if (gstPct > 0) {
   alert("Supplier name is required");
   return;
 }
-if (!supplierId) {
+
+
+
+
+
+if (paymentMode === "CREDIT" && !supplierId) {
+ 
   const isValid = validateSupplierDraft();
     
   if (!isValid) return;
@@ -406,6 +442,10 @@ SupplierDraft: supplierId ? null : supplierDraft,
         TotalAmount: totals.total,
         RoundOff: totals.roundOff,
         Notes: notes,
+        PaymentMode:paymentMode, 
+        PaidAmount: paidAmount,
+        BalanceAmount: balanceAmount,
+        PaidVia: paidVia,
         Items,
         CreatedBy: user?.email
       }
@@ -497,6 +537,11 @@ if (msg.action === "GetNextPurchaseInvoiceNumResponse") {
 
     setLines([ blankLine() ]);
     setNotes("");
+    setPaidAmount(0);
+    setPaidTouched(false);
+    setPaidVia("");
+    
+
  
 window.chrome.webview.postMessage({ Action: "GetNextPurchaseInvoiceNum" });
   } 
@@ -730,6 +775,18 @@ setPdfPath(url);
 
 {/* ================= DATE ================= */}
 <div className="form-row">
+<div className="form-group">
+  <label>Payment Mode</label>
+<select
+  value={paymentMode}
+  onChange={e => setPaymentMode(e.target.value)}
+>
+  <option value="CASH">Cash</option>
+  <option value="BANK">Bank</option>
+  <option value="CREDIT">Credit</option>
+</select>
+</div>
+
   <div className="form-group">
     <label>Purchase Invoice Date</label>
     <input 
@@ -748,6 +805,45 @@ setPdfPath(url);
     style={{ background: "#f1ecff", width:"150px" }}
   />
 </div>
+
+<div className="form-group">
+  <label>Paid Amount</label>
+<input
+  type="number"
+  min="0"
+  max={totals.total}
+  value={paidAmount}
+  disabled={paymentMode !== "CREDIT"}
+  onChange={e => {
+    const v = Number(e.target.value) || 0;
+     setPaidTouched(true);
+    setPaidAmount(Math.min(v, totals.total));
+  }}
+/>
+</div>
+<div className="form-group">
+{paymentMode === "CREDIT" && paidAmount > 0 && (
+  <div className="form-group">
+    <label>Paid Via</label>
+    <select
+      value={paidVia}
+      onChange={e => setPaidVia(e.target.value)}
+    >
+      <option value="CASH">Cash</option>
+      <option value="BANK">Bank</option>
+    </select>
+  </div>
+)}
+</div>
+<div className="form-group">
+  <label>Balance Amount</label>
+<input
+  type="number"
+  value={Number(balanceAmount).toFixed(2)}
+  readOnly
+/>
+</div>
+
 </div>
 
 {/* ================= ITEM TABLE ================= */}

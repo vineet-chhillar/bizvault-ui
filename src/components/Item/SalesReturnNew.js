@@ -41,6 +41,12 @@ export default function EditSalesReturn({ user }) {
   const [customerState, setCustomerState] = useState("");
 const [refundMode, setRefundMode] = useState("AUTO");
 
+const [outstanding, setOutstanding] = useState(0);   // BalanceAmount
+const [paidAmount, setPaidAmount] = useState(0);     // PaidAmount
+const [adjustAmount, setAdjustAmount] = useState(0);
+const [refundAmount, setRefundAmount] = useState(0);
+const [paidVia, setPaidVia] = useState("");   // CASH | BANK | ""
+
   const [invoiceDate, setInvoiceDate] = useState(
     new Date().toISOString().slice(0, 10)
   );
@@ -68,7 +74,16 @@ const [refundMode, setRefundMode] = useState("AUTO");
     if (!data.InvoiceId) errors.push("Sales invoice is required.");
     if (!data.InvoiceDate) errors.push("Invoice date is required.");
     if (!data.InvoiceNo) errors.push("Invoice number missing.");
-    if (!data.CustomerId) errors.push("Customer is required.");
+
+    if (refundMode !== "ADJUST" && refundAmount > 0 && !paidVia) {
+  errors.push("Refund mode requires Paid Via (Cash or Bank).");
+}
+
+    // Customer required ONLY for CREDIT sales
+if (paymentMode === "CREDIT" && !data.CustomerId) {
+  errors.push("Customer is required for sales return.");
+}
+
 
     if (!data.Items || data.Items.length === 0) {
       errors.push("No items found for this invoice.");
@@ -205,6 +220,12 @@ const [refundMode, setRefundMode] = useState("AUTO");
       return copy;
     });
   };
+useEffect(() => {
+  if (refundMode === "CASH") setPaidVia("CASH");
+  if (refundMode === "BANK") setPaidVia("BANK");
+
+  if (refundMode === "ADJUST") setPaidVia("");
+}, [refundMode]);
 
   // Re-split GST if company or customer changes (shouldn't in return, but safe)
   useEffect(() => {
@@ -287,6 +308,11 @@ const [refundMode, setRefundMode] = useState("AUTO");
       SubTotal: totals.subTotal,
       Notes: notes,
       CreatedBy: user?.email || "system",
+      BalanceAmount:outstanding,
+      PaidAmount:paidAmount,
+      OriginalPaymentMode: paymentMode,
+      PaidVia: paidVia,
+
       Items: lines
     };
 
@@ -295,6 +321,9 @@ const [refundMode, setRefundMode] = useState("AUTO");
       alert("Fix these issues:\n\n" + errors.join("\n"));
       return;
     }
+if (refundMode === "ADJUST" && refundAmount > 0) {
+  errors.push("Return exceeds outstanding. Cannot adjust fully.");
+}
 
     setConfirmModal(true);
   };
@@ -315,6 +344,11 @@ const [refundMode, setRefundMode] = useState("AUTO");
       SubTotal: totals.subTotal,
       Notes: notes,
       CreatedBy: user?.email || "system",
+      BalanceAmount:outstanding,
+      PaidAmount:paidAmount,
+      OriginalPaymentMode: paymentMode,
+      PaidVia: paidVia,
+
       Items: lines
     };
 
@@ -323,6 +357,22 @@ const [refundMode, setRefundMode] = useState("AUTO");
       Payload: payload
     });
   };
+
+  useEffect(() => {
+  const returnTotal = totals.total || 0;
+
+  const adj = Math.min(returnTotal, outstanding);
+  const refund = returnTotal - adj;
+
+  setAdjustAmount(adj);
+  setRefundAmount(refund);
+}, [totals.total, outstanding]);
+useEffect(() => {
+  // If refund mode is ADJUST but refund is required → block it
+  if (refundMode === "ADJUST" && refundAmount > 0) {
+    setRefundMode("CASH"); // safe default
+  }
+}, [refundMode, refundAmount]);
 
   // ---------- MESSAGE LISTENER ----------
   useEffect(() => {
@@ -354,6 +404,7 @@ const [refundMode, setRefundMode] = useState("AUTO");
           alert("Invoice not found.");
           return;
         }
+setPaidVia(data.PaidVia || "");
 
         setInvoiceId(data.InvoiceId);
         setPaymentMode(data.RefundMode || "CASH");
@@ -365,6 +416,11 @@ const [refundMode, setRefundMode] = useState("AUTO");
         setInvoiceNo(data.InvoiceNo);
         setInvoiceNum(data.InvoiceNum);
         setNotes(data.Notes || "");
+// Payment summary from backend
+setPaidAmount(Number(data.PaidAmount) || 0);
+
+setOutstanding(Number(data.BalanceAmount) || 0);
+
 
         // Items from InvoiceItems + AvailableQty
         setLines(
@@ -409,6 +465,12 @@ const [refundMode, setRefundMode] = useState("AUTO");
     setInvoiceNo("");
     setInvoiceNum("");
     setNotes("");
+setPaymentMode("");
+setOutstanding(0);
+setPaidAmount(0);
+setAdjustAmount(0);
+setRefundAmount(0);
+setPaidVia("");
 
     setLines([blankLine()]);  // Reset table rows
 
@@ -513,15 +575,37 @@ const [refundMode, setRefundMode] = useState("AUTO");
   <div className="form-group">
     <label>Refund Mode</label>
     <select
-      value={refundMode}
-      onChange={e => setRefundMode(e.target.value)}
-    >
-      <option value="AUTO">Same as Invoice</option>
-      <option value="CASH">Cash Refund</option>
-      <option value="BANK">Bank Refund</option>
-      <option value="ADJUST">Adjust Against Dues</option>
-    </select>
+  value={refundMode}
+  onChange={e => setRefundMode(e.target.value)}
+>
+  <option value="AUTO">Same as Invoice</option>
+
+  <option value="ADJUST" disabled={refundAmount > 0}>
+    Adjust Against Dues
+  </option>
+
+  <option value="CASH" disabled={refundAmount <= 0}>
+    Cash Refund
+  </option>
+
+  <option value="BANK" disabled={refundAmount <= 0}>
+    Bank Refund
+  </option>
+</select>
   </div>
+
+  {paymentMode === "CREDIT" && paidAmount > 0 && (
+  <div className="form-group">
+    <label>Paid Via</label>
+    <input
+      type="text"
+      value={paidVia}
+      readOnly
+      style={{ background: "#f1ecff", width: "150px" }}
+    />
+  </div>
+)}
+
 
 
       </div>
@@ -701,6 +785,14 @@ const [refundMode, setRefundMode] = useState("AUTO");
           Grand Total: {totals.total.toFixed(2)}
         </div>
       </div>
+<div className="invoice-totals" style={{ marginTop: "10px" }}>
+  <div>
+  <b>Outstanding:</b> ₹{Number(outstanding || 0).toFixed(2)}
+</div>
+
+  <div><b>Adjust Against Dues:</b> ₹{Number(adjustAmount || 0).toFixed(2)}</div>
+  <div><b>Refund Amount:</b> ₹{Number(refundAmount || 0).toFixed(2)}</div>
+</div>
 
       {/* SAVE BUTTON */}
       <div className="button-row">

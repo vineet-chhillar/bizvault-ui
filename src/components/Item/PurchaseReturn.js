@@ -36,13 +36,16 @@ const blankLine = () => ({
   Color: "",
   Weight: "",
   Dimension: "",
-  showDetails: false
+  showDetails: false,
+  AvailableQty: 0
 });
 
 export default function EditPurchaseInvoice({ user }) {
   const [invoiceId, setInvoiceId] = useState("");
   const [invoiceList, setInvoiceList] = useState([]);
 const [detailsModal, setDetailsModal] = useState({ open: false, index: null });
+const [refundMode, setRefundMode] = useState("ADJUST"); // ADJUST | CASH | BANK
+const [paidVia, setPaidVia] = useState("");             // CASH | BANK | ""
 
   const [company, setCompany] = useState(null);
   const [supplierList, setSupplierList] = useState([]);
@@ -73,6 +76,9 @@ const [filterDate, setFilterDate] = useState(
   if (!data.SupplierId) errors.push("Supplier is required.");
   if (!data.InvoiceDate) errors.push("Invoice date is required.");
   if (!data.InvoiceNo)  errors.push("Invoice number missing.");
+if (refundMode !== "ADJUST" && !paidVia) {
+  errors.push("Refund mode requires Cash or Bank.");
+}
 
   if (!data.Items || data.Items.length === 0) {
     errors.push("Add at least 1 item.");
@@ -214,6 +220,11 @@ const isInterState = () => {
       return copy;
     });
   };
+useEffect(() => {
+  if (refundMode === "CASH") setPaidVia("CASH");
+  else if (refundMode === "BANK") setPaidVia("BANK");
+  else setPaidVia("");
+}, [refundMode]);
 
 // Whenever supplierInfo changes → recalc gst split for all rows
 useEffect(() => {
@@ -296,6 +307,8 @@ useEffect(() => {
       SubTotal: totals.subTotal,
       Notes: notes,
       CreatedBy: user?.email || "system",
+        RefundMode: refundMode,   // ✅ ADD
+  PaidVia: paidVia, 
       Items: lines
     };
 
@@ -323,6 +336,8 @@ useEffect(() => {
       SubTotal: totals.subTotal,
       Notes: notes,
       CreatedBy: user?.email,
+        RefundMode: refundMode,   // ✅ ADD
+  PaidVia: paidVia,         // ✅ ADD
       Items: lines
     };
 
@@ -423,7 +438,9 @@ AvailableQty: item.AvailableQty || 0,
     setNotes("");
      setPurchaseDate("");   // blank
    setInvoiceNo("");      // blank
-   
+   setRefundMode("ADJUST");
+setPaidVia("");
+
    setSupplierId("");
   } else {
     alert("Failed to save return: " + msg.message);
@@ -506,6 +523,32 @@ AvailableQty: item.AvailableQty || 0,
           <label className="invoice-no-label">Invoice No</label>
           <input type="text" value={invoiceNo} readOnly style={{ background: "#f1ecff", width:"150px" }} />
         </div>
+
+<div className="form-group">
+  <label>Refund Mode</label>
+  <select
+    value={refundMode}
+    onChange={(e) => setRefundMode(e.target.value)}
+  >
+    <option value="ADJUST">Adjust Against Supplier Dues</option>
+    <option value="CASH">Cash Refund</option>
+    <option value="BANK">Bank Refund</option>
+  </select>
+</div>
+{refundMode !== "ADJUST" && (
+  <div className="form-group">
+    <label>Refund Via</label>
+    <input
+      type="text"
+      value={paidVia}
+      readOnly
+      style={{ background: "#f1ecff", width: "150px" }}
+    />
+  </div>
+)}
+
+
+
       </div>
 
       {/* ITEM TABLE */}

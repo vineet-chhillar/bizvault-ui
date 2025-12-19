@@ -36,7 +36,8 @@ const blankLine = () => ({
   TaxAmount: 0,
   Balance: null,
   BalanceBatchWise:null,
-  RateBatchWise:null
+  RateBatchWise:null,
+  PaidAmount:0
 
 });
 
@@ -103,7 +104,8 @@ const [itemSearchIndex, setItemSearchIndex] = useState(null); // which row is sh
 const [selectedItemBalance, setSelectedItemBalance] = useState(null);
 const [selectedBatchBalance, setSelectedBatchBalance] = useState(null);
 const [selectedBatchRate, setSelectedBatchRate] = useState(null);
-const [paymentMode, setPaymentMode] = useState("CASH");
+const [paymentMode, setPaymentMode] = useState("Cash");
+const [paidVia, setPaidVia] = useState("Cash");
 
 const INDIAN_STATES = [
   "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh",
@@ -143,6 +145,10 @@ const isInterState = () => {
   const [lines, setLines] = useState([ blankLine() ]);
   const [invoiceNo, setInvoiceNo] = useState(""); // fetched from server when saving
   const [totals, setTotals] = useState({ subTotal:0, totalTax:0, total:0, roundOff:0 });
+
+const [paidAmount, setPaidAmount] = useState(0);
+const balanceAmount = Math.max(0, totals.total - paidAmount);
+
 
   function fetchInvoiceNumbers(date) {
     
@@ -203,6 +209,18 @@ useEffect(() => {
     window.chrome.webview.postMessage({ Action: "GetItemsForInvoice" });
   }
 }, []);
+
+useEffect(() => {
+  if (paymentMode !== "CREDIT") {
+    // CASH / BANK → fully paid
+    setPaidAmount(totals.total);
+  } else {
+    // CREDIT → default unpaid
+    setPaidAmount(0);
+  }
+}, [paymentMode, totals.total]);
+
+
   useEffect(() => recalc(), [lines]);
 
   const recalc = () => {
@@ -513,10 +531,12 @@ LineTotal: Number(l.LineTotal) || 0,
        Customer: Customer,
       CompanyId: company?.Id ?? 1,
 PaymentMode: paymentMode,   // ✅ ADD THIS
+PaidAmount: paidAmount,
       SubTotal: totals.subTotal,
       TotalTax: totals.totalTax,
       TotalAmount: totals.total,
       RoundOff: totals.roundOff,  
+      PaidVia: paidVia,
 //AvailableStock:selectedItemBalance,
 //BalanceBatchWise:selectedBatchBalance,
 ItemName:Items.ItemName,
@@ -926,6 +946,46 @@ type="button"
       </div>
     )}
   </div>
+<div className="form-group">
+  <label className="invoice-no-label">Paid Amount</label>
+<input
+className={paymentMode !== "CREDIT" ? "input-disabled" : ""}
+  type="number"
+  min="0"
+  max={totals.total}
+  value={paidAmount}
+  disabled={paymentMode !== "CREDIT"}
+  onChange={(e) => {
+    const v = Number(e.target.value) || 0;
+    setPaidAmount(Math.min(v, totals.total));
+  }}
+/>
+</div>
+
+{paymentMode === "CREDIT" && paidAmount > 0 && (
+  <div className="form-group">
+    <label>Paid Via</label>
+    <select
+      value={paidVia}
+      onChange={e => setPaidVia(e.target.value)}
+    >
+      <option value="CASH">Cash</option>
+      <option value="BANK">Bank</option>
+    </select>
+  </div>
+)}
+
+
+
+<div className="form-group">
+  <label className="invoice-no-label">Balance amount</label>
+<input
+  type="number"
+  value={balanceAmount.toFixed(2)}
+  readOnly
+/>
+</div>
+
 </div>
 
 

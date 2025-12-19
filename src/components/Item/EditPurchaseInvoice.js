@@ -43,6 +43,9 @@ export default function EditPurchaseInvoice({ user }) {
   const [invoiceId, setInvoiceId] = useState("");
   const [invoiceList, setInvoiceList] = useState([]);
 const [detailsModal, setDetailsModal] = useState({ open: false, index: null });
+const [paymentMode, setPaymentMode] = useState("CREDIT");
+const [paidAmount, setPaidAmount] = useState(0);
+const [paidVia, setPaidVia] = useState("CASH"); // NEW
 
   const [company, setCompany] = useState(null);
   const [supplierList, setSupplierList] = useState([]);
@@ -65,12 +68,15 @@ const [detailsModal, setDetailsModal] = useState({ open: false, index: null });
 const [filterDate, setFilterDate] = useState(
   new Date().toISOString().slice(0, 10)
 );
-
+const balanceAmount = Math.max(0, totals.total - paidAmount);
   // ---------- VALIDATION ----------
   function validateUpdate(data) {
     let errors = [];
 
-    if (!data.SupplierId) errors.push("Supplier is required.");
+    if (paymentMode === "CREDIT" && !data.SupplierId) {
+  errors.push("Supplier is required for credit purchase.");
+}
+
     if (!data.InvoiceDate) errors.push("Invoice date is required.");
     if (!data.InvoiceNo) errors.push("Invoice number missing.");
 
@@ -93,6 +99,18 @@ const [filterDate, setFilterDate] = useState(
 
     return errors;
   }
+useEffect(() => {
+  if (paymentMode !== "CREDIT") {
+    setPaidAmount(totals.total);
+    setPaidVia(paymentMode); // CASH or BANK
+  } else {
+    // CREDIT
+    if (paidAmount === 0) {
+      setPaidVia("CASH"); // default, harmless
+    }
+  }
+}, [paymentMode, totals.total]);
+
 
   // ---------- FETCH SUPPLIERS + ITEMS ----------
   useEffect(() => {
@@ -299,6 +317,10 @@ useEffect(() => {
       SubTotal: totals.subTotal,
       Notes: notes,
       CreatedBy: user?.email || "system",
+      PaymentMode: paymentMode,
+PaidAmount: paidAmount,
+BalanceAmount: balanceAmount,
+PaidVia:paidVia,
       Items: lines
     };
 
@@ -326,6 +348,10 @@ useEffect(() => {
       SubTotal: totals.subTotal,
       Notes: notes,
       CreatedBy: user?.email,
+      PaymentMode: paymentMode,
+PaidAmount: paidAmount,
+BalanceAmount: balanceAmount,
+PaidVia:paidVia,
       Items: lines
     };
 
@@ -378,6 +404,9 @@ useEffect(() => {
           alert("Invoice not found.");
           return;
         }
+setPaymentMode(data.PaymentMode || "CREDIT");
+setPaidAmount(Number(data.PaidAmount) || 0);
+setPaidVia(data.PaidVia || "CASH");
 
         setSupplierId(data.SupplierId);
         setPurchaseDate(data.InvoiceDate);
@@ -432,6 +461,16 @@ useEffect(() => {
       if (msg.action === "UpdatePurchaseInvoiceResponse") {
         if (msg.success) {
           alert("Invoice updated successfully. New PurchaseId = " + msg.newPurchaseId);
+
+    
+
+    // Refresh dropdown for today's date
+    setInvoiceNo("");
+    setPurchaseDate("");
+setLines([ blankLine() ]);
+    setNotes("");
+    setPaidAmount(0);
+
         } else {
           alert("Update failed: " + msg.message);
         }
@@ -511,6 +550,43 @@ useEffect(() => {
           <label className="invoice-no-label">Invoice No</label>
           <input type="text" value={invoiceNo} readOnly style={{ background: "#f1ecff", width:"150px" }} />
         </div>
+
+
+  <div className="form-group">
+    <label>Payment Mode</label>
+    <select
+      value={paymentMode}
+      onChange={e => setPaymentMode(e.target.value)}
+    >
+      <option value="CASH">Cash</option>
+      <option value="BANK">Bank</option>
+      <option value="CREDIT">Credit</option>
+    </select>
+  </div>
+<div className="form-group">
+    <label>Paid Amount</label>
+    <input
+      type="number"
+      min="0"
+      max={totals.total}
+      value={paidAmount}
+      disabled={paymentMode !== "CREDIT"}
+      onChange={e => {
+        const v = Number(e.target.value) || 0;
+        setPaidAmount(Math.min(v, totals.total));
+      }}
+    />
+  </div>
+
+  <div className="form-group">
+    <label>Balance Amount</label>
+    <input
+      type="number"
+      readOnly
+      value={Number(balanceAmount).toFixed(2)}
+    />
+  </div>
+
       </div>
 
       {/* ITEM TABLE */}
