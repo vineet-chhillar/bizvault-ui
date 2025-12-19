@@ -284,6 +284,7 @@ const toggleItemDetails = (i) => {
 if (gstPct > 0) {
   if (isInterState()) {
     // IGST only
+    
     line.IgstPercent = gstPct;
     line.IgstValue = gstValue;
 
@@ -340,15 +341,17 @@ if (gstPct > 0) {
   // ========= RECALC TOTALS =========
   useEffect(() => recalc(), [lines]);
 
-  const isInterState = () => {
-    //console.log(company.State)
-    //console.log(supplierInfo.State)
-    const seller = company?.State?.toLowerCase().trim();
-    const buyer  = supplierInfo?.State?.toLowerCase().trim();
+ const isInterState = () => { 
+  //console.log(company.State)
+  //  //console.log(supplierInfo.State)
+    const seller = company?.State?.toLowerCase().trim(); 
+    const buyer = supplierInfo?.State?.toLowerCase().trim(); 
+    if (!seller || !buyer) 
+      return false;
+     return seller !== buyer; 
+    };
 
-    if (!seller || !buyer) return false;
-    return seller !== buyer;
-  };
+
 
 
  const recalc = () => {
