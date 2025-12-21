@@ -34,6 +34,7 @@ const blankLine = () => ({
 
   //Amount: 0,
   TaxAmount: 0,
+  Notes:"",
   Balance: null,
   BalanceBatchWise:null,
   RateBatchWise:null,
@@ -57,7 +58,7 @@ const [customerDraft, setCustomerDraft] = useState({
   CustomerName: "",
   Mobile: ""
 });
-
+const [notes, setNotes] = useState("");
 const [customerErrors, setCustomerErrors] = useState({});
 const isValidMobile = (val) =>
   /^[6-9]\d{9}$/.test(val.trim());
@@ -513,7 +514,7 @@ const Items = lines.map(l => ({
 
  LineSubTotal: Number(l.NetAmount) || 0,
 LineTotal: Number(l.LineTotal) || 0,
-
+Notes: l.Notes || "",
 
     AvailableStock: Number(selectedItemBalance) || 0,
     BalanceBatchWise: Number(selectedBatchBalance) || 0,
@@ -541,7 +542,8 @@ PaidAmount: paidAmount,
 //BalanceBatchWise:selectedBatchBalance,
 ItemName:Items.ItemName,
       Items: Items,
-      CreatedBy: user?.email
+      CreatedBy: user?.email,
+      Notes: notes
     }
   };
 
@@ -593,6 +595,7 @@ useEffect(() => {
       "Invoice No: " + msg.invoiceNo + "\n"
       
     );setInvoiceId(msg.invoiceId);  // <-- ADD THIS
+    setNotes("");
     resetInvoiceForm();
     // OPTIONAL → reset invoice form after save
     // resetInvoiceForm();
@@ -1264,6 +1267,27 @@ window.chrome.webview.postMessage({
           ))}
         </tbody>
       </table>
+
+<div className="form-row">
+  <div className="form-group" style={{ width: "100%" }}>
+    <label>Sales Invoice Notes</label>
+    <textarea
+      value={notes}
+      onChange={(e) => setNotes(e.target.value)}
+      rows={3}
+      style={{
+        width: "100%",
+        padding: "8px",
+        borderRadius: "6px",
+        border: "1px solid #ccc",
+        resize: "vertical",
+        fontSize: "14px",
+      }}
+      placeholder="Enter additional notes or remarks (optional)"
+    />
+  </div>
+</div>
+      
 <div className="button-row-wrapper">
      <div className="button-row">
       <div className="inventory-btns">

@@ -40,12 +40,57 @@ const blankLine = () => ({
 });
 
 export default function EditPurchaseInvoice({ user }) {
+  const [dragOffset, setDragOffset] = React.useState({ x: 0, y: 0 });
+const [isDragging, setIsDragging] = React.useState(false);
+const modalRef = React.useRef(null);
+
+const onMouseDown = (e) => {
+  const rect = modalRef.current.getBoundingClientRect();
+  setDragOffset({
+    x: e.clientX - rect.left,
+    y: e.clientY - rect.top
+  });
+  setIsDragging(true);
+};
+
+const onMouseMove = (e) => {
+  if (!isDragging) return;
+
+  modalRef.current.style.left = `${e.clientX - dragOffset.x}px`;
+  modalRef.current.style.top = `${e.clientY - dragOffset.y}px`;
+};
+
+const onMouseUp = () => {
+  setIsDragging(false);
+};
+
+React.useEffect(() => {
+  window.addEventListener("mousemove", onMouseMove);
+  window.addEventListener("mouseup", onMouseUp);
+
+  return () => {
+    window.removeEventListener("mousemove", onMouseMove);
+    window.removeEventListener("mouseup", onMouseUp);
+  };
+}, [isDragging, dragOffset]);
+
   const [invoiceId, setInvoiceId] = useState("");
   const [invoiceList, setInvoiceList] = useState([]);
 const [detailsModal, setDetailsModal] = useState({ open: false, index: null });
 const [paymentMode, setPaymentMode] = useState("CREDIT");
 const [paidAmount, setPaidAmount] = useState(0);
 const [paidVia, setPaidVia] = useState("CASH"); // NEW
+
+const [showPaymentModal, setShowPaymentModal] = useState(false);
+
+const [paymentForm, setPaymentForm] = useState({
+  PaymentDate: new Date().toISOString().slice(0, 10),
+  PaymentMode: "CASH",
+  Amount: 0,
+  Notes: ""
+});
+
+
 
   const [company, setCompany] = useState(null);
   const [supplierList, setSupplierList] = useState([]);
@@ -68,7 +113,13 @@ const [paidVia, setPaidVia] = useState("CASH"); // NEW
 const [filterDate, setFilterDate] = useState(
   new Date().toISOString().slice(0, 10)
 );
-const balanceAmount = Math.max(0, totals.total - paidAmount);
+const [originalPaidAmount, setOriginalPaidAmount] = useState(0);
+const [isEditMode, setIsEditMode] = useState(false);
+const balanceAmount =
+  paymentMode === "CREDIT"
+    ? Math.max(0, totals.total - originalPaidAmount)
+    : 0;
+
   // ---------- VALIDATION ----------
   function validateUpdate(data) {
     let errors = [];
@@ -99,15 +150,17 @@ const balanceAmount = Math.max(0, totals.total - paidAmount);
 
     return errors;
   }
+  
+
 useEffect(() => {
   if (paymentMode !== "CREDIT") {
     setPaidAmount(totals.total);
     setPaidVia(paymentMode); // CASH or BANK
   } else {
     // CREDIT
-    if (paidAmount === 0) {
-      setPaidVia("CASH"); // default, harmless
-    }
+    //if (paidAmount === 0) {
+      //setPaidVia("CASH"); // default, harmless
+    //}
   }
 }, [paymentMode, totals.total]);
 
@@ -239,6 +292,14 @@ const addLine = () => setLines(prev => [...prev, blankLine()]);
     return prev.filter((_, j) => j !== i);
   });
 };
+React.useEffect(() => {
+  if (showPaymentModal && modalRef.current) {
+    const modal = modalRef.current;
+    modal.style.left = `${(window.innerWidth - modal.offsetWidth) / 2}px`;
+    modal.style.top = `${(window.innerHeight - modal.offsetHeight) / 2}px`;
+  }
+}, [showPaymentModal]);
+
 // Whenever supplierInfo changes → recalc gst split for all rows
 useEffect(() => {
   if (!supplierInfo || !company) return;
@@ -406,6 +467,8 @@ PaidVia:paidVia,
         }
 setPaymentMode(data.PaymentMode || "CREDIT");
 setPaidAmount(Number(data.PaidAmount) || 0);
+setOriginalPaidAmount(Number(data.PaidAmount) || 0);
+setIsEditMode(true);
 setPaidVia(data.PaidVia || "CASH");
 
         setSupplierId(data.SupplierId);
@@ -457,12 +520,22 @@ setPaidVia(data.PaidVia || "CASH");
         if (msg.success) setSupplierInfo(msg.data);
       }
 
+
       // --------------- UPDATE RESPONSE ---------------
       if (msg.action === "UpdatePurchaseInvoiceResponse") {
         if (msg.success) {
           alert("Invoice updated successfully. New PurchaseId = " + msg.newPurchaseId);
 
-    
+    // Close modal
+    setShowPaymentModal(false);
+
+    // Reset payment form
+    setPaymentForm({
+      PaymentDate: new Date().toISOString().slice(0, 10),
+      PaymentMode: "CASH",
+      Amount: 0,
+      Notes: ""
+    });
 
     // Refresh dropdown for today's date
     setInvoiceNo("");
@@ -570,6 +643,7 @@ setLines([ blankLine() ]);
       min="0"
       max={totals.total}
       value={paidAmount}
+      readOnly={paymentMode === "CREDIT" && isEditMode}
       disabled={paymentMode !== "CREDIT"}
       onChange={e => {
         const v = Number(e.target.value) || 0;
@@ -586,6 +660,15 @@ setLines([ blankLine() ]);
       value={Number(balanceAmount).toFixed(2)}
     />
   </div>
+
+<div className="form-group">
+{paymentMode === "CREDIT" && isEditMode && balanceAmount > 0 && (
+  <button className="btn-submit" onClick={() => setShowPaymentModal(true)}>
+    ➕ Add Payment
+  </button>
+)}
+</div>
+
 
       </div>
 
@@ -940,6 +1023,132 @@ setLines([ blankLine() ]);
           </div>
         </div>
       )}
+{showPaymentModal && (
+  <div className="modal-overlay">
+    <div className="modal-card draggable" ref={modalRef}>
+
+      {/* HEADER (DRAG HANDLE) */}
+      <div
+        className="modal-header draggable-header"
+        onMouseDown={onMouseDown}
+      >
+        <h3>Add Purchase Payment</h3>
+        <button
+          className="modal-close"
+          onClick={() => setShowPaymentModal(false)}
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* BODY */}
+      <div className="modal-body">
+
+        <div className="form-grid">
+
+          <div className="form-group">
+            <label>Payment Date</label>
+            <input
+              type="date"
+              value={paymentForm.PaymentDate}
+              onChange={e =>
+                setPaymentForm(p => ({ ...p, PaymentDate: e.target.value }))
+              }
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Payment Mode</label>
+            <select
+              value={paymentForm.PaymentMode}
+              onChange={e =>
+                setPaymentForm(p => ({ ...p, PaymentMode: e.target.value }))
+              }
+            >
+              <option value="CASH">Cash</option>
+              <option value="BANK">Bank</option>
+              <option value="UPI">UPI</option>
+            </select>
+          </div>
+
+          <div className="form-group full">
+            <label>Amount</label>
+            <input
+              type="number"
+              min="1"
+              max={balanceAmount}
+              value={paymentForm.Amount}
+              onChange={e => {
+                const v = Number(e.target.value) || 0;
+                setPaymentForm(p => ({
+                  ...p,
+                  Amount: Math.min(v, balanceAmount)
+                }));
+              }}
+            />
+            <small className="hint">
+              Balance Available: ₹ {balanceAmount.toFixed(2)}
+            </small>
+          </div>
+
+          <div className="form-group full">
+            <label>Notes (optional)</label>
+            <textarea
+              rows={2}
+              placeholder="Reference / remarks"
+              value={paymentForm.Notes}
+              onChange={e =>
+                setPaymentForm(p => ({ ...p, Notes: e.target.value }))
+              }
+            />
+          </div>
+
+        </div>
+      </div>
+
+      {/* FOOTER */}
+      <div className="modal-footer">
+        <button
+          className="btn-outline"
+          onClick={() => setShowPaymentModal(false)}
+        >
+          Cancel
+        </button>
+
+        <button
+          className="btn-primary"
+          onClick={() => {
+            if (paymentForm.Amount <= 0) {
+              alert("Enter valid payment amount.");
+              return;
+            }
+            if (paymentForm.Amount > balanceAmount) {
+              alert("Payment exceeds balance.");
+              return;
+            }
+
+            window.chrome.webview.postMessage({
+              Action: "SavePurchasePayment",
+              Payload: {
+                PurchaseId: invoiceId,
+                PaymentDate: paymentForm.PaymentDate,
+                Amount: paymentForm.Amount,
+                PaymentMode: paymentForm.PaymentMode,
+                Notes: paymentForm.Notes,
+                CreatedBy: user?.email || "system",
+                SupplierAccountId: supplierId
+              }
+            });
+          }}
+        >
+          Save Payment
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}
+
 
     </div>
   );

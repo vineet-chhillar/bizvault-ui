@@ -5,6 +5,9 @@ import EditItem from "./components/Item/EditItem";
 import CompanySetup from "./components/Item/CompanySetup";
 import PurchaseInvoiceEditor from "./components/Item/PurchaseInvoiceEditor";
 import EditPurchaseInvoice from "./components/Item/EditPurchaseInvoice";
+
+import EditSalesInvoice from "./components/Item/EditSalesInvoice";
+
 import InvoiceEditor from "./components/Item/InvoiceEditor";
 import SupplierPage from "./components/Item/SupplierPage";
 import CustomerPage from "./components/Item/CustomerPage";
@@ -428,6 +431,15 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
       Create/View/Print Sales Invoice
     </NavLink>
 
+<NavLink
+      to="/item/EditSalesInvoice"
+      onClick={() => isMobile && setMobileOpen(false)}
+      className={({ isActive }) =>
+        "nav-tab-link" + (isActive ? " active" : "")
+      }
+    >
+      Edit Sales Invoice
+    </NavLink>
 
    <NavLink
       to="/item/SalesReturnNew"
@@ -438,6 +450,8 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
     >
       Sales Return
     </NavLink>
+
+
 
     
   </div>
@@ -532,6 +546,7 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
   <Route path="/Item/CompanySetup" element={<CompanySetup user={user} />} />
   <Route path="/Item/PurchaseInvoiceEditor" element={<PurchaseInvoiceEditor user={user} />} />
   <Route path="/Item/EditPurchaseInvoice" element={<EditPurchaseInvoice user={user} />} />
+  <Route path="/Item/EditSalesInvoice" element={<EditSalesInvoice user={user} />} />
   <Route path="/Item/InvoiceEditor" element={<InvoiceEditor user={user} />} />
   <Route path="/Item/SalesReturnNew" element={<SalesReturnNew user={user} />} />
   <Route path="/Item/PurchaseReturn" element={<PurchaseReturn user={user} />} />
