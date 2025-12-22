@@ -426,10 +426,12 @@ if (copy[idx].BalanceBatchWise != null && Number(val) > Number(copy[idx].Balance
 // 🔴 CUSTOMER VALIDATION BASED ON PAYMENT MODE
 if (paymentMode === "CREDIT") {
   // CREDIT → customer is mandatory
-  if (!customer.CustomerId) {
-    const ok = validateCustomerDraft();
-    if (!ok) return;
-  }
+  // 🔴 CUSTOMER IS MANDATORY FOR ALL PAYMENT MODES
+if (!customer.CustomerId) {
+  const ok = validateCustomerDraft();
+  if (!ok) return;
+}
+
 }
 // CASH / BANK → customer optional (no validation)
 
@@ -476,16 +478,20 @@ if (!paymentMode) {
   // Fix bug: Customer object
   let Customer = null;
 
-if (paymentMode === "CREDIT") {
-  Customer = customer.CustomerId
-    ? { CustomerId: customer.CustomerId }
-    : {
-        CustomerId: 0,
-        CustomerName: customerDraft.CustomerName.trim(),
-        Mobile: customerDraft.Mobile.trim(),
-        BillingState: company?.State || ""
-      };
+// Existing customer selected
+if (customer.CustomerId && customer.CustomerId > 0) {
+  Customer = { CustomerId: customer.CustomerId };
 }
+// New customer (typed manually)
+else {
+  Customer = {
+    CustomerId: 0,
+    CustomerName: customerDraft.CustomerName.trim(),
+    Mobile: customerDraft.Mobile.trim(),
+    BillingState: customer.BillingState || company?.State || ""
+  };
+}
+
 
 
 
@@ -807,7 +813,7 @@ type="button"
 
   <select
   id="CustomerId"
-  disabled={paymentMode !== "CREDIT"}
+  //disabled={paymentMode !== "CREDIT"}
   value={customer.CustomerId || ""}
   onChange={(e) => {
     const selectedId = Number(e.target.value);
@@ -1294,7 +1300,6 @@ window.chrome.webview.postMessage({
   <button className="btn-submit small" onClick={addLine}>Add Item</button>
  <button
   disabled={
-    paymentMode === "CREDIT" &&
     !customer.CustomerId &&
     !customerDraft.CustomerName.trim()
   }
@@ -1303,6 +1308,7 @@ window.chrome.webview.postMessage({
 >
   Save Invoice
 </button>
+
 
 
   <button 

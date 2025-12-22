@@ -1047,3 +1047,7 @@
   border-radius: 6px;
   font-size: 13px;
 }
+.input-disabled {
+  background: #eee;
+  cursor: not-allowed;
+}

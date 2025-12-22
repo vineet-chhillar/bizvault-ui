@@ -10,6 +10,7 @@ const blankLine = () => ({
   HsnCode: "",
   BatchNo: "",
   Qty: 0,
+  AvailableQty: 0,
   ReturnedQty: 0,
 
   Rate: 0,
@@ -36,11 +37,20 @@ export default function EditSalesInvoice({ user }) {
   // --------------------------------------------------
   // HEADER STATE
   // --------------------------------------------------
-  const [invoiceId, setInvoiceId] = useState("");
+  const selectedInvoiceIdRef = React.useRef(null);
+
+  const [invoiceId, setInvoiceId] = useState(null);
   const [invoiceList, setInvoiceList] = useState([]);
   const [filterDate, setFilterDate] = useState(
     new Date().toISOString().slice(0, 10)
   );
+const [company, setCompany] = useState(null);
+const [selectedCustomer, setSelectedCustomer] = useState(null);
+const [customerList, setCustomerList] = useState([]);
+const [customerInfo, setCustomerInfo] = useState(null);
+const [editLocked, setEditLocked] = useState(false); // for sales return lock
+
+
 
   const [invoiceNo, setInvoiceNo] = useState("");
   const [invoiceNum, setInvoiceNum] = useState("");
@@ -80,6 +90,91 @@ export default function EditSalesInvoice({ user }) {
     paymentMode === "CREDIT"
       ? Math.max(0, totals.total - originalPaidAmount)
       : 0;
+function getBuyerState(customer) {
+  return (
+    customer?.BillingState ||
+    customer?.CustomerState ||
+    customer?.State ||
+    ""
+  );
+}
+
+
+function recomputeLineForState(line, sellerState, buyerState) {
+  const qty = Number(line.Qty) || 0;
+  const rate = Number(line.Rate) || 0;
+  const discount = Number(line.DiscountPercent) || 0;
+  const gst = Number(line.GstPercent) || 0;
+
+  const gross = qty * rate;
+  const discountAmt = (gross * discount) / 100;
+  const taxable = gross - discountAmt;
+
+  let cgst = 0, sgst = 0, igst = 0;
+  let cgstVal = 0, sgstVal = 0, igstVal = 0;
+
+  // ✅ ONLY decide GST type when BOTH states are known
+  if (sellerState && buyerState) {
+    if (sellerState === buyerState) {
+      cgst = gst / 2;
+      sgst = gst / 2;
+
+      cgstVal = (taxable * cgst) / 100;
+      sgstVal = (taxable * sgst) / 100;
+    } else {
+      igst = gst;
+      igstVal = (taxable * igst) / 100;
+    }
+  }
+
+  const tax = cgstVal + sgstVal + igstVal;
+
+  return {
+    ...line,
+
+    NetRate: qty > 0 ? taxable / qty : 0,
+    LineSubTotal: taxable,
+
+    CgstPercent: cgst,
+    SgstPercent: sgst,
+    IgstPercent: igst,
+
+    CgstValue: cgstVal,
+    SgstValue: sgstVal,
+    IgstValue: igstVal,
+
+    GstValue: tax,
+    LineTotal: taxable + tax
+  };
+}
+
+const sellerState = company?.State || "";
+
+const handleCustomerChange = (customerId) => {
+  if (!customerId) {
+    setCustomerId(null);
+    setCustomerInfo(null);
+    return;
+  }
+
+  setCustomerId(customerId);
+
+  window.chrome.webview.postMessage({
+    Action: "GetCustomerById",
+    Payload: { CustomerId: customerId }
+  });
+  
+};
+useEffect(() => {
+ window.chrome?.webview?.postMessage({ Action: "GetCompanyProfile" });
+ },[]);
+
+
+useEffect(() => {
+  window.chrome.webview.postMessage({
+    Action: "GetCustomers"
+  });
+}, []);
 
   // --------------------------------------------------
   // LOAD INVOICE LIST
@@ -116,47 +211,56 @@ export default function EditSalesInvoice({ user }) {
   // --------------------------------------------------
   // UPDATE LINE
   // --------------------------------------------------
-  const updateLine = (i, key, val) => {
-    setLines(prev => {
-      const copy = [...prev];
-      const base = copy[i];
-      const line = { ...base, [key]: val };
+ const updateLine = (index, field, value) => {
+  setLines(prev => {
+    
+    const copy = [...prev];
+    copy[index] = { ...copy[index], [field]: value };
 
-      if (key === "Qty") {
-        const maxQty = base.Qty - base.ReturnedQty;
-        line.Qty = Math.max(0, Math.min(Number(val), maxQty));
-      }
+    const sellerState = company?.State || "";
+    const buyerState = getBuyerState(selectedCustomer);
 
-      const qty = Number(line.Qty) || 0;
-      const rate = Number(line.Rate) || 0;
-      const disc = Number(line.DiscountPercent) || 0;
+//console.log("seller state is:", sellerState);
+//console.log("buyer state is:",buyerState);
 
-      line.NetRate = +(rate - (rate * disc / 100)).toFixed(2);
-      line.LineSubTotal = +(qty * line.NetRate).toFixed(2);
+    copy[index] = recomputeLineForState(
+      copy[index],
+      sellerState,
+      buyerState
+    );
 
-      const gstVal = +(line.LineSubTotal * (line.GstPercent || 0) / 100).toFixed(2);
-      line.GstValue = gstVal;
-      line.LineTotal = line.LineSubTotal + gstVal;
+    return copy;
+  });
+};
+const removeLine = (i) => {
+  setLines(prev => {
+    if (prev.length === 1) {
+      alert("At least one item is required in the invoice.");
+      return prev; // do NOT delete
+    }
 
-      copy[i] = line;
-      return copy;
-    });
-  };
+    return prev.filter((_, j) => j !== i);
+  });
+};
 
   // --------------------------------------------------
   // LOAD INVOICE
   // --------------------------------------------------
   const loadInvoice = () => {
-  if (!invoiceId) {
+  if (invoiceId == null) {
     alert("Select an invoice first.");
     return;
   }
 
+  const id = invoiceId; // 🔒 freeze value
+
   window.chrome.webview.postMessage({
     Action: "CanEditSalesInvoice",
-    Payload: { InvoiceId: invoiceId }
+    Payload: { InvoiceId: id }
   });
 };
+
+
 
 
   // --------------------------------------------------
@@ -194,19 +298,37 @@ export default function EditSalesInvoice({ user }) {
 
       if (!msg) return;
 // ---------- CAN EDIT SALES INVOICE ----------
-if (msg.action === "CanEditSalesInvoiceResponse") {
-  if (!msg.Editable) {
-    alert(
-      "This sales invoice cannot be edited because some quantity has been returned."
-    );
-    return;
-  }
 
-  // ✅ Use ID from response, NOT React state
-  window.chrome.webview.postMessage({
-    Action: "LoadSalesInvoice",
-    Payload: { InvoiceId: msg.InvoiceId }
-  });
+if (msg.action === "GetCompanyProfileResponse") {
+        setCompany(msg.profile);
+        return;
+      }
+if (msg.action === "GetCustomersResult") {
+  setCustomerList(msg.data || []);
+  
+}
+if (msg.action === "GetCustomerByIdResult") {
+  const c = msg.data;
+  if (!c) return;
+
+
+  const normalized = {
+    ...c,
+    State: c.BillingState || c.CustomerState || c.State
+  };
+
+  setCustomerInfo(c);
+  setSelectedCustomer(c);   // 🔥 REQUIRED
+
+
+  const sellerState = company?.State || "";
+  const buyerState = getBuyerState(c);
+
+  setLines(prev =>
+    prev.map(l =>
+      recomputeLineForState(l, sellerState, buyerState)
+    )
+  );
 }
 
 
@@ -216,20 +338,30 @@ if (msg.action === "CanEditSalesInvoiceResponse") {
 // ---------- CAN EDIT SALES INVOICE ----------
 if (msg.action === "CanEditSalesInvoiceResponse") {
   if (!msg.Editable) {
-    alert(
-      "This sales invoice cannot be edited because some quantity has already been returned."
-    );
+    alert("This sales invoice cannot be edited because a sales return exists.");
+    setEditLocked(true);
+    return;
+  }
+ 
+  setEditLocked(false);
+
+  const id = selectedInvoiceIdRef.current;
+
+  if (!id) {
+    console.error("❌ InvoiceId lost before LoadSalesInvoice");
     return;
   }
 
-  // ✅ Allowed → load invoice (same pattern as purchase)
   window.chrome.webview.postMessage({
     Action: "LoadSalesInvoice",
-    Payload: { InvoiceId: msg.InvoiceId }
+    Payload: { InvoiceId: id }
   });
 }
 
-      if (msg.action === "LoadSalesInvoiceResponse") {
+
+
+
+     if (msg.action === "LoadSalesInvoiceResponse") {
   const d = msg.data;
   if (!d) {
     alert("Invoice not found.");
@@ -243,20 +375,44 @@ if (msg.action === "CanEditSalesInvoiceResponse") {
   setInvoiceDate(d.InvoiceDate);
 
   setCustomerId(d.CustomerId);
-  setCustomerName(d.CustomerName);
 
   setPaymentMode(d.PaymentMode);
   setPaidVia(d.PaidVia || "CASH");
   setPaidAmount(Number(d.PaidAmount) || 0);
   setOriginalPaidAmount(Number(d.PaidAmount) || 0);
 
+  // fetch customer info (IMPORTANT)
+  window.chrome.webview.postMessage({
+    Action: "GetCustomerById",
+    Payload: { CustomerId: d.CustomerId }
+  });
+
+  const sellerState = company?.State || "";
+ const buyerState = getBuyerState({
+  BillingState: d.BillingState,
+  CustomerState: d.CustomerState
+});
+
   setLines(
-    (d.Items || []).map(it => ({
+  (d.Items || []).map(it => {
+    const line = {
       ...blankLine(),
-      ...it
-    }))
-  );
+      ...it,
+      Qty: Number(it.Qty) || Number(it.AvailableQty) || 0,
+AvailableQty: Number(it.AvailableQty) || 0,
+
+      Rate: Number(it.Rate) || 0,
+      DiscountPercent: Number(it.DiscountPercent) || 0,
+      GstPercent: Number(it.GstPercent) || 0
+      
+    };
+
+    return recomputeLineForState(line, sellerState, buyerState);
+  })
+);
+
 }
+
 
 
       if (msg.action === "UpdateSalesInvoiceResponse") {
@@ -273,6 +429,27 @@ if (msg.action === "CanEditSalesInvoiceResponse") {
     window.chrome.webview.addEventListener("message", handler);
     return () => window.chrome.webview.removeEventListener("message", handler);
   }, []);
+  // 🔥 RECOMPUTE GST WHEN COMPANY OR CUSTOMER STATE ARRIVES
+useEffect(() => {
+  if (!company || !selectedCustomer) return;
+
+  const sellerState = company.State || "";
+  const buyerState = getBuyerState(selectedCustomer);
+
+  if (!sellerState || !buyerState) return;
+
+  setLines(prev =>
+    prev.map(l => recomputeLineForState(l, sellerState, buyerState))
+  );
+}, [company, selectedCustomer]);
+
+// --------------------------------------------------
+// HEADER CALCULATIONS
+// --------------------------------------------------
+const totalAvailableQty = lines.reduce(
+  (sum, l) => sum + (Number(l.Qty || 0) - Number(l.ReturnedQty || 0)),
+  0
+);
 
   // --------------------------------------------------
   // UI
@@ -289,10 +466,15 @@ if (msg.action === "CanEditSalesInvoiceResponse") {
             onChange={e => setFilterDate(e.target.value)}
           />
 
-          <select
-            value={invoiceId}
-            onChange={e => setInvoiceId(e.target.value)}
-          >
+         <select
+  value={invoiceId ?? ""}
+  onChange={e => {
+    const v = e.target.value ? Number(e.target.value) : null;
+    setInvoiceId(v);
+    selectedInvoiceIdRef.current = v; // 🔒 freeze value
+  }}
+>
+
             <option value="">Select Sales Invoice</option>
             {invoiceList.map(i => (
               <option key={i.Id} value={i.Id}>{i.InvoiceNo}</option>
@@ -304,14 +486,33 @@ if (msg.action === "CanEditSalesInvoiceResponse") {
           </button>
         </div>
 
-        <div className="customer-section">
-          <label>Customer</label>
-          <input
-            value={customerName}
-            readOnly
-            style={{ background: "#f1ecff" }}
-          />
-        </div>
+        {/* CUSTOMER SECTION */}
+<div className="customer-section">
+  <label>Customer</label>
+
+  <select
+    value={customerId || ""}
+    //disabled={isEditMode}   // 🔒 lock after load
+    onChange={e => handleCustomerChange(Number(e.target.value))}
+
+  >
+    <option value="">Select Customer</option>
+    {customerList.map(c => (
+      <option key={c.CustomerId} value={c.CustomerId}>
+        {c.CustomerName}
+      </option>
+    ))}
+  </select>
+
+  {customerInfo && (
+    <div className="supplier-details-box">
+      <div><b>Name:</b> {customerInfo.CustomerName}</div>
+      <div><b>GSTIN:</b> {customerInfo.GSTIN || "-"}</div>
+      <div><b>State:</b> {customerInfo.State}</div>
+    </div>
+  )}
+</div>
+
       </div>
 
       {/* HEADER ROW */}
@@ -325,20 +526,46 @@ if (msg.action === "CanEditSalesInvoiceResponse") {
           <label>Invoice No</label>
           <input readOnly value={invoiceNo} />
         </div>
+        
+
+        
+        <div className="form-group">
+          <label>Available Qty</label>
+         <input  readOnly value={totalAvailableQty} />
+         </div>
 
         <div className="form-group">
-          <label>Payment Mode</label>
-          <select value={paymentMode} disabled>
-            <option value="CASH">Cash</option>
-            <option value="BANK">Bank</option>
-            <option value="CREDIT">Credit</option>
-          </select>
-        </div>
+  <label>Payment Mode</label>
+  <select
+  value={paymentMode}
+  onChange={e => setPaymentMode(e.target.value)}
+>
+  <option value="CASH">Cash</option>
+  <option value="BANK">Bank</option>
+  <option value="CREDIT">Credit</option>
+</select>
 
-        <div className="form-group">
-          <label>Paid Amount</label>
-          <input readOnly value={paidAmount} />
-        </div>
+</div>
+
+
+        
+ <div className="form-group">
+  <label>Paid Amount</label>
+  <input
+    type="number"
+    value={paidAmount}
+    disabled={paymentMode !== "CREDIT"}   // ✅ editable ONLY for CREDIT
+    onChange={e => {
+      const val = Number(e.target.value) || 0;
+
+      // optional safety
+      if (val > totals.total) return;
+
+      setPaidAmount(val);                // ✅ user-controlled only
+    }}
+    className={paymentMode !== "CREDIT" ? "input-disabled" : ""}
+  />
+</div>
 
         <div className="form-group">
           <label>Balance</label>
@@ -355,36 +582,113 @@ if (msg.action === "CanEditSalesInvoiceResponse") {
       </div>
 
       {/* ITEM TABLE */}
-      <table className="data-table">
+      <table className="data-table" style={{ tableLayout: "fixed" }}>
         <thead>
           <tr>
-            <th>Item</th>
-            <th>Batch</th>
-            <th>Qty</th>
-            <th>Rate</th>
-            <th>Disc%</th>
-            <th>Net</th>
-            <th>Total</th>
+            <th style={{ width: "200px" }}>Item</th>
+            <th style={{ width: "110px" }}>Batch</th>
+            <th style={{ width: "85px" }}>HSN</th>
+            <th style={{ width: "70px" }}>Qty</th>
+            <th style={{ width: "90px" }}>Rate</th>
+            <th style={{ width: "70px" }}>Disc%</th>
+            <th style={{ width: "90px" }}>Net Rate</th>
+            <th style={{ width: "100px" }}>Net Amt</th>
+            <th style={{ width: "70px" }}>GST%</th>
+            <th style={{ width: "90px" }}>GST Amt</th>
+              <th style={{ width: "70px" }}>CGST%</th>
+            <th style={{ width: "90px" }}>CGST Amt</th>
+             <th style={{ width: "70px" }}>SGST%</th>
+            <th style={{ width: "90px" }}>SGST Amt</th>
+             <th style={{ width: "70px" }}>IGST%</th>
+            <th style={{ width: "90px" }}>IGST Amt</th>
+            <th style={{ width: "100px" }}>Total</th>
+            <th></th>
           </tr>
         </thead>
+
         <tbody>
           {lines.map((l, i) => (
             <tr key={i}>
-              <td><div className="cell-box">{l.ItemName}</div></td>
-              <td><div className="cell-box">{l.BatchNo}</div></td>
+              <td>
+                
+                <div className="cell-box">
+        <input value={l.ItemName} onChange={e => updateLine(i, "ItemName", e.target.value)}
+        />
+        </div>
+                </td>
+              <td><div className="cell-box"><input value={l.BatchNo} readOnly /></div></td>
+               <td><div className="cell-box"><input value={l.HsnCode} readOnly /></div></td>
               <td>
                 <div className="cell-box">
                   <input
-                    value={l.Qty}
-                    disabled={l.ReturnedQty >= l.Qty}
-                    onChange={e => updateLine(i, "Qty", e.target.value)}
-                  />
+  type="number"
+  value={l.Qty}
+  disabled={l.ReturnedQty > 0}   // lock if return exists
+  onChange={e => updateLine(i, "Qty", e.target.value)}
+/>
+
                 </div>
+                
+
               </td>
-              <td><div className="cell-box"><input value={l.Rate} readOnly /></div></td>
-              <td><div className="cell-box"><input value={l.DiscountPercent} readOnly /></div></td>
+              
+              <td><div className="cell-box"><input  value={l.Rate}  onChange={e => updateLine(i, "Rate", e.target.value)}/></div></td>
+              <td><div className="cell-box"><input  value={l.DiscountPercent}  onChange={e => updateLine(i, "DiscountPercent", e.target.value)}/></div></td>
+
+              <td><div className="cell-box"><input value={l.NetRate} readOnly /> </div></td>
               <td><div className="cell-box">{l.LineSubTotal.toFixed(2)}</div></td>
+              <td>
+        <div className="cell-box">
+        <input value={l.GstPercent} readOnly />
+        </div>
+        </td>
+      <td>
+        <div className="cell-box">
+        <input value={l.GstValue} readOnly />
+        </div>
+        </td>
+      <td>
+        <div className="cell-box">
+        <input value={l.CgstPercent} readOnly />
+        </div>
+        </td>
+      <td>
+        <div className="cell-box">
+        <input value={l.CgstValue} readOnly />
+        </div>
+        </td>
+      <td>
+        <div className="cell-box">
+        <input value={l.SgstPercent} readOnly />
+        </div>
+        </td>
+      <td>
+        <div className="cell-box">
+        <input value={l.SgstValue} readOnly />
+        </div>
+        </td>
+      <td>
+        <div className="cell-box">
+        <input value={l.IgstPercent} readOnly />
+        </div>
+        </td>
+      <td>
+        <div className="cell-box">
+        <input value={l.IgstValue} readOnly />
+        </div>
+        </td>
+      
+
+
               <td><div className="cell-box">{l.LineTotal.toFixed(2)}</div></td>
+              <td><button
+              className="invaction-btn invaction-modify"
+              onClick={() => removeLine(i)}
+            >
+              X
+            </button>
+             </td>
+              
             </tr>
           ))}
         </tbody>
