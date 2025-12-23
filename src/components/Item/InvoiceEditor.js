@@ -105,8 +105,8 @@ const [itemSearchIndex, setItemSearchIndex] = useState(null); // which row is sh
 const [selectedItemBalance, setSelectedItemBalance] = useState(null);
 const [selectedBatchBalance, setSelectedBatchBalance] = useState(null);
 const [selectedBatchRate, setSelectedBatchRate] = useState(null);
-const [paymentMode, setPaymentMode] = useState("Cash");
-const [paidVia, setPaidVia] = useState("Cash");
+const [paymentMode, setPaymentMode] = useState("CASH");
+const [paidVia, setPaidVia] = useState("CASH");
 
 const INDIAN_STATES = [
   "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh",
@@ -539,6 +539,7 @@ Notes: l.Notes || "",
       CompanyId: company?.Id ?? 1,
 PaymentMode: paymentMode,   // ✅ ADD THIS
 PaidAmount: paidAmount,
+BalanceAmount: balanceAmount,
       SubTotal: totals.subTotal,
       TotalTax: totals.totalTax,
       TotalAmount: totals.total,
@@ -617,8 +618,8 @@ if (msg.action === "GetNextSalesInvoiceNumResponse") {
 }
 
 
-      if (msg.action === "GetCustomersResponse") {
-  setCustomerList(msg.customers || []);
+      if (msg.action === "GetCustomersResult") {
+  setCustomerList(msg.data || []);
 }
 {/*if (msg.action === "SaveInvoiceResponse") {
 
@@ -1300,6 +1301,7 @@ window.chrome.webview.postMessage({
   <button className="btn-submit small" onClick={addLine}>Add Item</button>
  <button
   disabled={
+    paymentMode === "CREDIT" &&
     !customer.CustomerId &&
     !customerDraft.CustomerName.trim()
   }
@@ -1308,6 +1310,7 @@ window.chrome.webview.postMessage({
 >
   Save Invoice
 </button>
+
 
 
 

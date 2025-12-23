@@ -46,7 +46,8 @@ export default function EditPurchaseInvoice({ user }) {
 const [detailsModal, setDetailsModal] = useState({ open: false, index: null });
 const [refundMode, setRefundMode] = useState("ADJUST"); // ADJUST | CASH | BANK
 const [paidVia, setPaidVia] = useState("");             // CASH | BANK | ""
-
+const [outstanding, setOutstanding] = useState(0);   // BalanceAmount
+const [paidAmount, setPaidAmount] = useState(0);     // PaidAmount
   const [company, setCompany] = useState(null);
   const [supplierList, setSupplierList] = useState([]);
   const [supplierId, setSupplierId] = useState("");
@@ -309,6 +310,8 @@ useEffect(() => {
       CreatedBy: user?.email || "system",
         RefundMode: refundMode,   // ✅ ADD
   PaidVia: paidVia, 
+  BalanceAmount: outstanding,
+      PaidAmount: paidAmount,
       Items: lines
     };
 
@@ -385,6 +388,11 @@ useEffect(() => {
         setInvoiceNo(data.InvoiceNo);
         setInvoiceNum(data.InvoiceNum);
         setNotes(data.Notes || "");
+        // Payment summary from backend
+setPaidAmount(Number(data.PaidAmount) || 0);
+
+setOutstanding(Number(data.BalanceAmount) || 0);
+
         setLines((data.Items || []).map(item => ({
   PurchaseItemId: item.PurchaseItemId,          
   ItemId: item.ItemId,
@@ -440,7 +448,8 @@ AvailableQty: item.AvailableQty || 0,
    setInvoiceNo("");      // blank
    setRefundMode("ADJUST");
 setPaidVia("");
-
+setOutstanding(0);
+setPaidAmount(0);
    setSupplierId("");
   } else {
     alert("Failed to save return: " + msg.message);

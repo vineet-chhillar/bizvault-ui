@@ -88,7 +88,7 @@ const [editLocked, setEditLocked] = useState(false); // for sales return lock
 
   const balanceAmount =
     paymentMode === "CREDIT"
-      ? Math.max(0, totals.total - originalPaidAmount)
+      ? Math.max(0, totals.total - paidAmount)
       : 0;
 function getBuyerState(customer) {
   return (
@@ -166,6 +166,11 @@ const handleCustomerChange = (customerId) => {
   
 };
 useEffect(() => {
+  console.log("showPaymentModal =", showPaymentModal);
+}, [showPaymentModal]);
+
+
+useEffect(() => {
  window.chrome?.webview?.postMessage({ Action: "GetCompanyProfile" });
  },[]);
 
@@ -213,18 +218,28 @@ useEffect(() => {
   // --------------------------------------------------
  const updateLine = (index, field, value) => {
   setLines(prev => {
-    
     const copy = [...prev];
-    copy[index] = { ...copy[index], [field]: value };
+    const line = { ...copy[index] };
+
+    if (field === "Qty") {
+      const qty = Number(value) || 0;
+      const maxQty = Number(line.AvailableQty || 0);
+
+      if (qty > maxQty) {
+        alert(`Quantity cannot exceed available quantity (${maxQty})`);
+        return prev; // ⛔ reject change
+      }
+
+      line.Qty = qty;
+    } else {
+      line[field] = value;
+    }
 
     const sellerState = company?.State || "";
     const buyerState = getBuyerState(selectedCustomer);
 
-//console.log("seller state is:", sellerState);
-//console.log("buyer state is:",buyerState);
-
     copy[index] = recomputeLineForState(
-      copy[index],
+      line,
       sellerState,
       buyerState
     );
@@ -232,6 +247,7 @@ useEffect(() => {
     return copy;
   });
 };
+
 const removeLine = (i) => {
   setLines(prev => {
     if (prev.length === 1) {
@@ -267,26 +283,35 @@ const removeLine = (i) => {
   // UPDATE INVOICE
   // --------------------------------------------------
   const updateInvoice = () => {
-    window.chrome.webview.postMessage({
-      Action: "UpdateSalesInvoice",
-      Payload: {
-        InvoiceId: invoiceId,
-        InvoiceNo: invoiceNo,
-        InvoiceNum: invoiceNum,
-        InvoiceDate: invoiceDate,
-        CustomerId: customerId,
-        PaymentMode: paymentMode,
-        PaidAmount: paidAmount,
-        PaidVia: paidVia,
-        SubTotal: totals.subTotal,
-        TotalTax: totals.tax,
-        RoundOff: totals.roundOff,
-        TotalAmount: totals.total,
-        CreatedBy: user?.email || "system",
-        Items: lines
-      }
-    });
-  };
+  const id = selectedInvoiceIdRef.current;
+
+  if (!id) {
+    alert("Invoice ID missing. Reload the invoice.");
+    return;
+  }
+
+  window.chrome.webview.postMessage({
+    Action: "UpdateSalesInvoice",
+    Payload: {
+      InvoiceId: id,
+      InvoiceNo: invoiceNo,
+      InvoiceNum: invoiceNum,
+      InvoiceDate: invoiceDate,
+      CustomerId: customerId,
+      CompanyProfileId: company?.Id || null,
+      PaymentMode: paymentMode,
+      PaidAmount: paidAmount,
+      PaidVia: paidVia,
+      SubTotal: totals.subTotal,
+      TotalTax: totals.tax,
+      RoundOff: totals.roundOff,
+      TotalAmount: totals.total,
+      CreatedBy: user?.email || "system",
+      Items: lines
+    }
+  });
+};
+
 
   // --------------------------------------------------
   // MESSAGE HANDLER
@@ -416,14 +441,24 @@ AvailableQty: Number(it.AvailableQty) || 0,
 
 
       if (msg.action === "UpdateSalesInvoiceResponse") {
-        if (msg.success) {
-          alert("Invoice updated successfully.");
-          setIsEditMode(false);
-          setLines([blankLine()]);
-        } else {
-          alert("Update failed: " + msg.message);
-        }
-      }
+  if (msg.success) {
+    alert("Invoice updated successfully.");
+    setConfirmModal(false);
+    setIsEditMode(false);
+    setLines([blankLine()]);
+    setPaidAmount(0);
+    setOriginalPaidAmount(0);
+    setInvoiceNo("");
+  setInvoiceNum("");
+    setInvoiceId(null);
+    setCustomerId(null);
+    setSelectedCustomer(null);
+    setCustomerInfo(null);
+  } else {
+    alert("Update failed: " + msg.message);
+  }
+}
+
     };
 
     window.chrome.webview.addEventListener("message", handler);
@@ -447,9 +482,10 @@ useEffect(() => {
 // HEADER CALCULATIONS
 // --------------------------------------------------
 const totalAvailableQty = lines.reduce(
-  (sum, l) => sum + (Number(l.Qty || 0) - Number(l.ReturnedQty || 0)),
+  (sum, l) => sum + Number(l.AvailableQty || 0),
   0
 );
+
 
   // --------------------------------------------------
   // UI
@@ -704,9 +740,14 @@ const totalAvailableQty = lines.reduce(
 
       {/* ACTION */}
       <div className="button-row">
-        <button className="btn-submit" onClick={() => setConfirmModal(true)}>
-          Update Invoice
-        </button>
+        <button
+  className="btn-submit"
+  disabled={!isEditMode || editLocked}
+  onClick={() => setConfirmModal(true)}
+>
+  Update Invoice
+</button>
+
       </div>
 
       {/* CONFIRM MODAL */}
@@ -722,12 +763,172 @@ const totalAvailableQty = lines.reduce(
             <button className="btn-cancel" onClick={() => setConfirmModal(false)}>
               Cancel
             </button>
-            <button className="btn-submit" onClick={updateInvoice}>
-              Yes, Update Invoice
-            </button>
+            <button
+  type="button"
+  className="btn-submit"
+  onClick={(e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    updateInvoice();
+  }}
+>
+  Yes, Update Invoice
+</button>
+
           </div>
         </div>
       )}
+{showPaymentModal && (
+  <div className="modal-overlay">
+    <div className="modal-card draggable">
+
+      {/* HEADER (DRAG HANDLE) */}
+      <div className="modal-header draggable-header">
+        <h3>Add Sales Payment</h3>
+        <button
+          className="modal-close"
+          onClick={() => setShowPaymentModal(false)}
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* BODY */}
+      <div className="modal-body">
+        <div className="form-grid">
+
+          <div className="form-group">
+            <label>Payment Date</label>
+            <input
+              type="date"
+              value={paymentForm.PaymentDate}
+              onChange={e =>
+                setPaymentForm(p => ({
+                  ...p,
+                  PaymentDate: e.target.value
+                }))
+              }
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Payment Mode</label>
+            <select
+              value={paymentForm.PaymentMode}
+              onChange={e =>
+                setPaymentForm(p => ({
+                  ...p,
+                  PaymentMode: e.target.value
+                }))
+              }
+            >
+              <option value="CASH">Cash</option>
+              <option value="BANK">Bank</option>
+              <option value="UPI">UPI</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>Amount</label>
+            <input
+              type="number"
+              min="1"
+              max={balanceAmount}
+              value={paymentForm.Amount}
+              onChange={e =>
+                setPaymentForm(p => ({
+                  ...p,
+                  Amount: Number(e.target.value) || 0
+                }))
+              }
+            />
+            <small className="hint">
+              Balance: ₹{balanceAmount.toFixed(2)}
+            </small>
+          </div>
+
+          <div className="form-group full-width">
+            <label>Notes</label>
+            <input
+              type="text"
+              value={paymentForm.Notes}
+              onChange={e =>
+                setPaymentForm(p => ({
+                  ...p,
+                  Notes: e.target.value
+                }))
+              }
+              placeholder="Optional remarks"
+            />
+          </div>
+
+        </div>
+      </div>
+
+      {/* FOOTER */}
+      <div className="modal-footer">
+        <button
+          className="btn-cancel"
+          onClick={() => setShowPaymentModal(false)}
+        >
+          Cancel
+        </button>
+
+        <button
+          className="btn-submit"
+          onClick={() => {
+            if (paymentForm.Amount <= 0) {
+              alert("Enter valid payment amount");
+              return;
+            }
+
+            if (paymentForm.Amount > balanceAmount) {
+              alert("Payment exceeds balance amount");
+              return;
+            }
+
+            // ✅ Apply payment locally
+            setPaidAmount(prev =>
+              Math.min(prev + paymentForm.Amount, totals.total)
+            );
+
+            // reset modal form
+            setPaymentForm({
+              PaymentDate: new Date().toISOString().slice(0, 10),
+              PaymentMode: "CASH",
+              Amount: 0,
+              Notes: ""
+            });
+
+            window.chrome.webview.postMessage(
+             {
+  Action: "SaveSalesPayment",
+  Payload: {
+    InvoiceId: invoiceId,
+    PaymentDate: paymentForm.PaymentDate,
+    Amount: paidAmount,        // 🔒 read-only
+    PaymentMode: paymentForm.PaymentMode,
+    Notes: paymentForm.Notes,
+    CustomerAccountId: customerId,
+    CreatedBy: user.email
+  }
+}
+
+          );
+
+            setShowPaymentModal(false);
+          }}
+        >
+          Save Payment
+        </button>
+      </div>
+
     </div>
+  </div>
+)}
+
+
+    </div>
+
   );
 }
