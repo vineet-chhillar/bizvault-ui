@@ -367,6 +367,13 @@ if (gstPct > 0) {
   const round = Math.round(total) - total;
   setTotals({ subTotal: sub, tax: tax, total: total + round, roundOff: round });
 };
+// 🔥 AUTO-MOVE TOTAL TO PAID WHEN NOT CREDIT
+useEffect(() => {
+  if (paymentMode !== "CREDIT") {
+    setPaidTouched(false);        // user is not editing paid manually
+    setPaidAmount(totals.total); // 🔥 FULL AMOUNT PAID
+  }
+}, [totals.total, paymentMode]);
 
 
   // ========= SAVE PURCHASE INVOICE =========
@@ -857,8 +864,8 @@ setPdfPath(url);
   <thead>
     <tr>
       <th style={{ width: "200px" }}>Item</th>
-      <th style={{ width: "110px" }}>Batch</th>
-      <th style={{ width: "85px" }}>HSN</th>
+      <th style={{ width: "120px" }}>Batch</th>
+      <th style={{ width: "100px" }}>HSN</th>
       <th style={{ width: "70px" }}>Qty</th>
       <th style={{ width: "90px" }}>Purchase Rate</th>
       <th style={{ width: "70px" }}>Disc %</th>
@@ -947,7 +954,7 @@ setPdfPath(url);
 
           </td>
 
-          <td style={{ width:"90px" }}>
+          <td style={{ width:"100px" }}>
             <div className="cell-box">
               <input value={l.BatchNo} readOnly
                      onChange={e=>updateLine(i,"BatchNo",e.target.value)} 
@@ -955,7 +962,7 @@ setPdfPath(url);
             </div>
           </td>
 
-          <td style={{ width:"85px" }}>
+          <td style={{ width:"100px" }}>
             <div className="cell-box">
               <input value={l.HsnCode} readOnly style={{background:"#eee"}} />
             </div>

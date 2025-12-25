@@ -63,22 +63,34 @@ const [customerErrors, setCustomerErrors] = useState({});
 const isValidMobile = (val) =>
   /^[6-9]\d{9}$/.test(val.trim());
 
-const validateCustomerDraft = () => {
-  const errors = {};
-
-  if (!customerDraft.CustomerName.trim()) {
-    errors.CustomerName = "Customer name is required";
+//const validateCustomerDraft = () => {
+ const validateCustomerDraft = () => {
+  // Existing customer selected
+  if (customer.CustomerId && customer.CustomerId > 0) {
+    return true;
   }
 
+  // New customer (draft) must have name
+  if (!customerDraft.CustomerName.trim()) {
+    setCustomerErrors({
+      CustomerName: "Customer name is required for credit invoice"
+    });
+    return false;
+  }
+
+  // Mobile optional but if provided must be valid
   if (
     customerDraft.Mobile.trim() &&
     !isValidMobile(customerDraft.Mobile)
   ) {
-    errors.Mobile = "Enter valid 10-digit mobile number";
+    setCustomerErrors({
+      Mobile: "Enter valid 10-digit mobile number"
+    });
+    return false;
   }
 
-  setCustomerErrors(errors);
-  return Object.keys(errors).length === 0;
+  setCustomerErrors({});
+  return true;
 };
 
 const [validationErrors, setValidationErrors] = useState({});
@@ -424,15 +436,17 @@ if (copy[idx].BalanceBatchWise != null && Number(val) > Number(copy[idx].Balance
 
 
 // 🔴 CUSTOMER VALIDATION BASED ON PAYMENT MODE
-if (paymentMode === "CREDIT") {
+//if (paymentMode === "CREDIT") {
   // CREDIT → customer is mandatory
   // 🔴 CUSTOMER IS MANDATORY FOR ALL PAYMENT MODES
 if (!customer.CustomerId) {
   const ok = validateCustomerDraft();
-  if (!ok) return;
+  if (!ok)
+    alert("Please Add/Select Customer for invoice");
+    return;
 }
 
-}
+//}
 // CASH / BANK → customer optional (no validation)
 
 
@@ -1051,13 +1065,13 @@ className={paymentMode !== "CREDIT" ? "input-disabled" : ""}
   /></div>
 
   {itemSearchIndex === i && l.ItemName.trim() !== "" && (
-    <div className="suggestions-box" style={{ width: "320px" }}>
+    <div className="suggestions-box" style={{ width: "520px" }}>
       {itemList
         .filter(it =>
           (it.Name || "").toLowerCase().includes(l.ItemName.toLowerCase()) ||
           (it.ItemCode || "").toLowerCase().includes(l.ItemName.toLowerCase())
         )
-        .slice(0, 12)
+        .slice(0, 50)
         .map(it => (
           <div
             key={it.Id}

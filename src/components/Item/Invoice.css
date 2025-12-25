@@ -123,8 +123,8 @@
 }
 
 .data-table th:nth-child(1) { width: 10%; } /* Item */
-.data-table th:nth-child(2) { width: 5%; } /* Batch */
-.data-table th:nth-child(3) { width: 5%; } /* HSN */
+.data-table th:nth-child(2) { width: 8%; } /* Batch */
+.data-table th:nth-child(3) { width: 7%; } /* HSN */
 .data-table th:nth-child(4) { width: 5%; }  /* Qty */
 .data-table th:nth-child(5) { width: 5%; } /* Rate */
 .data-table th:nth-child(6) { width: 5%; } /* discount */

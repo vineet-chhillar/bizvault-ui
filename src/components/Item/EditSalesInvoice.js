@@ -50,6 +50,8 @@ const [customerList, setCustomerList] = useState([]);
 const [customerInfo, setCustomerInfo] = useState(null);
 const [editLocked, setEditLocked] = useState(false); // for sales return lock
 
+const paymentModeChangedByUser = React.useRef(false);
+const [originalPaymentMode, setOriginalPaymentMode] = useState(null);
 
 
   const [invoiceNo, setInvoiceNo] = useState("");
@@ -59,18 +61,19 @@ const [editLocked, setEditLocked] = useState(false); // for sales return lock
   const [customerName, setCustomerName] = useState("");
   const [customerId, setCustomerId] = useState(null);
 
-  const [paymentMode, setPaymentMode] = useState("CREDIT");
+  const [paymentMode, setPaymentMode] = useState("Credit");
   const [paidAmount, setPaidAmount] = useState(0);
   const [originalPaidAmount, setOriginalPaidAmount] = useState(0);
-  const [paidVia, setPaidVia] = useState("CASH");
+  const [paidVia, setPaidVia] = useState("Cash");
 
   const [isEditMode, setIsEditMode] = useState(false);
   const [confirmModal, setConfirmModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
+
   const [paymentForm, setPaymentForm] = useState({
     PaymentDate: new Date().toISOString().slice(0, 10),
-    PaymentMode: "CASH",
+    PaymentMode: "Cash",
     Amount: 0,
     Notes: ""
   });
@@ -87,7 +90,7 @@ const [editLocked, setEditLocked] = useState(false); // for sales return lock
   });
 
   const balanceAmount =
-    paymentMode === "CREDIT"
+    paymentMode === "Credit"
       ? Math.max(0, totals.total - paidAmount)
       : 0;
 function getBuyerState(customer) {
@@ -166,6 +169,35 @@ const handleCustomerChange = (customerId) => {
   
 };
 useEffect(() => {
+  if (!isEditMode) return;
+  if (!paymentModeChangedByUser.current) return;
+
+  if (paymentMode === "Credit") {
+    // 🔥 switching TO credit
+    if (originalPaymentMode === "Credit") {
+      // was already credit → keep original paid
+      setPaidAmount(originalPaidAmount || 0);
+    } else {
+      // was CASH/BANK → reset to 0
+      setPaidAmount(0);
+    }
+  } else {
+    // 🔥 switching TO CASH/BANK
+    setPaidAmount(totals.total);
+  }
+
+  paymentModeChangedByUser.current = false;
+}, [
+  paymentMode,
+  isEditMode,
+  originalPaidAmount,
+  originalPaymentMode,
+  totals.total
+]);
+
+
+
+useEffect(() => {
   console.log("showPaymentModal =", showPaymentModal);
 }, [showPaymentModal]);
 
@@ -212,6 +244,15 @@ useEffect(() => {
       roundOff: round
     });
   }, [lines]);
+// 🔥 AUTO SYNC PAID AMOUNT WHEN TOTAL CHANGES
+// 🔥 AUTO SYNC PAID ONLY WHEN TOTAL CHANGES (NOT MODE CHANGE)
+useEffect(() => {
+  if (!isEditMode) return;
+
+  if (paymentMode !== "Credit") {
+    setPaidAmount(totals.total);
+  }
+}, [totals.total]); // ❌ removed paymentMode
 
   // --------------------------------------------------
   // UPDATE LINE
@@ -393,6 +434,7 @@ if (msg.action === "CanEditSalesInvoiceResponse") {
     return;
   }
 
+
   setIsEditMode(true);
 
   setInvoiceNo(d.InvoiceNo);
@@ -401,10 +443,20 @@ if (msg.action === "CanEditSalesInvoiceResponse") {
 
   setCustomerId(d.CustomerId);
 
-  setPaymentMode(d.PaymentMode);
-  setPaidVia(d.PaidVia || "CASH");
-  setPaidAmount(Number(d.PaidAmount) || 0);
-  setOriginalPaidAmount(Number(d.PaidAmount) || 0);
+  setPaymentMode(d.PaymentMode || "Credit");
+  setPaidVia(d.PaidVia || "Cash");
+  setPaymentMode(d.PaymentMode || "Credit");
+setOriginalPaymentMode(d.PaymentMode || "Credit");
+
+const paid = Number(d.PaidAmount) || 0;
+setPaidAmount(paid);
+setOriginalPaidAmount(paid);
+
+// VERY IMPORTANT
+paymentModeChangedByUser.current = false;
+
+//  setPaidAmount(Number(d.PaidAmount) || 0);
+  //setOriginalPaidAmount(Number(d.PaidAmount) || 0);
 
   // fetch customer info (IMPORTANT)
   window.chrome.webview.postMessage({
@@ -436,6 +488,30 @@ AvailableQty: Number(it.AvailableQty) || 0,
   })
 );
 
+}
+if (msg.action === "SaveSalesPaymentResponse") {
+  if (!msg.success) {
+    alert("Payment failed: " + msg.message);
+    return;
+  }
+
+  // ✅ Update paid amount from backend
+  setPaidAmount(msg.newPaidAmount);
+  setOriginalPaidAmount(msg.newPaidAmount);
+
+  // ✅ Success message
+  alert("✅ Payment added successfully!");
+
+  // ✅ Close modal
+  setShowPaymentModal(false);
+
+  // ✅ Reset payment form
+  setPaymentForm({
+    PaymentDate: new Date().toISOString().slice(0, 10),
+    PaymentMode: "Cash",
+    Amount: 0,
+    Notes: ""
+  });
 }
 
 
@@ -574,12 +650,16 @@ const totalAvailableQty = lines.reduce(
   <label>Payment Mode</label>
   <select
   value={paymentMode}
-  onChange={e => setPaymentMode(e.target.value)}
+  onChange={e => {
+    paymentModeChangedByUser.current = true;
+    setPaymentMode(e.target.value);
+  }}
 >
-  <option value="CASH">Cash</option>
-  <option value="BANK">Bank</option>
-  <option value="CREDIT">Credit</option>
+  <option value="Cash">Cash</option>
+  <option value="Bank">Bank</option>
+  <option value="Credit">Credit</option>
 </select>
+
 
 </div>
 
@@ -590,7 +670,7 @@ const totalAvailableQty = lines.reduce(
   <input
     type="number"
     value={paidAmount}
-    disabled={paymentMode !== "CREDIT"}   // ✅ editable ONLY for CREDIT
+    disabled={paymentMode !== "Credit"}   // ✅ editable ONLY for CREDIT
     onChange={e => {
       const val = Number(e.target.value) || 0;
 
@@ -599,7 +679,7 @@ const totalAvailableQty = lines.reduce(
 
       setPaidAmount(val);                // ✅ user-controlled only
     }}
-    className={paymentMode !== "CREDIT" ? "input-disabled" : ""}
+    className={paymentMode !== "Credit" ? "input-disabled" : ""}
   />
 </div>
 
@@ -609,11 +689,18 @@ const totalAvailableQty = lines.reduce(
         </div>
 
         <div className="form-group">
-          {paymentMode === "CREDIT" && isEditMode && balanceAmount > 0 && (
-            <button className="btn-submit" onClick={() => setShowPaymentModal(true)}>
-              ➕ Add Payment
-            </button>
-          )}
+          {isEditMode &&
+  originalPaymentMode === "Credit" &&
+  paymentMode === "Credit" &&
+  balanceAmount > 0 && (
+    <button
+      className="btn-submit"
+      onClick={() => setShowPaymentModal(true)}
+    >
+      ➕ Add Payment
+    </button>
+)}
+
         </div>
       </div>
 
@@ -622,8 +709,8 @@ const totalAvailableQty = lines.reduce(
         <thead>
           <tr>
             <th style={{ width: "200px" }}>Item</th>
-            <th style={{ width: "110px" }}>Batch</th>
-            <th style={{ width: "85px" }}>HSN</th>
+            <th style={{ width: "130px" }}>Batch</th>
+            <th style={{ width: "100px" }}>HSN</th>
             <th style={{ width: "70px" }}>Qty</th>
             <th style={{ width: "90px" }}>Rate</th>
             <th style={{ width: "70px" }}>Disc%</th>
@@ -822,9 +909,9 @@ const totalAvailableQty = lines.reduce(
                 }))
               }
             >
-              <option value="CASH">Cash</option>
-              <option value="BANK">Bank</option>
-              <option value="UPI">UPI</option>
+              <option value="Cash">Cash</option>
+              <option value="Bank">Bank</option>
+              
             </select>
           </div>
 
@@ -887,15 +974,12 @@ const totalAvailableQty = lines.reduce(
               return;
             }
 
-            // ✅ Apply payment locally
-            setPaidAmount(prev =>
-              Math.min(prev + paymentForm.Amount, totals.total)
-            );
+            
 
             // reset modal form
             setPaymentForm({
               PaymentDate: new Date().toISOString().slice(0, 10),
-              PaymentMode: "CASH",
+              PaymentMode: "Cash",
               Amount: 0,
               Notes: ""
             });
@@ -906,7 +990,8 @@ const totalAvailableQty = lines.reduce(
   Payload: {
     InvoiceId: invoiceId,
     PaymentDate: paymentForm.PaymentDate,
-    Amount: paidAmount,        // 🔒 read-only
+   Amount: paymentForm.Amount,
+      // 🔒 read-only
     PaymentMode: paymentForm.PaymentMode,
     Notes: paymentForm.Notes,
     CustomerAccountId: customerId,

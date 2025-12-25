@@ -52,6 +52,7 @@ const onMouseDown = (e) => {
   });
   setIsDragging(true);
 };
+const paymentModeChangedByUser = React.useRef(false);
 
 const onMouseMove = (e) => {
   if (!isDragging) return;
@@ -77,15 +78,15 @@ React.useEffect(() => {
   const [invoiceId, setInvoiceId] = useState("");
   const [invoiceList, setInvoiceList] = useState([]);
 const [detailsModal, setDetailsModal] = useState({ open: false, index: null });
-const [paymentMode, setPaymentMode] = useState("CREDIT");
+const [paymentMode, setPaymentMode] = useState("Credit");
 const [paidAmount, setPaidAmount] = useState(0);
-const [paidVia, setPaidVia] = useState("CASH"); // NEW
+const [paidVia, setPaidVia] = useState("Cash"); // NEW
 
 const [showPaymentModal, setShowPaymentModal] = useState(false);
 
 const [paymentForm, setPaymentForm] = useState({
   PaymentDate: new Date().toISOString().slice(0, 10),
-  PaymentMode: "CASH",
+  PaymentMode: "Cash",
   Amount: 0,
   Notes: ""
 });
@@ -115,18 +116,44 @@ const [filterDate, setFilterDate] = useState(
 );
 const [originalPaidAmount, setOriginalPaidAmount] = useState(0);
 const [isEditMode, setIsEditMode] = useState(false);
-const balanceAmount =
-  paymentMode === "CREDIT"
-    ? Math.max(0, totals.total - originalPaidAmount)
-    : 0;
+const [balanceAmount, setBalanceAmount] = useState(0);
+const [originalPaymentMode, setOriginalPaymentMode] = useState(null);
 
+
+useEffect(() => {
+  if (!isEditMode) return;
+  if (!paymentModeChangedByUser.current) return;
+
+  if (paymentMode === "Credit") {
+    // 🔥 YOUR REQUIRED BEHAVIOUR
+    setPaidAmount(0);
+    setBalanceAmount(totals.total);
+    setPaidVia("");
+  } else {
+    // CASH / BANK
+    setPaidAmount(totals.total);
+    setBalanceAmount(0);
+    setPaidVia(paymentMode);
+  }
+
+  paymentModeChangedByUser.current = false;
+}, [paymentMode, totals.total, isEditMode]);
+
+
+
+const hasPayments = originalPaidAmount > 0;
   // ---------- VALIDATION ----------
   function validateUpdate(data) {
     let errors = [];
 
-    if (paymentMode === "CREDIT" && !data.SupplierId) {
+    if (paymentMode === "Credit" && !data.SupplierId) {
   errors.push("Supplier is required for credit purchase.");
 }
+{/*if (originalPaidAmount > 0 && paymentMode !== "Credit") {
+  alert("Payments already exist. Cannot change payment mode.");
+  return;
+}*/}
+
 
     if (!data.InvoiceDate) errors.push("Invoice date is required.");
     if (!data.InvoiceNo) errors.push("Invoice number missing.");
@@ -153,16 +180,19 @@ const balanceAmount =
   
 
 useEffect(() => {
-  if (paymentMode !== "CREDIT") {
-    setPaidAmount(totals.total);
-    setPaidVia(paymentMode); // CASH or BANK
+  if (!isEditMode) return;
+
+  if (paymentMode === "Credit") {
+    setBalanceAmount(Math.max(0, totals.total - paidAmount));
   } else {
-    // CREDIT
-    //if (paidAmount === 0) {
-      //setPaidVia("CASH"); // default, harmless
-    //}
+    setBalanceAmount(0);
   }
-}, [paymentMode, totals.total]);
+}, [paidAmount, totals.total, paymentMode, isEditMode]);
+
+
+
+
+
 
 
   // ---------- FETCH SUPPLIERS + ITEMS ----------
@@ -457,6 +487,33 @@ PaidVia:paidVia,
           Payload: { PurchaseId: invoiceId }
         });
       }
+// --------------- SAVE PAYMENT RESPONSE ---------------
+if (msg.action === "SavePurchasePaymentResponse") {
+  if (!msg.success) {
+    alert("Payment save failed: " + (msg.message || ""));
+    return;
+  }
+
+  alert("Payment added successfully.");
+
+  const amt = Number(msg.amount);
+
+  setPaidAmount(prev => prev + amt);
+  setOriginalPaidAmount(prev => prev + amt);
+
+  // 🔥 FORCE balance sync immediately
+  setBalanceAmount(prev => Math.max(0, prev - amt));
+
+  setShowPaymentModal(false);
+
+  setPaymentForm({
+    PaymentDate: new Date().toISOString().slice(0, 10),
+    PaymentMode: "Cash",
+    Amount: 0,
+    Notes: ""
+  });
+}
+
 
       // --------------- LOAD INVOICE ---------------
       if (msg.action === "LoadPurchaseInvoiceResponse") {
@@ -465,11 +522,22 @@ PaidVia:paidVia,
           alert("Invoice not found.");
           return;
         }
-setPaymentMode(data.PaymentMode || "CREDIT");
-setPaidAmount(Number(data.PaidAmount) || 0);
-setOriginalPaidAmount(Number(data.PaidAmount) || 0);
+setPaymentMode(data.PaymentMode || "Credit");
+// 🔒 ORIGINAL VALUES (DO NOT TOUCH AFTER THIS)
+  setOriginalPaymentMode(data.PaymentMode || "Credit");
+const paid = Number(data.PaidAmount) || 0;
+const total = Number(data.TotalAmount) || totals.total;
+
+setPaidAmount(paid);
+setOriginalPaidAmount(paid);
+// 🔥 set balance immediately
+setBalanceAmount(
+  (data.PaymentMode === "Credit")
+    ? Math.max(0, total - paid)
+    : 0
+);
 setIsEditMode(true);
-setPaidVia(data.PaidVia || "CASH");
+setPaidVia(data.PaidVia || "");
 
         setSupplierId(data.SupplierId);
         setPurchaseDate(data.InvoiceDate);
@@ -532,7 +600,7 @@ setPaidVia(data.PaidVia || "CASH");
     // Reset payment form
     setPaymentForm({
       PaymentDate: new Date().toISOString().slice(0, 10),
-      PaymentMode: "CASH",
+      PaymentMode: "Cash",
       Amount: 0,
       Notes: ""
     });
@@ -627,29 +695,41 @@ setLines([ blankLine() ]);
 
   <div className="form-group">
     <label>Payment Mode</label>
-    <select
-      value={paymentMode}
-      onChange={e => setPaymentMode(e.target.value)}
-    >
-      <option value="CASH">Cash</option>
-      <option value="BANK">Bank</option>
-      <option value="CREDIT">Credit</option>
+   <select
+  value={paymentMode}
+  onChange={e => {
+    paymentModeChangedByUser.current = true;
+    setPaymentMode(e.target.value);
+  }}
+>
+
+      <option value="Cash">Cash</option>
+      <option value="Bank">Bank</option>
+      <option value="Credit">Credit</option>
     </select>
   </div>
 <div className="form-group">
     <label>Paid Amount</label>
-    <input
+   <input
+  type="number"
+  value={paidAmount}
+  readOnly
+/>
+
+
+
+    {/*<input
       type="number"
       min="0"
       max={totals.total}
       value={paidAmount}
-      readOnly={paymentMode === "CREDIT" && isEditMode}
-      disabled={paymentMode !== "CREDIT"}
+      readOnly={paymentMode === "Credit" && isEditMode}
+      disabled={paymentMode !== "Credit"}
       onChange={e => {
         const v = Number(e.target.value) || 0;
         setPaidAmount(Math.min(v, totals.total));
       }}
-    />
+    />*/}
   </div>
 
   <div className="form-group">
@@ -662,11 +742,20 @@ setLines([ blankLine() ]);
   </div>
 
 <div className="form-group">
-{paymentMode === "CREDIT" && isEditMode && balanceAmount > 0 && (
-  <button className="btn-submit" onClick={() => setShowPaymentModal(true)}>
+
+{isEditMode &&
+ originalPaymentMode === "Credit" &&
+ balanceAmount > 0 && (
+  <button
+    className="btn-submit"
+    onClick={() => setShowPaymentModal(true)}
+  >
     ➕ Add Payment
   </button>
 )}
+
+
+
 </div>
 
 
@@ -677,8 +766,8 @@ setLines([ blankLine() ]);
         <thead>
           <tr>
             <th style={{ width: "200px" }}>Item</th>
-            <th style={{ width: "110px" }}>Batch</th>
-            <th style={{ width: "85px" }}>HSN</th>
+            <th style={{ width: "130px" }}>Batch</th>
+            <th style={{ width: "100px" }}>HSN</th>
             <th style={{ width: "70px" }}>Qty</th>
             <th style={{ width: "90px" }}>Rate</th>
             <th style={{ width: "70px" }}>Disc%</th>
@@ -1065,9 +1154,9 @@ setLines([ blankLine() ]);
                 setPaymentForm(p => ({ ...p, PaymentMode: e.target.value }))
               }
             >
-              <option value="CASH">Cash</option>
-              <option value="BANK">Bank</option>
-              <option value="UPI">UPI</option>
+              <option value="Cash">Cash</option>
+              <option value="Bank">Bank</option>
+              
             </select>
           </div>
 
