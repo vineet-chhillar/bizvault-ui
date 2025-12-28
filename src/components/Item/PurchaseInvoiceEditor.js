@@ -98,7 +98,8 @@ const onMouseUp = () => {
   const [supplierList, setSupplierList] = useState([]);
   const [supplierId, setSupplierId] = useState("");
   const [supplierInfo, setSupplierInfo] = useState(null);
-const [paidVia, setPaidVia] = useState("CASH");
+const [paidVia, setPaidVia] = useState("Cash");
+const pendingSavePayloadRef = React.useRef(null);
 
   const [itemList, setItemList] = useState([]);
   const [itemSearchIndex, setItemSearchIndex] = useState(null);
@@ -153,7 +154,7 @@ const [invoiceNum, setInvoiceNum] = useState("");
 const [invoiceFY, setInvoiceFY] = useState("");
 const [invoiceNo, setInvoiceNo] = useState("");
 
-const [paymentMode, setPaymentMode] = useState("CREDIT");
+const [paymentMode, setPaymentMode] = useState("Credit");
 const [paidAmount, setPaidAmount] = useState(0);
 
   const [invoiceId, setInvoiceId] = useState(null);
@@ -197,7 +198,7 @@ useEffect(() => {
   }, []);
 
 {/*useEffect(() => {
-  if (paymentMode !== "CREDIT") {
+  if (paymentMode !== "Credit") {
     setPaidAmount(totals.total);
   } else {
     setPaidAmount(0);
@@ -205,7 +206,7 @@ useEffect(() => {
 }, [paymentMode, totals.total]);*/}
 
   useEffect(() => {
-  if (paymentMode === "CREDIT") {
+  if (paymentMode === "Credit") {
     setPaidAmount(0);
     setPaidTouched(false);
     return;
@@ -369,7 +370,7 @@ if (gstPct > 0) {
 };
 // 🔥 AUTO-MOVE TOTAL TO PAID WHEN NOT CREDIT
 useEffect(() => {
-  if (paymentMode !== "CREDIT") {
+  if (paymentMode !== "Credit") {
     setPaidTouched(false);        // user is not editing paid manually
     setPaidAmount(totals.total); // 🔥 FULL AMOUNT PAID
   }
@@ -378,18 +379,24 @@ useEffect(() => {
 
   // ========= SAVE PURCHASE INVOICE =========
   const saveInvoice = () => {
-
-    
+   
  if (!supplierId && !supplierDraft.SupplierName.trim()) {
   alert("Supplier name is required");
   return;
 }
+// 🔴 Invoice No validation
+if (!invoiceNo.trim()) {
+  alert("Supplier Invoice No is required");
+  return;
+}
 
+// optional formatting rule
+if (invoiceNo.length > 50) {
+  alert("Invoice No is too long");
+  return;
+}
 
-
-
-
-if (paymentMode === "CREDIT" && !supplierId) {
+if (paymentMode === "Credit" && !supplierId) {
  
   const isValid = validateSupplierDraft();
     
@@ -436,31 +443,34 @@ if (paymentMode === "CREDIT" && !supplierId) {
   Notes: l.Notes || ""
 }));
 
-
-
-    window.chrome.webview.postMessage({
-      Action: "SavePurchaseInvoice",
-      Payload: {
-        SupplierId: supplierId ? Number(supplierId) : 0,
-SupplierDraft: supplierId ? null : supplierDraft,
-
-       InvoiceNum: Number(invoiceNum),
-    InvoiceNo: invoiceNo,
-        InvoiceDate: purchaseDate,
-        SubTotal: totals.subTotal,
-        TotalTax: totals.tax,
-        TotalAmount: totals.total,
-        RoundOff: totals.roundOff,
-        Notes: notes,
-        PaymentMode:paymentMode, 
-        PaidAmount: paidAmount,
-        BalanceAmount: balanceAmount,
-        PaidVia: paidVia,
-        Items,
-        CreatedBy: user?.email
-      }
-    });
+// ---------------- STORE PAYLOAD ----------------
+  pendingSavePayloadRef.current = {
+    SupplierId: supplierId ? Number(supplierId) : 0,
+    SupplierDraft: supplierId ? null : supplierDraft,
+    InvoiceNo: invoiceNo.trim(),
+    InvoiceDate: purchaseDate,
+    SubTotal: totals.subTotal,
+    TotalTax: totals.tax,
+    TotalAmount: totals.total,
+    RoundOff: totals.roundOff,
+    Notes: notes,
+    PaymentMode: paymentMode,
+    PaidAmount: paidAmount,
+    BalanceAmount: balanceAmount,
+    PaidVia: paidVia,
+    Items,
+    CreatedBy: user?.email
   };
+
+  // ---------------- CHECK DUPLICATE ----------------
+  window.chrome.webview.postMessage({
+    Action: "CheckDuplicatePurchaseInvoice",
+    Payload: {
+      SupplierId: supplierId ? Number(supplierId) : 0,
+      InvoiceNo: invoiceNo.trim()
+    }
+  });
+};
 
 
   // ========= VIEW / PRINT =========
@@ -493,11 +503,11 @@ SupplierDraft: supplierId ? null : supplierDraft,
       try { if (typeof msg === "string") msg = JSON.parse(msg); } catch {}
 
       if (!msg) return;
-if (msg.action === "GetNextPurchaseInvoiceNumResponse") {
-     setInvoiceNum(msg.nextNum);
-    setInvoiceFY(msg.fy);
-    setInvoiceNo(msg.invoiceNo)
-}
+//if (msg.action === "GetNextPurchaseInvoiceNumResponse") {
+  //   setInvoiceNum(msg.nextNum);
+    //setInvoiceFY(msg.fy);
+    //setInvoiceNo(msg.invoiceNo)
+//}
       // Company
       if (msg.action === "GetCompanyProfileResponse") {
         setCompany(msg.profile);
@@ -530,6 +540,22 @@ if (msg.action === "GetNextPurchaseInvoiceNumResponse") {
           });
         }
       }
+if (msg.action === "CheckDuplicatePurchaseInvoiceResponse") {
+
+  if (msg.exists) {
+    alert("This supplier invoice number already exists.");
+    pendingSavePayloadRef.current = null;
+    return;
+  }
+
+  // ✅ SAFE → SAVE NOW
+  window.chrome.webview.postMessage({
+    Action: "SavePurchaseInvoice",
+    Payload: pendingSavePayloadRef.current
+  });
+
+  pendingSavePayloadRef.current = null;
+}
 
 
       // Save response
@@ -550,15 +576,17 @@ if (msg.action === "GetNextPurchaseInvoiceNumResponse") {
     setPaidAmount(0);
     setPaidTouched(false);
     setPaidVia("");
-    
+    setInvoiceNo("");     // 🔥 important
+setInvoiceId(null);
+  }}
 
  
-window.chrome.webview.postMessage({ Action: "GetNextPurchaseInvoiceNum" });
-  } 
-  else {
-    alert("Error: " + msg.message);
-  }
-}
+//window.chrome.webview.postMessage({ Action: "GetNextPurchaseInvoiceNum" });
+  //} 
+  //else {
+    //alert("Error: " + msg.message);
+  //}
+//}
 
 
       // Supplier details
@@ -794,9 +822,9 @@ setPdfPath(url);
   value={paymentMode}
   onChange={e => setPaymentMode(e.target.value)}
 >
-  <option value="CASH">Cash</option>
-  <option value="BANK">Bank</option>
-  <option value="CREDIT">Credit</option>
+  <option value="Cash">Cash</option>
+  <option value="Bank">Bank</option>
+  <option value="Credit">Credit</option>
 </select>
 </div>
 
@@ -811,12 +839,14 @@ setPdfPath(url);
 
 <div className="form-group">
   <label className="invoice-no-label">Invoice No</label>
-  <input 
-    type="text"
-    value={invoiceNo}
-    readOnly
-    style={{ background: "#f1ecff", width:"150px" }}
-  />
+  <input
+  type="text"
+  value={invoiceNo}
+  placeholder="Supplier Invoice No *"
+  onChange={e => setInvoiceNo(e.target.value)}
+  style={{ width: "150px" }}
+/>
+
 </div>
 
 <div className="form-group">
@@ -826,7 +856,7 @@ setPdfPath(url);
   min="0"
   max={totals.total}
   value={paidAmount}
-  disabled={paymentMode !== "CREDIT"}
+  disabled={paymentMode !== "Credit"}
   onChange={e => {
     const v = Number(e.target.value) || 0;
      setPaidTouched(true);
@@ -835,15 +865,15 @@ setPdfPath(url);
 />
 </div>
 <div className="form-group">
-{paymentMode === "CREDIT" && paidAmount > 0 && (
+{paymentMode === "Credit" && paidAmount > 0 && (
   <div className="form-group">
     <label>Paid Via</label>
     <select
       value={paidVia}
       onChange={e => setPaidVia(e.target.value)}
     >
-      <option value="CASH">Cash</option>
-      <option value="BANK">Bank</option>
+      <option value="Cash">Cash</option>
+      <option value="Bank">Bank</option>
     </select>
   </div>
 )}

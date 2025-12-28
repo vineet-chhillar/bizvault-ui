@@ -377,6 +377,7 @@
   border: 1px solid #d7d4ff;
   border-radius: 8px;
   min-width: 200px;
+  margin-left: 30px;
 }
 
 .stock-line {

@@ -66,7 +66,8 @@ export default function CompanySetup({user}) {
     BranchName: "",
     InvoicePrefix: "INV-",
     InvoiceStartNo: 1,
-    CurrentInvoiceNo: 1,
+    CurrentInvoiceNo: null,
+    CanEditInvoiceStartNo: true,
     CreatedBy: "",
     LogoBase64: null
   });
@@ -106,14 +107,16 @@ if (user?.email) {
     setProfile((prev) => ({
       ...prev,
       ...msg.profile,
-      InvoiceStartNo: msg.profile.InvoiceStartNo ?? 1,
-      CurrentInvoiceNo: msg.profile.CurrentInvoiceNo ?? 1,
+      InvoiceStartNo: msg.profile.InvoiceStartNo ?? null,
+      CurrentInvoiceNo: msg.profile.CurrentInvoiceNo ?? null,
       Country: msg.profile.Country ?? "India"
+      
     }));
 
     if (!profileLoadedToastShown.current) {
   profileLoadedToastShown.current = true;
   pushToast("Company profile loaded", "success");
+  
 }
   } 
   else {
@@ -171,8 +174,23 @@ if (user?.email) {
     // phone formatting
     if (name === "Phone") value = formatIndianPhone(rawVal);
 
-    // set & validate
-    setProfile(prev => ({ ...prev, [name]: value }));
+
+   setProfile(prev => {
+    // 🔑 SPECIAL RULE FOR INVOICE START NO
+    if (name === "InvoiceStartNo") {
+      const num = rawVal === "" ? null : Number(rawVal);
+
+      return {
+        ...prev,
+        InvoiceStartNo: num,
+        // 👇 sync current only if still editable
+        CurrentInvoiceNo: prev.CanEditInvoiceStartNo ? num : prev.CurrentInvoiceNo
+      };
+    }
+
+    return { ...prev, [name]: value };
+  });
+
     validateField(name, value);
   };
 
@@ -211,7 +229,7 @@ if (user?.email) {
         Payload: {
           ...profile,
           InvoiceStartNo: Number(profile.InvoiceStartNo) || 1,
-          CurrentInvoiceNo: Number(profile.CurrentInvoiceNo) || 1
+          CurrentInvoiceNo: Number(profile.CurrentInvoiceNo) || null
         }
       });
     } else {
@@ -388,14 +406,38 @@ if (user?.email) {
             </div>
 
             <div className="company-form-group">
-              <label>Invoice Start No</label>
-              <input type="number" name="InvoiceStartNo" value={profile.InvoiceStartNo} onChange={handleChange} />
-            </div>
+  <label>Invoice Start No</label>
+  <input
+    type="number"
+    name="InvoiceStartNo"
+    value={profile.InvoiceStartNo ?? ""}
+    onChange={handleChange}
+    readOnly={!profile.CanEditInvoiceStartNo}
+    style={{
+      background: !profile.CanEditInvoiceStartNo ? "#eee" : "white",
+      cursor: !profile.CanEditInvoiceStartNo ? "not-allowed" : "text"
+    }}
+  />
+  {!profile.CanEditInvoiceStartNo && (
+    <small style={{ color: "#888" }}>
+      Invoice numbering has already started and cannot be changed.
+    </small>
+  )}
+</div>
 
-            <div className="company-form-group">
-              <label>Current Invoice No (readonly)</label>
-              <input type="number" name="CurrentInvoiceNo" value={profile.CurrentInvoiceNo} readOnly />
-            </div>
+
+<div className="company-form-group">
+  <label>Current Invoice No (readonly)</label>
+  <input
+    type="number"
+    name="CurrentInvoiceNo"
+    value={
+      profile.CurrentInvoiceNo ?? profile.InvoiceStartNo ?? ""
+    }
+    readOnly
+  />
+</div>
+
           </div>
         </div>
       )}

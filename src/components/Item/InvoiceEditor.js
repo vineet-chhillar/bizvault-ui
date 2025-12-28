@@ -117,8 +117,8 @@ const [itemSearchIndex, setItemSearchIndex] = useState(null); // which row is sh
 const [selectedItemBalance, setSelectedItemBalance] = useState(null);
 const [selectedBatchBalance, setSelectedBatchBalance] = useState(null);
 const [selectedBatchRate, setSelectedBatchRate] = useState(null);
-const [paymentMode, setPaymentMode] = useState("CASH");
-const [paidVia, setPaidVia] = useState("CASH");
+const [paymentMode, setPaymentMode] = useState("Cash");
+const [paidVia, setPaidVia] = useState("Cash");
 
 const INDIAN_STATES = [
   "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh",
@@ -199,7 +199,7 @@ useEffect(() => {
 
 
 useEffect(() => {
-  window.chrome.webview.postMessage({ Action: "GetNextSalesInvoiceNum" });
+  window.chrome.webview.postMessage({ Action: "GetNextInvoiceNumberFromCompanyProfile" });
 }, []);
 
 useEffect(() => {
@@ -224,7 +224,7 @@ useEffect(() => {
 }, []);
 
 useEffect(() => {
-  if (paymentMode !== "CREDIT") {
+  if (paymentMode !== "Credit") {
     // CASH / BANK → fully paid
     setPaidAmount(totals.total);
   } else {
@@ -436,7 +436,7 @@ if (copy[idx].BalanceBatchWise != null && Number(val) > Number(copy[idx].Balance
 
 
 // 🔴 CUSTOMER VALIDATION BASED ON PAYMENT MODE
-//if (paymentMode === "CREDIT") {
+//if (paymentMode === "Credit") {
   // CREDIT → customer is mandatory
   // 🔴 CUSTOMER IS MANDATORY FOR ALL PAYMENT MODES
 if (!customer.CustomerId) {
@@ -579,7 +579,7 @@ ItemName:Items.ItemName,
 };
 
 useEffect(() => {
-  if (paymentMode !== "CREDIT") {
+  if (paymentMode !== "Credit") {
     setCustomerDraft({ CustomerName: "", Mobile: "" });
     setCustomerErrors({});
   }
@@ -620,14 +620,14 @@ useEffect(() => {
     resetInvoiceForm();
     // OPTIONAL → reset invoice form after save
     // resetInvoiceForm();
-window.chrome.webview.postMessage({ Action: "GetNextSalesInvoiceNum" });
+window.chrome.webview.postMessage({ Action: "GetNextInvoiceNumberFromCompanyProfile" });
   } else {
     alert("Save failed: " + msg.message);
   }
 }
-if (msg.action === "GetNextSalesInvoiceNumResponse") {
+if (msg.action === "GetNextInvoiceNumberFromCompanyProfileResponse") {
      setInvoiceNum(msg.nextNum);
-    setInvoiceFY(msg.fy);
+    //setInvoiceFY(msg.fy);
     setInvoiceNo(msg.invoiceNo)
 }
 
@@ -828,7 +828,7 @@ type="button"
 
   <select
   id="CustomerId"
-  //disabled={paymentMode !== "CREDIT"}
+  //disabled={paymentMode !== "Credit"}
   value={customer.CustomerId || ""}
   onChange={(e) => {
     const selectedId = Number(e.target.value);
@@ -881,7 +881,7 @@ type="button"
       <div><b>State:</b> {customer.BillingState}</div>
     </div>
   )}
-  {paymentMode === "CREDIT" && customer.CustomerId === 0 && (
+  {paymentMode === "Credit" && customer.CustomerId === 0 && (
   <div className="customer-inline-box">
 
     <input
@@ -934,9 +934,9 @@ type="button"
     value={paymentMode}
     onChange={(e) => setPaymentMode(e.target.value)}
   >
-    <option value="CASH">Cash</option>
-    <option value="BANK">Bank</option>
-    <option value="CREDIT">Credit</option>
+    <option value="Cash">Cash</option>
+    <option value="Bank">Bank</option>
+    <option value="Credit">Credit</option>
   </select>
 </div>
 
@@ -948,7 +948,7 @@ type="button"
     type="text"
     value={invoiceNo}
     readOnly
-    style={{ background: "#f1ecff", width:"150px" }}
+    style={{ background: "#f1ecff", width:"200px" }}
   />
 </div>
 
@@ -973,12 +973,12 @@ type="button"
 <div className="form-group">
   <label className="invoice-no-label">Paid Amount</label>
 <input
-className={paymentMode !== "CREDIT" ? "input-disabled" : ""}
+className={paymentMode !== "Credit" ? "input-disabled" : ""}
   type="number"
   min="0"
   max={totals.total}
   value={paidAmount}
-  disabled={paymentMode !== "CREDIT"}
+  disabled={paymentMode !== "Credit"}
   onChange={(e) => {
     const v = Number(e.target.value) || 0;
     setPaidAmount(Math.min(v, totals.total));
@@ -986,15 +986,15 @@ className={paymentMode !== "CREDIT" ? "input-disabled" : ""}
 />
 </div>
 
-{paymentMode === "CREDIT" && paidAmount > 0 && (
+{paymentMode === "Credit" && paidAmount > 0 && (
   <div className="form-group">
     <label>Paid Via</label>
     <select
       value={paidVia}
       onChange={e => setPaidVia(e.target.value)}
     >
-      <option value="CASH">Cash</option>
-      <option value="BANK">Bank</option>
+      <option value="Cash">Cash</option>
+      <option value="Bank">Bank</option>
     </select>
   </div>
 )}
@@ -1315,7 +1315,7 @@ window.chrome.webview.postMessage({
   <button className="btn-submit small" onClick={addLine}>Add Item</button>
  <button
   disabled={
-    paymentMode === "CREDIT" &&
+    paymentMode === "Credit" &&
     !customer.CustomerId &&
     !customerDraft.CustomerName.trim()
   }
