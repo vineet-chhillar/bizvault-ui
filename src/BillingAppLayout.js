@@ -11,8 +11,13 @@ import EditSalesInvoice from "./components/Item/EditSalesInvoice";
 import InvoiceEditor from "./components/Item/InvoiceEditor";
 import SupplierPage from "./components/Item/SupplierPage";
 import CustomerPage from "./components/Item/CustomerPage";
+import ExpenseVoucherEditor from "./components/Item/ExpenseVoucherEditor";
+
+
 import OpeningStockEditor from "./components/Item/OpeningStockEditor";
 import StockAdjustmentEditor from "./components/Item/StockAdjustmentEditor";
+
+
 import ChartOfAccounts from "./components/Item/ChartOfAccounts";
 import SalesReturnNew from "./components/Item/SalesReturnNew";
 import PurchaseReturn from "./components/Item/PurchaseReturn";
@@ -124,7 +129,11 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
  export default function BillingAppLayout({ user, onLogout }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [isItemOpen, setIsItemOpen] = useState(true);
+  const [isItemOpen, setIsItemOpen] = useState(false);
+  const [isStockOpen, setIsStockOpen] = useState(false);
+  const [isSalesOpen, setIsSalesOpen] = useState(true);
+  const [isPurchaseOpen, setIsPurchaseOpen] = useState(false);
+  const [isReportsOpen, setIsReportsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(
     typeof window !== "undefined" ? window.innerWidth <= 768 : false
   );
@@ -182,7 +191,16 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
   <span className="label">Home</span>
 </NavLink>
 
-
+ <NavLink
+              to="/dashboard"
+              onClick={() => isMobile && setMobileOpen(false)}
+              className={({ isActive }) =>
+                "nav-link" + (isActive ? " active" : "")
+              }
+            >
+              <span className="icon"><FaChartBar /></span>
+              <span className="label">Dashboard</span>
+            </NavLink>
 <NavLink
               to="Item/CompanySetup"
               onClick={() => isMobile && setMobileOpen(false)}
@@ -193,18 +211,18 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
               <span className="icon"><FaBoxes /></span>
               <span className="label">Company Profile</span>
             </NavLink>
-            <NavLink
-              to="/dashboard"
+           
+
+           <NavLink
+              to="/Masters"
               onClick={() => isMobile && setMobileOpen(false)}
               className={({ isActive }) =>
                 "nav-link" + (isActive ? " active" : "")
               }
             >
-              <span className="icon"><FaChartBar /></span>
-              <span className="label">Dashboard</span>
+              <span className="icon"><FaMoneyBillWave /></span>
+              <span className="label">Masters</span>
             </NavLink>
-
-           
 
             <NavLink
               to="Item/ChartOfAccounts"
@@ -217,7 +235,7 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
               <span className="label">Accounts</span>
             </NavLink>
 
-            *<NavLink
+            <NavLink
               to="Item/SupplierPage"
               onClick={() => isMobile && setMobileOpen(false)}
               className={({ isActive }) =>
@@ -243,37 +261,55 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
             </NavLink>
 
             <NavLink
-              to="Item/OpeningStockEditor"
+              to="Item/ExpenseVoucherEditor"
               onClick={() => isMobile && setMobileOpen(false)}
               className={({ isActive }) =>
                 "nav-link" + (isActive ? " active" : "")
               }
             >
               <span className="icon">👤</span>
-              <span className="label">Opening Stock</span>
+              <span className="label">Expenses</span>
             </NavLink>
 
-            <NavLink
-              to="Item/StockAdjustmentEditor"
-              onClick={() => isMobile && setMobileOpen(false)}
-              className={({ isActive }) =>
-                "nav-link" + (isActive ? " active" : "")
-              }
-            >
-              <span className="icon">👤</span>
-              <span className="label">Opening Stock</span>
-            </NavLink>
+{/* Parent Link * for Opening Stock & Adjustments/}
+<div className="nav-section">
+  {/* Parent Link */}
+  <div
+    className="nav-link item-parent"
+    onClick={() => setIsStockOpen(!isStockOpen)}
+    style={{ cursor: "pointer" }}
+  >
+    <span className="icon"><FaCubes /></span>
+    <span className="label">Opening Stock & Adjustments</span>
+    <span className="arrow">{isStockOpen ? "▲" : "▼"}</span>
+  </div>
 
-            <NavLink
-              to="/Masters"
-              onClick={() => isMobile && setMobileOpen(false)}
-              className={({ isActive }) =>
-                "nav-link" + (isActive ? " active" : "")
-              }
-            >
-              <span className="icon"><FaMoneyBillWave /></span>
-              <span className="label">Masters</span>
-            </NavLink>
+  {/* Collapsible Children */}
+  <div className={`nav-children-tabs ${isStockOpen ? "open" : ""}`}>
+    <NavLink
+      to="/item/OpeningStockEditor"
+      onClick={() => isMobile && setMobileOpen(false)}
+      className={({ isActive }) =>
+        "nav-tab-link" + (isActive ? " active" : "")
+      }
+    >
+      Opening Stock
+    </NavLink>
+<NavLink
+      to="/item/StockAdjustmentEditor"
+      onClick={() => isMobile && setMobileOpen(false)}
+      className={({ isActive }) =>
+        "nav-tab-link" + (isActive ? " active" : "")
+      }
+    >
+      Stock Adjustment
+    </NavLink>
+   
+    
+  </div>
+           
+
+            
 
            
 
@@ -292,16 +328,16 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
   {/* Parent Link */}
   <div
     className="nav-link item-parent"
-    onClick={() => setIsItemOpen(!isItemOpen)}
+    onClick={() => setIsReportsOpen(!isReportsOpen)}
     style={{ cursor: "pointer" }}
   >
     <span className="icon"><FaChartLine /></span>
     <span className="label">Reports</span>
-    <span className="arrow">{isItemOpen ? "▲" : "▼"}</span>
+    <span className="arrow">{isReportsOpen ? "▲" : "▼"}</span>
   </div>
 
   {/* Collapsible Children */}
-  <div className={`nav-children-tabs ${isItemOpen ? "open" : ""}`}>
+  <div className={`nav-children-tabs ${isReportsOpen ? "open" : ""}`}>
     <NavLink
       to="/Reports/TrialBalance"
       onClick={() => isMobile && setMobileOpen(false)}
@@ -373,16 +409,16 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
   {/* Parent Link */}
   <div
     className="nav-link item-parent"
-    onClick={() => setIsItemOpen(!isItemOpen)}
+    onClick={() => setIsPurchaseOpen(!isPurchaseOpen)}
     style={{ cursor: "pointer" }}
   >
     <span className="icon"><FaShoppingCart /></span>
     <span className="label">Purchase</span>
-    <span className="arrow">{isItemOpen ? "▲" : "▼"}</span>
+    <span className="arrow">{isPurchaseOpen ? "▲" : "▼"}</span>
   </div>
 
   {/* Collapsible Children */}
-  <div className={`nav-children-tabs ${isItemOpen ? "open" : ""}`}>
+  <div className={`nav-children-tabs ${isPurchaseOpen ? "open" : ""}`}>
     <NavLink
       to="/item/PurchaseInvoiceEditor"
       onClick={() => isMobile && setMobileOpen(false)}
@@ -430,22 +466,17 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
   {/* Parent Link */}
   <div
     className="nav-link item-parent"
-    onClick={() => setIsItemOpen(!isItemOpen)}
+    onClick={() => setIsSalesOpen(!isSalesOpen)}
     style={{ cursor: "pointer" }}
   >
     <span className="icon"><FaMoneyBillWave /></span>
     <span className="label">Sales</span>
-    <span className="arrow">{isItemOpen ? "▲" : "▼"}</span>
+    <span className="arrow">{isSalesOpen ? "▲" : "▼"}</span>
   </div>
 
   {/* Collapsible Children */}
-  <div className={`nav-children-tabs ${isItemOpen ? "open" : ""}`}>
-    
-
-   
-
-    
-    <NavLink
+  <div className={`nav-children-tabs ${isSalesOpen ? "open" : ""}`}>
+        <NavLink
       to="/item/InvoiceEditor"
       onClick={() => isMobile && setMobileOpen(false)}
       className={({ isActive }) =>
@@ -583,6 +614,7 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
   <Route path="/Reports/StockSummary" element={<StockSummary user={user} />} />
 
   <Route path="/Item/CustomerPage" element={<CustomerPage user={user} />} />
+  <Route path="/Item/ExpenseVoucherEditor" element={<ExpenseVoucherEditor user={user} />} />
   <Route path="/Item/OpeningStockEditor" element={<OpeningStockEditor user={user} />} />
   <Route path="/Item/StockAdjustmentEditor" element={<StockAdjustmentEditor user={user} />} />
   <Route path="/Item/ChartOfAccounts" element={<ChartOfAccounts user={user} />} />

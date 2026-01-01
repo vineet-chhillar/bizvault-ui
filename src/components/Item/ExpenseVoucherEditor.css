@@ -1,0 +1,297 @@
+/* Center compact tables inside container */
+/* FULL-WIDTH WRAPPER */
+.table-container.compact {
+  display: block;               /* ✅ MUST be block */
+  text-align: center;           /* ✅ centers inline children */
+  margin-top: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* ACTUAL WHITE BOX */
+.table-container.compact .table-box {
+  display: inline-block;        /* ✅ shrink to content */
+  padding: 12px 16px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+
+
+
+/* =========================================================
+   COMPACT CENTERED TABLE (2–3 columns only)
+   ========================================================= */
+
+.data-table.compact-center {
+  width: auto;                 /* do NOT stretch */
+  min-width: 420px;
+  max-width: 600px;
+  margin: 0 auto;              /* center horizontally */
+  border-collapse: collapse;
+}
+
+/* Center headers */
+.data-table.compact-center th {
+  text-align: center;
+  padding: 8px 10px;
+  white-space: nowrap;
+}
+
+/* Center cells */
+.data-table.compact-center td {
+  text-align: center;
+  padding: 6px 8px;
+  vertical-align: middle;
+}
+
+/* First column (Expense Account) wider */
+.data-table.compact-center th:first-child,
+.data-table.compact-center td:first-child {
+  width: 65%;
+  text-align: left;
+}
+
+/* Amount column */
+.data-table.compact-center th:nth-child(2),
+.data-table.compact-center td:nth-child(2) {
+  width: 35%;
+  text-align: right;
+}
+
+
+
+/* Input alignment inside compact table */
+.data-table.compact-center .cell-box input {
+  width: 100%;
+  text-align: right;
+}
+
+/* Expense name input left aligned */
+.data-table.compact-center td:first-child .cell-box input {
+  text-align: left;
+}
+
+/* Delete button alignment */
+.data-table.compact-center .invaction-btn {
+  margin: 0 auto;
+  display: inline-flex;
+}
+/* full-width form group */
+.form-group.full {
+  flex: 1;                 /* 🔥 allow grow */
+  min-width: 0;            /* 🔥 required in flex */
+}
+/* push content to right */
+.total-row {
+  display: flex;
+  justify-content: flex-end;   /* 🔥 move to right */
+  margin-top: 0px;
+  margin-bottom: 0%;
+}
+
+/* compact total box */
+.total-box {
+  min-width: 220px;
+  margin-top: 0px;
+  margin-bottom: 0%;
+  
+}
+/* footer under table */
+.table-footer {
+  display: flex;
+  justify-content: space-between;  /* 🔥 button left, total right */
+  align-items: center;
+  margin-top: 6px;                 /* 🔥 reduce vertical gap */
+}
+
+/* right aligned total */
+.total-box {
+  min-width: 220px;
+}
+
+/* tighten spacing */
+.total-box label {
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.form-group.total-box input {
+  text-align: right;
+  font-weight: 600;
+  background-color: #fdfaff;  /* matches focus bg tone */
+}
+
+
+/* ===========================
+   6 COLUMN TABLE – THEME SAFE
+   =========================== */
+
+.data-table.six-col {
+  width: 100%;
+  table-layout: fixed;          /* 🔥 stable columns */
+  font-size: 14px;
+}
+
+/* keep existing header styles */
+.data-table.six-col th,
+.data-table.six-col td {
+  padding: 8px 10px;            /* compact like forms */
+  vertical-align: middle;
+}
+
+/* numeric columns → right aligned */
+.data-table.six-col th:nth-child(4),
+.data-table.six-col th:nth-child(5),
+.data-table.six-col td:nth-child(4),
+.data-table.six-col td:nth-child(5) {
+  text-align: right;
+  font-weight: 600;
+}
+
+/* action column */
+.data-table.six-col th:last-child,
+.data-table.six-col td:last-child {
+  text-align: center;
+}
+
+/* column widths (no color touch) */
+.data-table.six-col th:nth-child(1) { width: 80px; }
+.data-table.six-col th:nth-child(2) { width: 80px; }
+.data-table.six-col th:nth-child(3) { width: 80px; }
+.data-table.six-col th:nth-child(4) { width: 50px; }
+.data-table.six-col th:nth-child(5) { width: 50px; }
+.data-table.six-col th:nth-child(6) { width: 50px; }
+.data-table.six-col th:nth-child(7) { width: 80px; }
+
+/* action buttons layout */
+.data-table.six-col .action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* compact buttons */
+.data-table.six-col .action-buttons button {
+  padding: 4px 8px;
+  font-size: 12px;
+}
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;              /* 🔥 small, tight gap */
+}
+
+.action-buttons button {
+  min-width: 72px;
+  height: 32px;
+  padding: 0 8px;         /* slightly tighter */
+  font-size: 13px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+/* Fix buttons inside table action column */
+.action-buttons .btn-submit,
+.action-buttons .btn-view {
+  display: inline-flex !important;
+  margin: 0 !important;
+  padding: 6px 12px;          /* compact */
+  height: 22px;
+  min-width: 70px;
+}
+.form-actions {
+  display: flex;
+  justify-content: center;   /* 🔥 center buttons as a group */
+  align-items: center;
+  gap: 10px;                 /* spacing between buttons */
+  margin-top: 12px;
+  }
+.form-actions .btn-submit {
+  margin: 0 !important;      /* 🔥 cancel auto-centering */
+  display: inline-flex !important;
+}
+
+.saved-summary {
+  margin-top: 5px;
+  padding: 1px;
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  background: #f9fbfc;
+}
+
+.saved-summary h3 {
+  margin-top: 0;
+  margin-bottom: 2px;
+  color: #1e3a8a;
+}
+
+.summary-row {
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+.summary-inline {
+  display: flex;
+  gap: 24px;           /* 🔥 space between fields */
+  align-items: center;
+}
+.ml-20 {
+  margin-left: 20px;
+}
+/* =========================
+   TWO COLUMN COMPACT TABLE
+   ========================= */
+
+.table-container.compact.center {
+  display: flex;
+  justify-content: center;   /* 🔥 center container */
+  margin-top: 10px;
+}
+
+.data-table.two-col {
+  width: auto;               /* 🔥 shrink to content */
+  min-width: 360px;          /* balanced look */
+  table-layout: auto;
+}
+
+/* align amount column */
+.data-table.two-col th:last-child,
+.data-table.two-col td:last-child {
+  text-align: right;
+  min-width: 100px;
+  font-weight: 600;
+}
+
+/* keep padding consistent with theme */
+.data-table.two-col th,
+.data-table.two-col td {
+  padding: 8px 14px;
+}
+/* ===============================
+   COMPACT SAVED SUMMARY (VIEW)
+   =============================== */
+
+.saved-summary.compact {
+  display: inline-block;        /* 🔥 shrink to content */
+  margin: 16px auto;            /* 🔥 center horizontally */
+  padding: 16px 20px;
+  max-width: unset;             /* remove full width */
+  width: auto;
+  text-align: center;
+}
+.saved-summary.compact .summary-row,
+.saved-summary.compact .summary-total {
+  text-align: center;
+}
+.saved-summary.compact .table-container.compact.center {
+  justify-content: center;
+}
+.summary-center {
+  display: flex;
+  justify-content: center;   /* 🔥 true horizontal centering */
+  width: 100%;
+}

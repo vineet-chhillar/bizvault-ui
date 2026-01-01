@@ -12,6 +12,7 @@ const blankLine = () => ({
 });
 
 export default function StockAdjustmentEditor() {
+const [selectedAdjustmentId, setSelectedAdjustmentId] = useState(null);
 
   const [date, setDate] = useState(
     new Date().toISOString().split("T")[0]
@@ -23,6 +24,24 @@ export default function StockAdjustmentEditor() {
   const [lines, setLines] = useState([blankLine()]);
   const [itemList, setItemList] = useState([]);
   const [activeRow, setActiveRow] = useState(null);
+  const [saving, setSaving] = useState(false);
+const [recentAdjustments, setRecentAdjustments] = useState([]);
+const [viewAdjustment, setViewAdjustment] = useState(null);
+
+
+const resetForm = () => {
+  setDate(new Date().toISOString().split("T")[0]);
+  setType("INCREASE");
+  setReason("");
+  setNotes("");
+  setLines([blankLine()]);
+  setActiveRow(null);
+};
+useEffect(() => {
+  window.chrome.webview.postMessage({
+    Action: "GetRecentStockAdjustments"
+  });
+}, []);
 
   // ------------------------------------------------
   // LOAD ITEMS
@@ -57,6 +76,49 @@ export default function StockAdjustmentEditor() {
     )
   );
 }
+if (msg.action === "GetRecentStockAdjustmentsResponse") {
+  setRecentAdjustments(msg.data || []);
+}
+
+if (msg.action === "SaveStockAdjustmentResponse") {
+  if (!msg.success) {
+    alert(msg.message || "Failed to save stock adjustment");
+    return;
+  }
+
+  alert(`✅ Stock adjustment saved successfully\nAdjustment No: ${msg.AdjustmentNo}`);
+
+setSaving(false);
+
+  resetForm(); // 👈 important
+  window.chrome.webview.postMessage({
+  Action: "GetRecentStockAdjustments"
+});
+
+}
+if (msg.action === "LoadStockAdjustmentResponse") {
+  if (!msg.success) {
+    alert(msg.message || "Failed to load stock adjustment");
+    return;
+  }
+
+  setViewAdjustment(msg.data);
+}
+if (msg.action === "ReverseStockAdjustmentResponse") {
+  if (!msg.success) {
+    alert(msg.message || "Failed to reverse adjustment");
+    return;
+  }
+
+  alert(`✅ Adjustment reversed successfully\nNew Adjustment No: ${msg.AdjustmentNo}`);
+
+  // reload recent list
+  window.chrome.webview.postMessage({
+    Action: "GetRecentStockAdjustments"
+  });
+
+  setViewAdjustment(null);
+}
 
     };
 
@@ -85,6 +147,27 @@ export default function StockAdjustmentEditor() {
   const addRow = () => setLines(p => [...p, blankLine()]);
   const removeRow = (i) => setLines(p => p.filter((_, idx) => idx !== i));
 const handleSave = () => {
+  
+  const validLines = lines.filter(
+  l => l.ItemId && Number(l.AdjustQty) > 0
+);
+
+if (validLines.length === 0) {
+  alert("Please add at least one item");
+  return;
+}
+if (validLines.some(l => Number(l.Rate) <= 0)) {
+  alert("Rate must be greater than zero");
+  return;
+}
+if (!date) {
+  alert("Please select a date");
+  return;
+}
+
+
+  if (saving) return;
+
   const invalid = lines.some(
     l =>
       !l.ItemId ||
@@ -98,6 +181,13 @@ const handleSave = () => {
     return;
   }
 
+  if (!reason) {
+    alert("Please select a reason");
+    return;
+  }
+
+  setSaving(true); // ✅ move here
+
   const user = JSON.parse(localStorage.getItem("user"));
 
   window.chrome.webview.postMessage({
@@ -108,15 +198,17 @@ const handleSave = () => {
       Reason: reason,
       Notes: notes,
       CreatedBy: user.email,
-      Items: lines.map(l => ({
-        ItemId: l.ItemId,
-        BatchNo: l.BatchNo || null,
-        AdjustQty: Number(l.AdjustQty),
-        Rate: Number(l.Rate)
-      }))
+      Items: validLines.map(l => ({
+  ItemId: l.ItemId,
+  BatchNo: l.BatchNo || null,
+  AdjustQty: Number(l.AdjustQty),
+  Rate: Number(l.Rate)
+}))
+
     }
   });
 };
+
 
   return (
     <div className="form-container">
@@ -286,8 +378,133 @@ const handleSave = () => {
             ➕ Add Item
           </button>
         </div>
+{/* ACTION BUTTONS */}
+<div className="form-actions">
+  <button
+    className="btn-submit"
+    onClick={handleSave}
+  >
+    💾 Save Stock Adjustment
+  </button>
+</div>
+{/* RECENT ADJUSTMENTS */}
+{recentAdjustments.length > 0 && (
+  <div className="saved-summary">
+    <h3>📌Stock Adjustments</h3>
+
+    <table className="data-table small">
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Reason</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {recentAdjustments.map(a => (
+          <tr key={a.AdjustmentId}>
+
+
+
+            <td>{a.AdjustmentNo}</td>
+            <td>{a.AdjustmentDate}</td>
+            <td>{a.AdjustmentType}</td>
+            <td>{a.Reason}</td>
+        
+        <td>
+  <div className="action-buttons">
+
+    {/* VIEW BUTTON */}
+    <button
+      className="btn-view compact"
+      onClick={() => {
+        setSelectedAdjustmentId(a.AdjustmentId);
+        window.chrome.webview.postMessage({
+          Action: "LoadStockAdjustment",
+          Payload: { AdjustmentId: a.AdjustmentId }
+        });
+      }}
+    >
+      👁 View
+    </button>
+
+    {/* REVERSE BUTTON */}
+    <button
+      className="btn-danger compact"
+      onClick={() => {
+        if (!window.confirm("Reverse this stock adjustment?")) return;
+
+        const user = JSON.parse(localStorage.getItem("user"));
+
+        window.chrome.webview.postMessage({
+          Action: "ReverseStockAdjustment",
+          Payload: {
+            AdjustmentId: a.AdjustmentId,   // 👈 USE ROW ID DIRECTLY
+            ReversedBy: user.email
+          }
+        });
+      }}
+    >
+      🔄 Reverse
+    </button>
+
+  </div>
+</td>
+   
+        
+
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}
+
+{/* READONLY VIEW */}
+{viewAdjustment && (
+  <div className="saved-summary">
+    <h3>📄 Stock Adjustment – {viewAdjustment.AdjustmentNo}</h3>
+
+    <div className="summary-row"><strong>Date:</strong> {viewAdjustment.Date}</div>
+    <div className="summary-row"><strong>Type:</strong> {viewAdjustment.Type}</div>
+    <div className="summary-row"><strong>Reason:</strong> {viewAdjustment.Reason}</div>
+    <div className="summary-row"><strong>Notes:</strong> {viewAdjustment.Notes}</div>
+
+    <table className="data-table small">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Batch</th>
+          <th>Qty</th>
+          <th>Rate</th>
+          <th>Impact</th>
+        </tr>
+      </thead>
+      <tbody>
+        {viewAdjustment.Items.map((it, i) => (
+          <tr key={i}>
+            <td>{it.ItemName}</td>
+            <td>{it.BatchNo || "-"}</td>
+            <td>{it.Qty}</td>
+            <td>{it.Rate}</td>
+            <td>{it.ValueImpact.toFixed(2)}</td>
+            
+          </tr>
+        ))}
+      </tbody>
+    </table>
+
+    <div className="summary-total">
+      <strong>Total:</strong>{" "}
+      ₹ {viewAdjustment.Items.reduce((s, i) => s + i.ValueImpact, 0).toFixed(2)}
+    </div>
+  </div>
+)}
 
       </div>
+
     </div>
   );
 }

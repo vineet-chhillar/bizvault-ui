@@ -24,22 +24,43 @@ export default function ChartOfAccounts() {
       }
 
       if (
-        msg.action === "createAccountResult" ||
-        msg.action === "updateAccountResult" ||
-        msg.action === "deleteAccountResult"
-      ) {
-        window.chrome.webview.postMessage({ action: "fetchCoA" });
+  msg.action === "createAccountResult" ||
+  msg.action === "updateAccountResult" ||
+  msg.action === "deleteAccountResult"
+) {
+  if (!msg.success) {
+    alert(msg.message || "Operation failed");
+    return;
+  }
 
-        setForm({
-          AccountId: 0,
-          AccountName: "",
-          AccountType: "Asset",
-          NormalSide: "Debit",
-          OpeningBalance: 0,
-        });
+  // ✅ SHOW SUCCESS MESSAGE
+  let successMsg = "Operation completed successfully";
 
-        setIsEditing(false);
-      }
+  if (msg.action === "createAccountResult")
+    successMsg = "✅ Account created successfully";
+  else if (msg.action === "updateAccountResult")
+    successMsg = "✅ Account updated successfully";
+  else if (msg.action === "deleteAccountResult")
+    successMsg = "✅ Account deleted successfully";
+
+  alert(successMsg);
+
+  // 🔄 Refresh chart of accounts
+  window.chrome.webview.postMessage({ action: "fetchCoA" });
+
+  // 🔁 Reset form
+  setForm({
+    AccountId: 0,
+    AccountName: "",
+    AccountType: "Asset",
+    ParentAccountId: 0,
+    NormalSide: "Debit",
+    OpeningBalance: 0,
+  });
+
+  setIsEditing(false);
+}
+
     };
 
     window.chrome.webview.addEventListener("message", handler);
@@ -51,25 +72,29 @@ export default function ChartOfAccounts() {
     if (isEditing) {
       window.chrome.webview.postMessage({
         action: "updateAccount",
-        data: form,
+        Payload: form,
       });
     } else {
       window.chrome.webview.postMessage({
         action: "createAccount",
-        data: form,
+        Payload: form,
       });
     }
   };
 
-  const edit = (r) => {
-    setForm(r);
-    setIsEditing(true);
-  };
+ const edit = (r) => {
+  if (r.IsSystemAccount === 1) {
+    alert("System account: only opening balance can be changed");
+  }
+  setForm(r);
+  setIsEditing(true);
+};
+
 
   const del = (id) => {
     window.chrome.webview.postMessage({
       action: "deleteAccount",
-      data: { AccountId: id },
+      Payload: { AccountId: id },
     });
   };
 
@@ -86,11 +111,11 @@ export default function ChartOfAccounts() {
             <div className="form-group">
               <label>Account Name</label>
               <input
-                value={form.AccountName}
-                onChange={(e) =>
-                  setForm({ ...form, AccountName: e.target.value })
-                }
-              />
+  value={form.AccountName}
+  disabled={isEditing && form.IsSystemAccount === 1}
+  onChange={e => setForm({ ...form, AccountName: e.target.value })}
+/>
+
             </div>
 
             <div className="form-group">
@@ -121,6 +146,36 @@ export default function ChartOfAccounts() {
                 <option>Credit</option>
               </select>
             </div>
+
+
+<div className="form-group">
+  <label>Parent Account</label>
+  <select
+    value={form.ParentAccountId || 0}
+    onChange={e =>
+      setForm({ ...form, ParentAccountId: Number(e.target.value) })
+    }
+    disabled={isEditing && form.IsSystemAccount === 1}
+  >
+    <option value={0}>None</option>
+
+    {rows
+      .filter(a =>
+        (a.ParentAccountId == null || a.ParentAccountId === 0) &&
+        a.AccountId !== form.AccountId
+      )
+      .map(a => (
+        <option key={a.AccountId} value={a.AccountId}>
+          {a.AccountName}
+        </option>
+      ))}
+  </select>
+</div>
+
+
+
+
+
 
             <div className="form-group">
               <label>Opening Balance</label>
@@ -218,6 +273,7 @@ export default function ChartOfAccounts() {
 
                         <button
             className="invaction-btn invaction-delete"
+             disabled={r.IsSystemAccount === 1}
             onClick={() => {
               if (
                 window.confirm(

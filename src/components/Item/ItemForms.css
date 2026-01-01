@@ -1137,4 +1137,191 @@ h1.form-title, h2.form-title, h3.form-title {
 .autocomplete-floating li:hover {
   background: #f0e9ff;
 }
+/* -------------------------------
+   CLICKABLE ROWS (Recent list)
+-------------------------------- */
+.clickable {
+  cursor: pointer;
+}
 
+.clickable:hover {
+  background-color: #f1f6ff;
+}
+
+/* -------------------------------
+   SAVED / READONLY SUMMARY PANEL
+-------------------------------- */
+.saved-summary {
+  margin-top: 30px;
+  padding: 16px;
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  background: #f9fbfc;
+}
+
+.saved-summary h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  color: #1e3a8a;
+}
+
+.summary-row {
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+/* FULL WIDTH BUT CONTROLLED */
+.data-table.small {
+  width: 100%;          /* ✅ full screen */
+  table-layout: fixed;  /* ✅ prevents column stretching */
+  margin-top: 10px;
+}
+
+
+/* -------------------------------
+   SMALL TABLE VARIANT
+-------------------------------- */
+.data-table.small th,
+.data-table.small td {
+  padding: 4px 8px;        /* ⬅ smaller vertical padding */
+  line-height: 1.2;        /* ⬅ tighter text */
+  height: auto;     
+  text-align: center;       /* ⬅ let content decide */
+  vertical-align: middle;
+}
+.data-table.small td > div {
+  margin: 0;
+  padding: 0;
+}
+.data-table.small th {
+  text-align: center;
+  vertical-align: middle;
+}
+
+
+/* -------------------------------
+   TOTAL ROW
+-------------------------------- */
+.summary-total {
+  margin-top: 12px;
+  text-align: right;
+  font-weight: 600;
+}
+
+/* -------------------------------
+   FORM ACTIONS
+-------------------------------- */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+  padding-top: 12px;
+  border-top: 1px solid #ddd;
+}
+
+/* -------------------------------
+   BUTTONS
+-------------------------------- */
+
+
+/* -------------------------------
+   DANGER BUTTON (Reverse)
+-------------------------------- */
+.btn-danger {
+  background: #301149;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 2px;
+  
+}
+
+.btn-danger:hover {
+  background: #b91c1c;
+}
+
+/* -------------------------------
+   DISABLED BUTTON
+-------------------------------- */
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Item */
+.data-table.small th:nth-child(1),
+.data-table.small td:nth-child(1) {
+  width: 40%;
+}
+
+/* Batch */
+.data-table.small th:nth-child(2),
+.data-table.small td:nth-child(2) {
+  width: 12%;
+}
+
+/* Qty */
+.data-table.small th:nth-child(3),
+.data-table.small td:nth-child(3) {
+  width: 12%;
+  /*text-align: right;*/
+}
+
+/* Rate */
+.data-table.small th:nth-child(4),
+.data-table.small td:nth-child(4) {
+  width: 16%;
+  /*text-align: right;*/
+}
+
+/* Impact */
+.data-table.small th:nth-child(5),
+.data-table.small td:nth-child(5) {
+  width: 20%;
+  /*text-align: right;*/
+}
+
+/* Separate reverse button from table */
+.reverse-action {
+  margin-top: 6px;
+  display: flex;
+  justify-content: center;   /* 👈 center horizontally */
+  align-items: center;       /* 👈 center vertically */
+}
+
+
+/* Compact danger button */
+.btn-danger.compact {
+  padding: 4px 10px;      /* ⬅ reduces height */
+  font-size: 13px;
+  line-height: 1.2;
+  
+  
+}
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* View button */
+.btn-view {
+  background: #411e81;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-view:hover {
+  background: #1d4ed8;
+}
+
+/* Compact buttons */
+.compact {
+  padding: 4px 10px;
+  font-size: 13px;
+  line-height: 1.2;
+}

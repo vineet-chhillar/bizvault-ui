@@ -66,13 +66,42 @@ useEffect(() => {
 
   /* ---------------- SAVE (STEP 2) ---------------- */
   const handleSave = () => {
-  if (!hasValidRows) return;
+  
+  const hasValidRows = lines.some(
+  l => l.ItemId && Number(l.Qty) > 0 && Number(l.Rate) > 0
+);
+const validLines = lines.filter(
+  l => l.ItemId && Number(l.Qty) > 0 && Number(l.Rate) > 0
+);
+
+if (validLines.length === 0) {
+  alert("Please add at least one valid item");
+  return;
+}
+if (!asOnDate) {
+  alert("Please select As On Date");
+  return;
+}
+if (new Date(asOnDate) > new Date()) {
+  alert("As On Date cannot be in the future");
+  return;
+}
+const itemIds = validLines.map(l => l.ItemId);
+const hasDuplicate = new Set(itemIds).size !== itemIds.length;
+
+if (hasDuplicate) {
+  alert("Same item cannot be entered twice in opening stock");
+  return;
+}
+
+
+    if (!hasValidRows) return;
 const user = JSON.parse(localStorage.getItem("user"));
   const payload = {
     AsOnDate: asOnDate,
     Notes: notes,
     CreatedBy: user.email, 
-    Items: lines
+    Items: validLines
       .filter(l => l.ItemId && Number(l.Qty) > 0)
       .map(l => ({
         ItemId: l.ItemId,
@@ -307,8 +336,15 @@ useEffect(() => {
                       onChange={e =>
                         updateLine(i, "Rate", e.target.value)
                       }
+                      className={
+  l.ItemName && Number(l.Rate) <= 0 ? "error-input" : ""
+}
                     />
                     </div>
+                    {l.ItemName && Number(l.Rate) <= 0 && (
+  <div className="error">Rate must be greater than 0</div>
+)}
+
                   </td>
 
                   <td>
@@ -360,11 +396,10 @@ useEffect(() => {
 
         {/* ---------- ACTIONS ---------- */}
         <div className="inventory-btns">
-          <button
+        <button
   className="btn-submit small"
   onClick={handleSave}
-  disabled={!hasValidRows}
-  
+  disabled={!hasValidRows || isLocked}
 >
   💾 Save Opening Stock
 </button>
