@@ -11,6 +11,9 @@ import EditSalesInvoice from "./components/Item/EditSalesInvoice";
 import InvoiceEditor from "./components/Item/InvoiceEditor";
 import SupplierPage from "./components/Item/SupplierPage";
 import CustomerPage from "./components/Item/CustomerPage";
+
+import VoucherEditor from "./components/Item/VoucherEditor";
+
 import ExpenseVoucherEditor from "./components/Item/ExpenseVoucherEditor";
 
 
@@ -258,6 +261,17 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
             >
               <span className="icon">👤</span>
               <span className="label">Customer</span>
+            </NavLink>
+
+             <NavLink
+              to="Item/VoucherEditor"
+              onClick={() => isMobile && setMobileOpen(false)}
+              className={({ isActive }) =>
+                "nav-link" + (isActive ? " active" : "")
+              }
+            >
+              <span className="icon">👤</span>
+              <span className="label">Voucher Editor</span>
             </NavLink>
 
             <NavLink
@@ -614,6 +628,7 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
   <Route path="/Reports/StockSummary" element={<StockSummary user={user} />} />
 
   <Route path="/Item/CustomerPage" element={<CustomerPage user={user} />} />
+  <Route path="/Item/VoucherEditor" element={<VoucherEditor user={user} />} />
   <Route path="/Item/ExpenseVoucherEditor" element={<ExpenseVoucherEditor user={user} />} />
   <Route path="/Item/OpeningStockEditor" element={<OpeningStockEditor user={user} />} />
   <Route path="/Item/StockAdjustmentEditor" element={<StockAdjustmentEditor user={user} />} />
