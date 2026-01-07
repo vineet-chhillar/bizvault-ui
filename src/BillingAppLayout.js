@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from "react";
 import CreateItem from "./components/Item/CreateItem";
-
 import EditItem from "./components/Item/EditItem";
 import CompanySetup from "./components/Item/CompanySetup";
 import PurchaseInvoiceEditor from "./components/Item/PurchaseInvoiceEditor";
 import EditPurchaseInvoice from "./components/Item/EditPurchaseInvoice";
-
 import EditSalesInvoice from "./components/Item/EditSalesInvoice";
-
 import InvoiceEditor from "./components/Item/InvoiceEditor";
+
+import Dashboard from "./components/Item/Dashboard";
 import SupplierPage from "./components/Item/SupplierPage";
 import CustomerPage from "./components/Item/CustomerPage";
 
@@ -24,12 +23,21 @@ import StockAdjustmentEditor from "./components/Item/StockAdjustmentEditor";
 import ChartOfAccounts from "./components/Item/ChartOfAccounts";
 import SalesReturnNew from "./components/Item/SalesReturnNew";
 import PurchaseReturn from "./components/Item/PurchaseReturn";
+
 import TrialBalance from "./components/Reports/TrialBalance";
+import DayBookReport from "./components/Reports/DayBookReport";
+import VoucherReport from "./components/Reports/VoucherReport";
+import CashBookReport from "./components/Reports/CashBookReport";
+import BankBookReport from "./components/Reports/BankBookReport";
 import LedgerReport from "./components/Reports/LedgerReport";
+import OutstandingReport from "./components/Reports/OutstandingReport";
 import ProfitLossReport from "./components/Reports/ProfitLossReport";
 import BalanceSheet from "./components/Reports/BalanceSheet";
 import StockValuationFIFO from "./components/Reports/StockValuationFIFO";
 import StockSummary from "./components/Reports/StockSummary";
+
+import { Navigate } from "react-router-dom";
+
 
 import {
   BrowserRouter as Router,
@@ -64,11 +72,14 @@ import {
 function usePageTitle() {
   const location = useLocation();
   const [title, setTitle] = useState("Home");
+ 
+
+
 
   useEffect(() => {
     const map = {
       "/": "Home",
-      "/dashboard": "Dashboard",
+      "Item/Dashboard": "Dashboard",
       "/reports": "Reports",
       "/chartofaccounts": "Accounts",
       "/supplier": "Supplier",
@@ -183,8 +194,8 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
 
 
 
-            <NavLink
-  to="/Home"
+            {/*<NavLink
+  to="Item/Dashboard"
   onClick={() => isMobile && setMobileOpen(false)}
   className={({ isActive }) =>
     "nav-link" + (isActive ? " active" : "")
@@ -192,10 +203,10 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
 >
   <span className="icon"><FaHome /></span>
   <span className="label">Home</span>
-</NavLink>
+</NavLink>*/}
 
- <NavLink
-              to="/dashboard"
+              <NavLink
+              to="Item/Dashboard"
               onClick={() => isMobile && setMobileOpen(false)}
               className={({ isActive }) =>
                 "nav-link" + (isActive ? " active" : "")
@@ -204,7 +215,9 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
               <span className="icon"><FaChartBar /></span>
               <span className="label">Dashboard</span>
             </NavLink>
-<NavLink
+
+
+             <NavLink
               to="Item/CompanySetup"
               onClick={() => isMobile && setMobileOpen(false)}
               className={({ isActive }) =>
@@ -352,6 +365,47 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
 
   {/* Collapsible Children */}
   <div className={`nav-children-tabs ${isReportsOpen ? "open" : ""}`}>
+
+<NavLink
+      to="/Reports/DayBookReport"
+      onClick={() => isMobile && setMobileOpen(false)}
+      className={({ isActive }) =>
+        "nav-tab-link" + (isActive ? " active" : "")
+      }
+    >
+      Day Book
+    </NavLink>
+
+<NavLink
+      to="/Reports/VoucherReport"
+      onClick={() => isMobile && setMobileOpen(false)}
+      className={({ isActive }) =>
+        "nav-tab-link" + (isActive ? " active" : "")
+      }
+    >
+      Voucher Report
+    </NavLink>
+
+    <NavLink
+      to="/Reports/CashBookReport"
+      onClick={() => isMobile && setMobileOpen(false)}
+      className={({ isActive }) =>
+        "nav-tab-link" + (isActive ? " active" : "")
+      }
+    >
+      Cash Book Report
+    </NavLink>
+
+    <NavLink
+      to="/Reports/BankBookReport"
+      onClick={() => isMobile && setMobileOpen(false)}
+      className={({ isActive }) =>
+        "nav-tab-link" + (isActive ? " active" : "")
+      }
+    >
+      Bank Book Report
+    </NavLink>
+
     <NavLink
       to="/Reports/TrialBalance"
       onClick={() => isMobile && setMobileOpen(false)}
@@ -369,7 +423,17 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
         "nav-tab-link" + (isActive ? " active" : "")
       }
     >
-      Ledger Report
+      Account Statement Report
+    </NavLink>
+
+    <NavLink
+      to="/Reports/OutstandingReport"
+      onClick={() => isMobile && setMobileOpen(false)}
+      className={({ isActive }) =>
+        "nav-tab-link" + (isActive ? " active" : "")
+      }
+    >
+      Outstanding Report
     </NavLink>
 
       <NavLink
@@ -620,8 +684,13 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
   <Route path="/Item/SalesReturnNew" element={<SalesReturnNew user={user} />} />
   <Route path="/Item/PurchaseReturn" element={<PurchaseReturn user={user} />} />
   
+  <Route path="/Reports/DayBookReport" element={<DayBookReport user={user} />} />
+  <Route path="/Reports/VoucherReport" element={<VoucherReport user={user} />} />
+  <Route path="/Reports/CashBookReport" element={<CashBookReport user={user} />} />
+  <Route path="/Reports/BankBookReport" element={<BankBookReport user={user} />} />
   <Route path="/Reports/TrialBalance" element={<TrialBalance user={user} />} />
   <Route path="/Reports/LedgerReport" element={<LedgerReport user={user} />} />
+  <Route path="/Reports/OutstandingReport" element={<OutstandingReport user={user} />} />
   <Route path="/Reports/ProfitLossReport" element={<ProfitLossReport user={user} />} />
   <Route path="/Reports/BalanceSheet" element={<BalanceSheet user={user} />} />
   <Route path="/Reports/StockValuationFIFO" element={<StockValuationFIFO user={user} />} />
@@ -634,23 +703,11 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
   <Route path="/Item/StockAdjustmentEditor" element={<StockAdjustmentEditor user={user} />} />
   <Route path="/Item/ChartOfAccounts" element={<ChartOfAccounts user={user} />} />
   <Route path="/Item/SupplierPage" element={<SupplierPage user={user} />} />
-</Routes>
-          {/*<main className="main-content">
-          
-            <Routes>
-              <Route path="/" element={<h2>Welcome to Home</h2>} />
-              <Route path="/dashboard" element={<h2>Dashboard Overview</h2>} />
-              <Route path="/reports" element={<h2>Reports Section</h2>} />
-              <Route path="/accounts" element={<h2>Accounts Details</h2>} />
-              <Route path="/supplier" element={<h2>Supplier Management</h2>} />
-              <Route path="/customer" element={<h2>Customer Records</h2>} />
-              <Route path="/sales" element={<h2>Sales Module</h2>} />
-              <Route path="/purchase" element={<h2>Purchase Records</h2>} />
-              <Route path="/invoice" element={<h2>Invoice Generation</h2>} />
-              <Route path="/inventory" element={<h2>Inventory Control</h2>} />
-              <Route path="/item" element={<h2>Item Details</h2>} />
-            </Routes>
-          </main>*/}
+  <Route path="/"  element={<Navigate to="/Item/Dashboard" replace />}/>
+  <Route path="/Item/Dashboard" element={<Dashboard user={user} />} />
+  </Routes>
+
+         
         </div>
       </div>
     </Router>

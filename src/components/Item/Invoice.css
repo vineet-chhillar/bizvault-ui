@@ -1052,3 +1052,25 @@
   background: #eee;
   cursor: not-allowed;
 }
+.item-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.item-name-input {
+  font-weight: 500;
+}
+
+.stock-meta {
+  display: flex;
+  gap: 10px;
+  font-size: 11px;
+  color: #6b7280; /* muted gray */
+  line-height: 1.2;
+}
+
+.batch-stock {
+  padding-left: 6px;
+  border-left: 1px solid #ddd;
+}

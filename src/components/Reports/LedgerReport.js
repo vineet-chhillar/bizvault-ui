@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 export default function LedgerReport() {
   const [accounts, setAccounts] = useState([]);
@@ -6,6 +7,20 @@ export default function LedgerReport() {
   const [from, setFrom] = useState(() => new Date().toISOString().slice(0, 10));
   const [to, setTo] = useState(() => new Date().toISOString().slice(0, 10));
   const [report, setReport] = useState(null);
+const [searchParams] = useSearchParams();
+const accountIdFromUrl = Number(searchParams.get("accountId"));
+const source = searchParams.get("source"); // 👈 important
+useEffect(() => {
+  if (!accountIdFromUrl) return;
+
+  // 🔑 If coming from Outstanding, expand date range
+  if (source === "outstanding") {
+    setFrom("2000-01-01"); // or company start date
+    setTo(new Date().toISOString().slice(0, 10));
+  }
+
+  setAccountId(accountIdFromUrl);
+}, [accountIdFromUrl, source]);
 
   useEffect(() => {
     window.chrome.webview.postMessage({ action: "fetchCoA" });
@@ -43,6 +58,33 @@ export default function LedgerReport() {
       payload: { AccountId: accountId, From: from, To: to },
     });
   };
+useEffect(() => {
+  if (!accountIdFromUrl) return;
+
+  setAccountId(accountIdFromUrl);
+
+  window.chrome.webview.postMessage({
+    action: "getLedgerReport",
+    payload: {
+      AccountId: accountIdFromUrl,
+      From: from,
+      To: to,
+    },
+  });
+}, [accountIdFromUrl, from, to]);
+useEffect(() => {
+  if (!accountId || !from || !to) return;
+
+  window.chrome.webview.postMessage({
+    action: "getLedgerReport",
+    payload: {
+      AccountId: accountId,
+      From: from,
+      To: to,
+    },
+  });
+}, [accountId, from, to]);
+
 
   const exportPdf = () => {
     if (!report) {
@@ -57,7 +99,7 @@ export default function LedgerReport() {
 
   return (
     <div className="form-container">
-      <h2 className="form-title">Ledger Report</h2>
+      <h2 className="form-title">Account Statement Report</h2>
 
       {/* FILTER AREA */}
       <div className="form-inner">

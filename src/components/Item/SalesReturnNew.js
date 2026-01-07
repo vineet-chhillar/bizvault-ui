@@ -29,8 +29,9 @@ const blankLine = () => ({
 
 export default function EditSalesReturn({ user }) {
   // ---------- STATE ----------
-  const [invoiceId, setInvoiceId] = useState("");
-  const [paymentMode, setPaymentMode] = useState("CASH");
+  const [invoiceId, setInvoiceId] = useState(null);
+
+  const [paymentMode, setPaymentMode] = useState("Cash");
   const [invoiceList, setInvoiceList] = useState([]);
 
   const [company, setCompany] = useState(null);
@@ -39,7 +40,7 @@ export default function EditSalesReturn({ user }) {
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerState, setCustomerState] = useState("");
-const [refundMode, setRefundMode] = useState("AUTO");
+const [refundMode, setRefundMode] = useState("Auto");
 
 const [outstanding, setOutstanding] = useState(0);   // BalanceAmount
 const [paidAmount, setPaidAmount] = useState(0);     // PaidAmount
@@ -75,12 +76,12 @@ const [paidVia, setPaidVia] = useState("");   // CASH | BANK | ""
     if (!data.InvoiceDate) errors.push("Invoice date is required.");
     if (!data.InvoiceNo) errors.push("Invoice number missing.");
 
-    if (refundMode !== "ADJUST" && refundAmount > 0 && !paidVia) {
+    if (refundMode !== "Adjust" && refundAmount > 0 && !paidVia) {
   errors.push("Refund mode requires Paid Via (Cash or Bank).");
 }
 
     // Customer required ONLY for CREDIT sales
-if (paymentMode === "CREDIT" && !data.CustomerId) {
+if (paymentMode === "Credit" && !data.CustomerId) {
   errors.push("Customer is required for sales return.");
 }
 
@@ -221,10 +222,10 @@ if (paymentMode === "CREDIT" && !data.CustomerId) {
     });
   };
 useEffect(() => {
-  if (refundMode === "CASH") setPaidVia("CASH");
-  if (refundMode === "BANK") setPaidVia("BANK");
+  if (refundMode === "Cash") setPaidVia("Cash");
+  if (refundMode === "Bank") setPaidVia("Bank");
 
-  if (refundMode === "ADJUST") setPaidVia("");
+  if (refundMode === "Adjust") setPaidVia("");
 }, [refundMode]);
 
   // Re-split GST if company or customer changes (shouldn't in return, but safe)
@@ -282,16 +283,17 @@ useEffect(() => {
 
   // ---------- LOAD SELECTED INVOICE ----------
   const loadInvoice = () => {
-    if (!invoiceId) {
-      alert("Select a sales invoice first.");
-      return;
-    }
+  if (!invoiceId || Number(invoiceId) <= 0) {
+    alert("Select a sales invoice first.");
+    return;
+  }
 
-    window.chrome.webview.postMessage({
-      Action: "LoadSalesInvoice",
-      Payload: { InvoiceId: invoiceId }
-    });
-  };
+  window.chrome.webview.postMessage({
+    Action: "LoadSalesInvoice",
+    Payload: { InvoiceId: Number(invoiceId) }
+  });
+};
+
 
   // ---------- SAVE RETURN ----------
   const saveReturn = () => {
@@ -321,7 +323,7 @@ useEffect(() => {
       alert("Fix these issues:\n\n" + errors.join("\n"));
       return;
     }
-if (refundMode === "ADJUST" && refundAmount > 0) {
+if (refundMode === "Adjust" && refundAmount > 0) {
   errors.push("Return exceeds outstanding. Cannot adjust fully.");
 }
 
@@ -369,8 +371,8 @@ if (refundMode === "ADJUST" && refundAmount > 0) {
 }, [totals.total, outstanding]);
 useEffect(() => {
   // If refund mode is ADJUST but refund is required → block it
-  if (refundMode === "ADJUST" && refundAmount > 0) {
-    setRefundMode("CASH"); // safe default
+  if (refundMode === "Adjust" && refundAmount > 0) {
+    setRefundMode("Cash"); // safe default
   }
 }, [refundMode, refundAmount]);
 
@@ -407,7 +409,7 @@ useEffect(() => {
 setPaidVia(data.PaidVia || "");
 
         setInvoiceId(data.InvoiceId);
-        setPaymentMode(data.RefundMode || "CASH");
+        setPaymentMode(data.RefundMode || "Cash");
         setCustomerId(data.CustomerId);
         setCustomerName(data.CustomerName || "");
         setCustomerPhone(data.CustomerPhone || "");
@@ -505,15 +507,16 @@ setPaidVia("");
 
          <select
   value={invoiceId}
-  onChange={e => setInvoiceId(e.target.value)}
+  onChange={e => setInvoiceId(Number(e.target.value))}
 >
   <option value="">Select Sales Invoice</option>
   {invoiceList.map(i => (
-    <option key={i.InvoiceNum} value={i.InvoiceNum}>
+    <option key={i.Id} value={i.Id}>
       {i.InvoiceNo} - {i.CustomerName} - ₹{i.TotalAmount}
     </option>
   ))}
 </select>
+
 
           <button className="btn-submit" onClick={loadInvoice}>
             Load Invoice
@@ -578,23 +581,23 @@ setPaidVia("");
   value={refundMode}
   onChange={e => setRefundMode(e.target.value)}
 >
-  <option value="AUTO">Same as Invoice</option>
+  <option value="Auto">Same as Invoice</option>
 
-  <option value="ADJUST" disabled={refundAmount > 0}>
+  <option value="Adjust" disabled={refundAmount > 0}>
     Adjust Against Dues
   </option>
 
-  <option value="CASH" disabled={refundAmount <= 0}>
+  <option value="Cash" disabled={refundAmount <= 0}>
     Cash Refund
   </option>
 
-  <option value="BANK" disabled={refundAmount <= 0}>
+  <option value="Bank" disabled={refundAmount <= 0}>
     Bank Refund
   </option>
 </select>
   </div>
 
-  {paymentMode === "CREDIT" && paidAmount > 0 && (
+  {paymentMode === "Credit" && paidAmount > 0 && (
   <div className="form-group">
     <label>Paid Via</label>
     <input

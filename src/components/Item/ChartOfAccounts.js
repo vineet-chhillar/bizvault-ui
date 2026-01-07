@@ -3,12 +3,20 @@ import React, { useEffect, useState } from "react";
 export default function ChartOfAccounts() {
   const [rows, setRows] = useState([]);
   const [form, setForm] = useState({
-    AccountId: 0,
-    AccountName: "",
-    AccountType: "Asset",
-    NormalSide: "Debit",
-    OpeningBalance: 0,
-  });
+  AccountId: 0,
+  AccountName: "",
+  AccountType: "Asset",
+  NormalSide: "Debit",
+  OpeningBalanceType: "DR", // 👈 ADD
+  OpeningBalance: 0,
+});
+useEffect(() => {
+  setForm(f => ({
+    ...f,
+    OpeningBalanceType: f.NormalSide === "Debit" ? "DR" : "CR"
+  }));
+}, [form.NormalSide]);
+
 
   const [isEditing, setIsEditing] = useState(false);
 
@@ -50,13 +58,15 @@ export default function ChartOfAccounts() {
 
   // 🔁 Reset form
   setForm({
-    AccountId: 0,
-    AccountName: "",
-    AccountType: "Asset",
-    ParentAccountId: 0,
-    NormalSide: "Debit",
-    OpeningBalance: 0,
-  });
+  AccountId: 0,
+  AccountName: "",
+  AccountType: "Asset",
+  ParentAccountId: 0,
+  NormalSide: "Debit",
+  OpeningBalanceType: "DR", // 👈 ADD
+  OpeningBalance: 0,
+});
+
 
   setIsEditing(false);
 }
@@ -147,6 +157,21 @@ export default function ChartOfAccounts() {
               </select>
             </div>
 
+            <div className="form-group">
+  <label>Opening Balance Type</label>
+  <select
+    value={form.OpeningBalanceType}
+    onChange={e =>
+      setForm({ ...form, OpeningBalanceType: e.target.value })
+    }
+    disabled={isEditing && form.IsSystemAccount === 1}
+  >
+    <option value="DR">Debit (DR)</option>
+    <option value="CR">Credit (CR)</option>
+  </select>
+</div>
+
+
 
 <div className="form-group">
   <label>Parent Account</label>
@@ -234,6 +259,7 @@ export default function ChartOfAccounts() {
               <th>Name</th>
               <th>Type</th>
               <th>Side</th>
+              <th>Opening Type</th> {/* 👈 ADD */}
               <th>Opening</th>
               <th style={{ width: "120px" }}>Actions</th>
             </tr>
@@ -245,7 +271,9 @@ export default function ChartOfAccounts() {
                 <td>{r.AccountName}</td>
                 <td>{r.AccountType}</td>
                 <td>{r.NormalSide}</td>
-                <td>{r.OpeningBalance}</td>
+                <td>{r.OpeningBalanceType}</td>
+                 <td>{r.OpeningBalance}</td>
+
                 <td style={{ textAlign: "center" }}>
                  
                   <button

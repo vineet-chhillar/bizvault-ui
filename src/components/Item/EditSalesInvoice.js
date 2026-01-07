@@ -10,7 +10,8 @@ const blankLine = () => ({
   HsnCode: "",
   BatchNo: "",
   Qty: 0,
-  AvailableQty: 0,
+   TotalStock: 0,       // ✅ NEW
+  BatchStock: 0,       // ✅ NEW
   ReturnedQty: 0,
 
   Rate: 0,
@@ -69,6 +70,7 @@ const [originalPaymentMode, setOriginalPaymentMode] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [confirmModal, setConfirmModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+const [selectedItemBalance, setSelectedItemBalance] = useState(null);
 
 
   const [paymentForm, setPaymentForm] = useState({
@@ -262,17 +264,24 @@ useEffect(() => {
     const copy = [...prev];
     const line = { ...copy[index] };
 
-    if (field === "Qty") {
-      const qty = Number(value) || 0;
-      const maxQty = Number(line.AvailableQty || 0);
+   if (field === "Qty") {
+  const qty = Number(value) || 0;
 
-      if (qty > maxQty) {
-        alert(`Quantity cannot exceed available quantity (${maxQty})`);
-        return prev; // ⛔ reject change
-      }
+  const maxTotal = Number(line.TotalStock || 0);
+  const maxBatch = Number(line.BatchStock || 0);
 
-      line.Qty = qty;
-    } else {
+  const allowedQty = line.BatchNo ? maxBatch : maxTotal;
+
+  if (qty > allowedQty) {
+    alert(
+      `Quantity cannot exceed available stock (${allowedQty})`
+    );
+    return prev;
+  }
+
+  line.Qty = qty;
+}
+ else {
       line[field] = value;
     }
 
@@ -487,8 +496,52 @@ AvailableQty: Number(it.AvailableQty) || 0,
     return recomputeLineForState(line, sellerState, buyerState);
   })
 );
+(d.Items || []).forEach((it, idx) => {
+  if (!it.ItemId) return;
+
+  window.chrome.webview.postMessage({
+    Action: "GetItemBalance",
+    Payload: { ItemId: it.ItemId, LineIndex: idx }
+  });
+
+  window.chrome.webview.postMessage({
+    Action: "GetItemBalanceBatchWise",
+    Payload: {
+      ItemId: it.ItemId,
+      BatchNo: it.BatchNo || "",
+      LineIndex: idx
+    }
+  });
+});
 
 }
+
+if (msg.action === "GetItemBalanceResponse") {
+  const { lineIndex, balance } = msg;
+
+  setLines(prev => {
+    const copy = [...prev];
+    if (copy[lineIndex]) {
+      copy[lineIndex].TotalStock = Number(balance) || 0;
+    }
+    return copy;
+  });
+}
+
+if (msg.action === "GetItemBalanceBatchWiseResponse") {
+  const { lineIndex, balance } = msg;
+
+  setLines(prev => {
+    const copy = [...prev];
+    if (copy[lineIndex]) {
+      copy[lineIndex].BatchStock = Number(balance) || 0;
+    }
+    return copy;
+  });
+}
+
+
+
 if (msg.action === "SaveSalesPaymentResponse") {
   if (!msg.success) {
     alert("Payment failed: " + msg.message);
@@ -557,10 +610,10 @@ useEffect(() => {
 // --------------------------------------------------
 // HEADER CALCULATIONS
 // --------------------------------------------------
-const totalAvailableQty = lines.reduce(
+{/*const totalAvailableQty = lines.reduce(
   (sum, l) => sum + Number(l.AvailableQty || 0),
   0
-);
+);*/}
 
 
   // --------------------------------------------------
@@ -640,11 +693,12 @@ const totalAvailableQty = lines.reduce(
         </div>
         
 
-        
-        <div className="form-group">
+      
+
+        {/*<div className="form-group">
           <label>Available Qty</label>
          <input  readOnly value={totalAvailableQty} />
-         </div>
+         </div>*/}
 
         <div className="form-group">
   <label>Payment Mode</label>
@@ -734,10 +788,25 @@ const totalAvailableQty = lines.reduce(
             <tr key={i}>
               <td>
                 
-                <div className="cell-box">
-        <input value={l.ItemName} onChange={e => updateLine(i, "ItemName", e.target.value)}
-        />
-        </div>
+                <div className="cell-box item-cell">
+  <input
+    className="item-name-input"
+    value={l.ItemName}
+    onChange={e => updateLine(i, "ItemName", e.target.value)}
+  />
+
+  {(l.TotalStock > 0 || l.BatchStock > 0) && (
+    <div className="stock-meta">
+      <span>Total Stock: <b>{l.TotalStock}</b></span>
+      {l.BatchNo && (
+        <span className="batch-stock">
+          Batch Stock: <b>{l.BatchStock}</b>
+        </span>
+      )}
+    </div>
+  )}
+</div>
+
                 </td>
               <td><div className="cell-box"><input value={l.BatchNo} readOnly /></div></td>
                <td><div className="cell-box"><input value={l.HsnCode} readOnly /></div></td>

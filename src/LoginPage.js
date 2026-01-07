@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import "./LoginPage.css";
 
+
 function LoginPage({ onLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("Admin");
+
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -12,6 +14,7 @@ function LoginPage({ onLogin }) {
     // Mock role-based login
     if (email && password) {
       onLogin({ email, role });
+      
     } else {
       alert("Please enter your email and password");
     }
