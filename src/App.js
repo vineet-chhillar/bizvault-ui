@@ -1,93 +1,136 @@
-import React, { useState, useEffect } from "react";
-import BillingAppLayout from "./BillingAppLayout";
-import LoginPage from "./LoginPage";
 
+import BillingAppLayout from "./BillingAppLayout";
+import React, { useEffect, useState } from "react";
+import LoginPage from "./LoginPage";
 export default function App() {
   const [user, setUser] = useState(null);
+  const [lastAction, setLastAction] = useState(null);
 
+const [forceChangePassword, setForceChangePassword] = useState(false);
+const clearLastAction = () => setLastAction(null);
 
- useEffect(() => {
-  if (window.chrome?.webview) {
-    const handler = (event) => {
-      let msg = event.data;
-      console.log("📩 Raw message:", msg);
-
-      // Parse JSON if it’s a string
-      if (typeof msg === "string") {
-        try {
-          msg = JSON.parse(msg);
-        } catch {
-          console.warn("Non-JSON string message:", msg);
-          return;
-        }
-      }
-
-      // ✅ Handle based on type
-      switch (msg.Type) {
-        case "AddItem":
-          if (msg.Status === "Success") 
-            {/*alert("✅ Item added!");*/}
-          break;
-
-        case "GetItems":
-          console.log("📊 Items:", msg.Data);
-          // setItems(msg.Data);
-          break;
-
-        default:
-          console.log("ℹ️ Unknown message:", msg);
-          break;
-      }
-    };
-
-    window.chrome.webview.addEventListener("message", handler);
-    return () => window.chrome.webview.removeEventListener("message", handler);
-  }
-}, []);
-
-
-  // ✅ Function to send data to C# (React → C#)
-  const sendToCSharp = (action, payload) => {
+const [loginError, setLoginError] = useState("");
+  useEffect(() => {
     if (window.chrome?.webview) {
-      window.chrome.webview.postMessage({ Action: action, Payload: payload });
-      console.log("📤 Sent to C#: ", { Action: action, Payload: payload });
+      const handler = (event) => {
+        let msg = event.data;
+
+        if (typeof msg === "string") {
+          try {
+            msg = JSON.parse(msg);
+          } catch {
+            return;
+          }
+        }
+
+        switch (msg.Type) {
+
+        case "Login":
+  if (msg.Status === "Success") {
+    setLoginError("");
+
+    // 🔐 FORCE PASSWORD CHANGE CHECK
+    if (msg.Data.MustChangePassword) {
+      setUser(msg.Data);              // login user
+      setForceChangePassword(true);   // force password change modal
     } else {
-      console.warn("⚠️ WebView2 bridge not available");
+      handleLogin(msg.Data);          // normal login flow
     }
-  };
 
-  // Example usage (you can pass this down to your layout)
-  const handleAddItem = (itemData) => {
-    sendToCSharp("AddItem", itemData);
-  };
+  } else {
+    setLoginError(msg.Message);
+  }
+  break;
 
 
-  // ✅ Called when user logs in successfully
+case "ChangePassword":
+  if (msg.Status === "Success") {
+    setLastAction("ChangePasswordSuccess");
+  } else {
+    alert(msg.Message);
+  }
+  break;
+case "GetUsers":
+  if (msg.Status === "Success") {
+    window.__onUsersLoaded?.(msg.Data);
+  }
+  break;
+
+case "SetUserStatus":
+  if (msg.Status === "Success") {
+    sendToCSharp("GetUsers", {});
+  } else {
+    alert(msg.Message);
+  }
+  break;
+
+case "CreateUser":
+  if (msg.Status === "Success") {
+    setLastAction("CreateUserSuccess");
+  } else {
+    alert(msg.Message);
+  }
+  break;
+
+
+          case "AddItem":
+            break;
+
+          default:
+            console.log("Unknown:", msg);
+        }
+      };
+
+      window.chrome.webview.addEventListener("message", handler);
+      return () =>
+        window.chrome.webview.removeEventListener("message", handler);
+    }
+  }, []);
+
+  const sendToCSharp = (action, payload) => {
+  console.log("📤 Sending to C#:", action, payload);
+
+  if (window.chrome?.webview) {
+    window.chrome.webview.postMessage({
+      Action: action,
+      Payload: payload,
+    });
+  } else {
+    console.warn("⚠️ WebView2 not available");
+  }
+};
+
+
   const handleLogin = (userData) => {
-    console.log("User logged in:", userData);
     setUser(userData);
     localStorage.setItem("user", JSON.stringify(userData));
   };
 
-  // ✅ Called when user clicks Logout
   const handleLogout = () => {
-    console.log("Logging out...");
     setUser(null);
+    localStorage.removeItem("user");
   };
 
-  // ✅ Conditional rendering
+  // 🔴 ADD / REPLACE THIS PART HERE
   if (!user) {
-    return <LoginPage onLogin={handleLogin} />;
-  }
+  return (
+    <LoginPage
+      sendToCSharp={sendToCSharp}
+      loginError={loginError}
+    />
+  );
+}
 
-  // ✅ Pass `onLogout` as prop
+
   return (
     <BillingAppLayout
-      key={user?.email || "guest"}
       user={user}
       onLogout={handleLogout}
-      sendToCSharp={sendToCSharp} // <-- 👈 add this
-      
+      sendToCSharp={sendToCSharp}
+      lastAction={lastAction}
+      forceChangePassword={forceChangePassword}
+  clearForceChangePassword={() => setForceChangePassword(false)}
+  clearLastAction={clearLastAction}
     />
   );
 }

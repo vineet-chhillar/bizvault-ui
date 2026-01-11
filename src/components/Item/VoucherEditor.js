@@ -7,7 +7,8 @@ const blankLine = () => ({
   AccountId: null,
   AccountName: "",
   Debit: "",
-  Credit: ""
+  Credit: "",
+  Side: ""   // "Debit" | "Credit"
 });
 
 export default function VoucherEditor() {
@@ -37,14 +38,14 @@ const [creditAccounts, setCreditAccounts] = useState([]);
   // -----------------------------
   // Load accounts
   // -----------------------------
-  useEffect(() => {
+ {/*} useEffect(() => {
   window.chrome.webview.postMessage({
     Action: "GetAccountsForVoucher",
     Payload: {
       VoucherType: voucherType
     }
   });
-}, [voucherType]);
+}, [voucherType]);*/}
 
 useEffect(() => {
   setLines([blankLine(), blankLine()]);
@@ -105,9 +106,9 @@ useEffect(() => {
     let msg = evt.data;
     try { if (typeof msg === "string") msg = JSON.parse(msg); } catch {}
 
-    if (msg.action === "GetAccountsForVoucherResponse") {
+    {/*if (msg.action === "GetAccountsForVoucherResponse") {
       setAccountList(msg.data || []);
-    }
+    }*/}
 
     if (msg.action === "GetNextVoucherNoResponse") {
       setVoucherNo(msg.voucherNo);
@@ -172,18 +173,30 @@ if (msg.action === "GetVoucherIdsByDateResponse") {
   // Line update
   // -----------------------------
   const updateLine = (i, field, value) => {
-    setLines(prev => {
-      const copy = [...prev];
-      copy[i][field] = value;
+  setLines(prev => {
+    const copy = [...prev];
+    copy[i][field] = value;
 
-      if (field === "Debit" && value)
-        copy[i].Credit = "";
-      if (field === "Credit" && value)
-        copy[i].Debit = "";
-
+    if (field === "Side") {
+      copy[i].Side = value;
       return copy;
-    });
-  };
+    }
+
+    if (field === "Debit" && value) {
+      copy[i].Credit = "";
+      copy[i].Side = "Debit";
+    }
+
+    if (field === "Credit" && value) {
+      copy[i].Debit = "";
+      copy[i].Side = "Credit";
+    }
+
+    return copy;
+  });
+};
+
+
 
   const addRow = () => setLines([...lines, blankLine()]);
 
@@ -356,42 +369,67 @@ const reverseVoucher = () => {
           </tr>
         </thead>
         <tbody>
-          {lines.map((l, i) => (
-            <tr key={i}>
-              <td>
-                  <div className="cell-box">
-               <select
-  value={l.AccountId ?? ""}
-  onChange={e => updateLine(i, "AccountId", Number(e.target.value))}
->
-  <option value="">--Select--</option>
-  {(l.Debit > 0 ? debitAccounts : creditAccounts).map(a => (
-    <option key={a.AccountId} value={a.AccountId}>
-      {a.AccountName}
-    </option>
-  ))}
-</select>
+  {lines.map((l, i) => {
 
-                </div>
-              </td>
-              <td>
-                 <div className="cell-box">
-               <input
+    // ✅ DEFINE accounts HERE
+    const accounts =
+      l.Side === "Debit"
+        ? debitAccounts
+        : l.Side === "Credit"
+          ? creditAccounts
+          : [];
+
+    return (
+      <tr key={i}>
+        <td>
+          <div className="cell-box">
+            <select
+              disabled={!l.Side}
+              value={l.AccountId ?? ""}
+              onChange={e =>
+                updateLine(i, "AccountId", Number(e.target.value))
+              }
+            >
+              <option value="">--Select--</option>
+              {accounts.map(a => (
+                <option key={a.AccountId} value={a.AccountId}>
+                  {a.AccountName}
+                </option>
+              ))}
+            </select>
+          </div>
+        </td>
+
+        <td>
+          <div className="cell-box">
+            <input
   type="number"
   disabled={isReversalMode}
   value={l.Debit}
+  onFocus={() => updateLine(i, "Side", "Debit")}
   onChange={e => updateLine(i, "Debit", e.target.value)}
 />
-</div>
-              </td>
-              <td>
-                 <div className="cell-box">
-                <input type="number" disabled={isReversalMode} value={l.Credit} onChange={e => updateLine(i, "Credit", e.target.value)} />
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
+
+          </div>
+        </td>
+
+        <td>
+          <div className="cell-box">
+            <input
+  type="number"
+  disabled={isReversalMode}
+  value={l.Credit}
+  onFocus={() => updateLine(i, "Side", "Credit")}
+  onChange={e => updateLine(i, "Credit", e.target.value)}
+/>
+
+          </div>
+        </td>
+      </tr>
+    );
+  })}
+</tbody>
+
       </table>
 </div>
    {!isReversalMode && (

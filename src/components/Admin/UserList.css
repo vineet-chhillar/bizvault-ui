@@ -1,0 +1,107 @@
+/* ===============================
+   USER LIST – DHANSUTRA THEME
+   =============================== */
+
+/* Wrapper same feel as form-container */
+.userlist-container {
+  background: #f8f9fa;
+  padding: 25px 30px 35px 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  border: 1px solid #d8d6e5;
+  width: 90%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* Title styling (matches form-title) */
+.userlist-title {
+  text-align: center;
+  color: #4e1d7c;
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* Table container */
+.userlist-table-container {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  padding: 0;
+  margin-top: 10px;
+}
+
+/* Compact Dhansutra table */
+.userlist-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;          /* 🔑 IMPORTANT */
+  border: 1px solid #ddd;
+  font-size: 0.95rem;
+}
+
+/* Header + cell */
+.userlist-table th:last-child,
+.userlist-table td:last-child {
+  width: 90px;                  /* 🔹 compact width */
+  text-align: center;
+  padding: 4px 6px;
+}
+/* Header */
+.userlist-table th {
+  background-color: #f4e9ff;
+  color: #4e1d7c;
+  font-weight: 600;
+}
+/* Center-align ALL data rows */
+.userlist-table tbody td {
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Zebra rows */
+.userlist-table tr:nth-child(even) {
+  background-color: #fafafa;
+}
+.userlist-action-cell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+/* Empty state */
+.userlist-empty {
+  padding: 14px;
+  color: #777;
+  text-align: center;
+}
+
+/* Action button */
+.userlist-action-btn {
+  margin: 0 !important;
+  padding: 6px 14px;
+  line-height: 1.1;
+}
+
+/* Make table narrower on large screens */
+@media (min-width: 1200px) {
+  .userlist-container {
+    width: 80%;
+  }
+}
+
+/* Mobile tweaks */
+@media (max-width: 768px) {
+  .userlist-container {
+    width: 100%;
+    padding: 20px;
+  }
+
+  .userlist-title {
+    font-size: 1.5rem;
+  }
+}

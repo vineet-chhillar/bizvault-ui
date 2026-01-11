@@ -1,36 +1,51 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./LoginPage.css";
-
-
-function LoginPage({ onLogin }) {
+import logo from "./assets/brandlogo111.png"; // <-- add this at the top
+function LoginPage({ sendToCSharp, loginError }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("Admin");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
+  // 🔁 Reset loading on error from App.js
+  useEffect(() => {
+    if (loginError) {
+      setError(loginError);
+      setLoading(false);
+    }
+  }, [loginError]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setError("");
 
-    // Mock role-based login
-    if (email && password) {
-      onLogin({ email, role });
-      
-    } else {
-      alert("Please enter your email and password");
+    if (!email || !password) {
+      setError("Please enter email and password");
+      return;
     }
+
+    setLoading(true);
+
+    sendToCSharp("Login", {
+      username: email,
+      password: password
+    });
   };
 
   return (
     <div className="login-container">
       <div className="login-card">
-        <h1 className="login-title">jghgfgghf</h1>
+        {/*<div className="logo-container">
+                <img src={logo} alt="DhanSutra Logo" className="app-logo" />
+        </div>*/}
+        <h1 className="login-title">Billhgfg arjhgge</h1>
         <p className="login-subtitle">Sign in to your account</p>
+
+        {error && <div className="login-error">{error}</div>}
 
         <form className="login-form" onSubmit={handleSubmit}>
           <label>Email</label>
           <input
-            type="email"
-            placeholder="Enter email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -38,23 +53,17 @@ function LoginPage({ onLogin }) {
           <label>Password</label>
           <input
             type="password"
-            placeholder="Enter password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
 
-          <label>Role</label>
-          <select value={role} onChange={(e) => setRole(e.target.value)}>
-            <option value="Admin">Admin</option>
-            <option value="Accountant">Accountant</option>
-            <option value="Staff">Staff</option>
-            <option value="Viewer">Viewer</option>
-          </select>
-
-          <button type="submit" className="login-btn">Login</button>
+          <button disabled={loading} className="login-btn">
+            {loading ? "Logging in..." : "Login"}
+          </button>
         </form>
       </div>
     </div>
   );
 }
+
 export default LoginPage;

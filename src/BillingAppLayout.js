@@ -35,8 +35,13 @@ import ProfitLossReport from "./components/Reports/ProfitLossReport";
 import BalanceSheet from "./components/Reports/BalanceSheet";
 import StockValuationFIFO from "./components/Reports/StockValuationFIFO";
 import StockSummary from "./components/Reports/StockSummary";
+import UserMenu from "./components/Item/UserMenu"; // adjust path if needed
 
 import { Navigate } from "react-router-dom";
+import ChangePasswordModal from "./components/Item/ChangePasswordModal";
+import CreateUserModal from "./components/Item/CreateUserModal";
+import UserList from "./components/Admin/UserList";
+import { hasPermission } from "./utils/Permissions";
 
 
 import {
@@ -63,24 +68,22 @@ import {
   FaTruck,
   FaUser,
   FaBoxes,
-  FaCubes
+  FaCubes,
+  FaKey,
+  FaUserPlus,
+  FaSignOutAlt
 } from "react-icons/fa";
 
 
 
 /* Hook: derive title from route */
-function usePageTitle() {
+{/*function usePageTitle() {
   const location = useLocation();
   const [title, setTitle] = useState("Home");
- 
-
-
-
-  useEffect(() => {
+   useEffect(() => {
     const map = {
       "/": "Home",
       "Item/Dashboard": "Dashboard",
-      "/reports": "Reports",
       "/chartofaccounts": "Accounts",
       "/supplier": "Supplier",
       "/customer": "Customer",
@@ -94,13 +97,24 @@ function usePageTitle() {
   }, [location]);
 
   return title;
-}
+}*/}
 
 /* Top navbar (uses hook — must be inside Router) */
-function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
-  const title = usePageTitle();
+function TopNavbar({
+  onToggle,
+  isMobile,
+  collapsed,
+  onLogout,
+  user,
+  onChangePassword,
+  onCreateUser,
+  forceChangePassword
+}) {
+
+  {/*const title = usePageTitle();*/}
   // label for the header toggle button
   const buttonLabel = isMobile ? "☰" : collapsed ? "▶" : "◀";
+
 
   return (
     <header className="top-navbar">
@@ -123,24 +137,28 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
           <FaCog />
         </button>
  
-        <button className="icon-btn" onClick={onLogout} title="Logout"><FaUserShield></FaUserShield></button>
-        
+     <UserMenu
+  user={user}
+  onLogout={onLogout}
+  onChangePassword={onChangePassword}
+  onCreateUser={onCreateUser}
+  forceChangePassword={forceChangePassword}
+/>
 
-
-        {/*<div className="icon-btn" title="Profile">
-           
-          {/*<img
-            src="https://cdn-icons-png.flaticon.com/512/149/149071.png"
-            alt="User"
-          />
-          <span className="icon-btn"><FaUserShield /></span>
-        </div>*/}
       </div>
     </header>
   );
 }
 
- export default function BillingAppLayout({ user, onLogout }) {
+ export default function BillingAppLayout({ user, onLogout, sendToCSharp, lastAction, forceChangePassword,  clearForceChangePassword, clearLastAction }) {
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showCreateUser, setShowCreateUser] = useState(false);
+const [changePasswordSuccess, setChangePasswordSuccess] = useState(false);
+const [createUserSuccess, setCreateUserSuccess] = useState(false);
+const refreshUsers = () => {
+  sendToCSharp("GetUsers", {});
+};
+
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isItemOpen, setIsItemOpen] = useState(false);
@@ -151,6 +169,30 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
   const [isMobile, setIsMobile] = useState(
     typeof window !== "undefined" ? window.innerWidth <= 768 : false
   );
+  useEffect(() => {
+  if (forceChangePassword) {
+    setShowChangePassword(true);
+  }
+}, [forceChangePassword]);
+function ProtectedRoute({ allow, children }) {
+  return allow ? children : <Navigate to="/" replace />;
+}
+
+useEffect(() => {
+  if (lastAction === "ChangePasswordSuccess") {
+    setShowChangePassword(false);
+    clearForceChangePassword();
+    alert("Password changed successfully");
+    clearLastAction(); // ✅ VERY IMPORTANT
+  }
+
+  if (lastAction === "CreateUserSuccess") {
+    setShowCreateUser(false);
+    alert("User created successfully");
+    clearLastAction(); // ✅ VERY IMPORTANT
+  }
+}, [lastAction]);
+
 
   useEffect(() => {
     const onResize = () => {
@@ -177,10 +219,13 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
         {mobileOpen && <div className="overlay" onClick={closeMobile} />}
 
         <aside
-          className={`sidebar ${collapsed ? "collapsed" : ""} ${
-            mobileOpen ? "mobile-open" : ""
-          }`}
-        >
+  className={`sidebar
+    ${collapsed ? "collapsed" : ""}
+    ${mobileOpen ? "mobile-open" : ""}
+    ${forceChangePassword ? "disabled" : ""}
+  `}
+>
+
           <div className="sidebar-header">
               <div className="logo-container">
                 <img src={logo} alt="DhanSutra Logo" className="app-logo" />
@@ -205,6 +250,7 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
   <span className="label">Home</span>
 </NavLink>*/}
 
+
               <NavLink
               to="Item/Dashboard"
               onClick={() => isMobile && setMobileOpen(false)}
@@ -216,6 +262,17 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
               <span className="label">Dashboard</span>
             </NavLink>
 
+{hasPermission(user, "users") && (
+  <NavLink
+    to="/admin/users"
+    className={({ isActive }) =>
+      "nav-link" + (isActive ? " active" : "")
+    }
+  >
+    <span className="icon">👤</span>
+    <span className="label">Users</span>
+  </NavLink>
+)}
 
              <NavLink
               to="Item/CompanySetup"
@@ -665,14 +722,31 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
         </aside>
 
         <div className="main-layout">
-          <TopNavbar
-  onToggle={toggleSidebar}
-  isMobile={isMobile}
-  collapsed={collapsed}
-  onLogout={onLogout}
+         <TopNavbar
   user={user}
+  onLogout={onLogout}
+  onChangePassword={() => setShowChangePassword(true)}
+  onCreateUser={() => setShowCreateUser(true)}
+   forceChangePassword={forceChangePassword}
 />
+
+
+
+
+
 <Routes>
+  {forceChangePassword ? (
+    <Route
+      path="*"
+      element={
+        <div style={{ padding: 20 }}>
+          <h3>Password Change Required</h3>
+          <p>Please change your password to continue.</p>
+        </div>
+      }
+    />
+  ) : (
+    <>
   <Route path="/Item/CreateItem" element={<CreateItem />}/>
   
   <Route path="/Item/EditItem" element={<EditItem />} />
@@ -705,7 +779,39 @@ function TopNavbar({ onToggle, isMobile, collapsed, onLogout, user }) {
   <Route path="/Item/SupplierPage" element={<SupplierPage user={user} />} />
   <Route path="/"  element={<Navigate to="/Item/Dashboard" replace />}/>
   <Route path="/Item/Dashboard" element={<Dashboard user={user} />} />
+
+  {user.Role === "Admin" && (
+  <Route
+    path="/admin/users"
+    element={<ProtectedRoute allow={hasPermission(user, "users")}>
+      <UserList user={user} sendToCSharp={sendToCSharp} />
+    </ProtectedRoute>}
+  />
+)}
+</>
+)}
   </Routes>
+
+{showChangePassword && (
+      <ChangePasswordModal
+        user={user}
+        sendToCSharp={sendToCSharp}
+        onClose={() => setShowChangePassword(false)}
+      />
+    )}
+    {showCreateUser && (
+  <CreateUserModal
+    sendToCSharp={sendToCSharp}
+    onClose={() => setShowCreateUser(false)}
+  />
+)}
+{forceChangePassword && (
+  <div className="force-password-overlay">
+    You must change your password to continue.
+  </div>
+)}
+
+
 
          
         </div>

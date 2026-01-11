@@ -5,11 +5,29 @@ export default function ChartOfAccounts() {
   const [form, setForm] = useState({
   AccountId: 0,
   AccountName: "",
-  AccountType: "Asset",
+  AccountType: "",
+  ParentAccountId: 0,
   NormalSide: "Debit",
-  OpeningBalanceType: "DR", // 👈 ADD
+  OpeningBalanceType: "DR",
   OpeningBalance: 0,
+  IsGroup: false
 });
+const [isEditing, setIsEditing] = useState(false);
+
+const hasChildren = (accountId) =>
+  rows.some(r => r.ParentAccountId === accountId);
+
+useEffect(() => {
+  if (!isEditing) {
+    setForm(f => ({
+      ...f,
+      IsGroup: f.ParentAccountId === 0
+    }));
+  }
+}, [form.ParentAccountId, isEditing]);
+
+
+
 useEffect(() => {
   setForm(f => ({
     ...f,
@@ -18,7 +36,14 @@ useEffect(() => {
 }, [form.NormalSide]);
 
 
-  const [isEditing, setIsEditing] = useState(false);
+  
+const onParentChange = (id) => {
+  setForm({
+    ...form,
+    ParentAccountId: id,
+    IsGroup: false // child must be ledger by default
+  });
+};
 
   // Load initial data
   useEffect(() => {
@@ -63,9 +88,11 @@ useEffect(() => {
   AccountType: "Asset",
   ParentAccountId: 0,
   NormalSide: "Debit",
-  OpeningBalanceType: "DR", // 👈 ADD
+  OpeningBalanceType: "DR",
   OpeningBalance: 0,
+  IsGroup: true        // 👈 MUST ADD
 });
+
 
 
   setIsEditing(false);
@@ -164,7 +191,7 @@ useEffect(() => {
     onChange={e =>
       setForm({ ...form, OpeningBalanceType: e.target.value })
     }
-    disabled={isEditing && form.IsSystemAccount === 1}
+    disabled={form.IsGroup || (isEditing && form.IsSystemAccount === 1)}
   >
     <option value="DR">Debit (DR)</option>
     <option value="CR">Credit (CR)</option>
@@ -176,26 +203,40 @@ useEffect(() => {
 <div className="form-group">
   <label>Parent Account</label>
   <select
-    value={form.ParentAccountId || 0}
-    onChange={e =>
-      setForm({ ...form, ParentAccountId: Number(e.target.value) })
-    }
-    disabled={isEditing && form.IsSystemAccount === 1}
-  >
-    <option value={0}>None</option>
+  value={form.ParentAccountId || 0}
+  onChange={e =>
+    setForm({
+      ...form,
+      ParentAccountId: Number(e.target.value)
+    })
+  }
+>
+  <option value={0}>None</option>
 
-    {rows
-      .filter(a =>
-        (a.ParentAccountId == null || a.ParentAccountId === 0) &&
-        a.AccountId !== form.AccountId
-      )
-      .map(a => (
-        <option key={a.AccountId} value={a.AccountId}>
-          {a.AccountName}
-        </option>
-      ))}
+  {rows
+    .filter(a => a.IsGroup && a.AccountId !== form.AccountId)
+    .map(a => (
+      <option key={a.AccountId} value={a.AccountId}>
+        {a.AccountName}
+      </option>
+    ))}
+</select>
+
+</div>
+
+<div className="form-group">
+  <label>Account Nature</label>
+  <select
+    value={form.IsGroup ? 1 : 0}
+    onChange={e =>
+      setForm({ ...form, IsGroup: e.target.value === "1" })
+    }
+  >
+    <option value={0}>Ledger (Postable)</option>
+    <option value={1}>Group (Non-postable)</option>
   </select>
 </div>
+
 
 
 
@@ -207,6 +248,7 @@ useEffect(() => {
               <input
                 type="number"
                 value={form.OpeningBalance}
+                 disabled={form.IsGroup}
                 onChange={(e) =>
                   setForm({
                     ...form,
