@@ -5,14 +5,6 @@ export default function OutstandingReport() {
   const [rows, setRows] = useState([]);
   const [balanceType, setBalanceType] = useState("ALL");
 const navigate = useNavigate();
-const [outstandingRows, setOutstandingRows] = useState([]);
-
-
-useEffect(() => {
-  window.chrome?.webview?.postMessage({
-    action: "GetDashboardOutstanding"
-  });
-}, []);
 
   useEffect(() => {
     const handler = (e) => {
@@ -21,10 +13,6 @@ useEffect(() => {
       if (msg.action === "getOutstandingReportResult") {
         setRows(msg.rows || []);
       }
-       if (msg.action === "GetDashboardOutstandingResult") {
-      setOutstandingRows(msg.data || []);
-    }
-
     };
 
     window.chrome.webview.addEventListener("message", handler);
@@ -40,10 +28,7 @@ useEffect(() => {
   };
 
 const openAccountStatement = (accountId) => {
-  navigate(
-  `/Reports/LedgerReport?accountId=${accountId}&source=outstanding`
-);
-
+  navigate(`/Reports/LedgerReport?accountId=${accountId}`);
 };
 
 

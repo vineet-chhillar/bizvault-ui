@@ -14,6 +14,7 @@ import CustomerPage from "./components/Item/CustomerPage";
 import VoucherEditor from "./components/Item/VoucherEditor";
 
 import ExpenseVoucherEditor from "./components/Item/ExpenseVoucherEditor";
+import IncomeVoucherEditor from "./components/Item/IncomeVoucherEditor";
 
 
 import OpeningStockEditor from "./components/Item/OpeningStockEditor";
@@ -41,7 +42,9 @@ import { Navigate } from "react-router-dom";
 import ChangePasswordModal from "./components/Item/ChangePasswordModal";
 import CreateUserModal from "./components/Item/CreateUserModal";
 import UserList from "./components/Admin/UserList";
+import AccessSettings from "./utils/AccessSettings";
 import { hasPermission } from "./utils/Permissions";
+import { PERMISSIONS } from "./utils/PermissionKeys";
 
 
 import {
@@ -114,6 +117,7 @@ function TopNavbar({
   {/*const title = usePageTitle();*/}
   // label for the header toggle button
   const buttonLabel = isMobile ? "☰" : collapsed ? "▶" : "◀";
+console.log("USER AT MENU:", user);
 
 
   return (
@@ -238,17 +242,7 @@ useEffect(() => {
           <nav className="nav-links">
 
 
-
-            {/*<NavLink
-  to="Item/Dashboard"
-  onClick={() => isMobile && setMobileOpen(false)}
-  className={({ isActive }) =>
-    "nav-link" + (isActive ? " active" : "")
-  }
->
-  <span className="icon"><FaHome /></span>
-  <span className="label">Home</span>
-</NavLink>*/}
+         
 
 
               <NavLink
@@ -262,11 +256,12 @@ useEffect(() => {
               <span className="label">Dashboard</span>
             </NavLink>
 
-{hasPermission(user, "users") && (
+{hasPermission(user, PERMISSIONS.USERS) && (
   <NavLink
-    to="/admin/users"
+    to="/Admin/UserList"
+    onClick={() => isMobile && setMobileOpen(false)}
     className={({ isActive }) =>
-      "nav-link" + (isActive ? " active" : "")
+            "nav-link" + (isActive ? " active" : "")
     }
   >
     <span className="icon">👤</span>
@@ -274,6 +269,21 @@ useEffect(() => {
   </NavLink>
 )}
 
+
+{hasPermission(user, PERMISSIONS.SETTINGS) && (
+             <NavLink
+              to="utils/AccessSettings"
+              onClick={() => isMobile && setMobileOpen(false)}
+              className={({ isActive }) =>
+                "nav-link" + (isActive ? " active" : "")
+              }
+            >
+              <span className="icon"><FaChartBar /></span>
+              <span className="label">Access Settings</span>
+            </NavLink>
+)}
+
+{hasPermission(user, PERMISSIONS.SETTINGS) && (
              <NavLink
               to="Item/CompanySetup"
               onClick={() => isMobile && setMobileOpen(false)}
@@ -284,8 +294,9 @@ useEffect(() => {
               <span className="icon"><FaBoxes /></span>
               <span className="label">Company Profile</span>
             </NavLink>
-           
+)}
 
+{hasPermission(user, PERMISSIONS.SETTINGS) && (
            <NavLink
               to="/Masters"
               onClick={() => isMobile && setMobileOpen(false)}
@@ -296,7 +307,9 @@ useEffect(() => {
               <span className="icon"><FaMoneyBillWave /></span>
               <span className="label">Masters</span>
             </NavLink>
+)}
 
+{hasPermission(user, PERMISSIONS.VOUCHERS) && (
             <NavLink
               to="Item/ChartOfAccounts"
               onClick={() => isMobile && setMobileOpen(false)}
@@ -307,7 +320,9 @@ useEffect(() => {
               <span className="icon"><FaWallet /></span>
               <span className="label">Accounts</span>
             </NavLink>
+)}
 
+            {hasPermission(user, PERMISSIONS.MASTERS) && (
             <NavLink
               to="Item/SupplierPage"
               onClick={() => isMobile && setMobileOpen(false)}
@@ -318,10 +333,10 @@ useEffect(() => {
               <span className="icon"><FaTruck /></span>
               <span className="label">Supplier</span>
             </NavLink>
-
+            )}
             
 
-
+{hasPermission(user, PERMISSIONS.MASTERS) && (
             <NavLink
               to="Item/CustomerPage"
               onClick={() => isMobile && setMobileOpen(false)}
@@ -332,7 +347,9 @@ useEffect(() => {
               <span className="icon">👤</span>
               <span className="label">Customer</span>
             </NavLink>
+)}
 
+{hasPermission(user, PERMISSIONS.VOUCHERS) && (
              <NavLink
               to="Item/VoucherEditor"
               onClick={() => isMobile && setMobileOpen(false)}
@@ -343,7 +360,22 @@ useEffect(() => {
               <span className="icon">👤</span>
               <span className="label">Voucher Editor</span>
             </NavLink>
+)}
 
+{hasPermission(user, PERMISSIONS.VOUCHERS) && (
+            <NavLink
+              to="Item/IncomeVoucherEditor"
+              onClick={() => isMobile && setMobileOpen(false)}
+              className={({ isActive }) =>
+                "nav-link" + (isActive ? " active" : "")
+              }
+            >
+              <span className="icon">👤</span>
+              <span className="label">Incomes</span>
+            </NavLink>
+)}
+
+{hasPermission(user, PERMISSIONS.VOUCHERS) && (
             <NavLink
               to="Item/ExpenseVoucherEditor"
               onClick={() => isMobile && setMobileOpen(false)}
@@ -354,10 +386,11 @@ useEffect(() => {
               <span className="icon">👤</span>
               <span className="label">Expenses</span>
             </NavLink>
-
+)}
 {/* Parent Link * for Opening Stock & Adjustments/}
 <div className="nav-section">
   {/* Parent Link */}
+  {hasPermission(user, PERMISSIONS.VOUCHERS) && (
   <div
     className="nav-link item-parent"
     onClick={() => setIsStockOpen(!isStockOpen)}
@@ -367,7 +400,7 @@ useEffect(() => {
     <span className="label">Opening Stock & Adjustments</span>
     <span className="arrow">{isStockOpen ? "▲" : "▼"}</span>
   </div>
-
+  )}
   {/* Collapsible Children */}
   <div className={`nav-children-tabs ${isStockOpen ? "open" : ""}`}>
     <NavLink
@@ -388,26 +421,11 @@ useEffect(() => {
     >
       Stock Adjustment
     </NavLink>
-   
-    
+      
   </div>
-           
-
-            
-
-           
-
-            {/*<NavLink
-              to="Item/InvoiceEditor"
-              onClick={() => isMobile && setMobileOpen(false)}
-              className={({ isActive }) =>
-                "nav-link" + (isActive ? " active" : "")
-              }
-            >
-              <span className="icon"><FaFileInvoice /></span>
-              <span className="label">Invoice</span>
-            </NavLink>*/}
+  
 {/* ---Reports (Grouped Tab Style) --- */}
+ {hasPermission(user, PERMISSIONS.REPORTS) && (
 <div className="nav-section">
   {/* Parent Link */}
   <div
@@ -536,10 +554,11 @@ useEffect(() => {
     
   </div>
 </div>
-
+ )}
 
 
 {/* ---Purchase Invoice MENU (Grouped Tab Style) --- */}
+{hasPermission(user, PERMISSIONS.VOUCHERS) && (
 <div className="nav-section">
   {/* Parent Link */}
   <div
@@ -591,12 +610,13 @@ useEffect(() => {
     
   </div>
 </div>
-
+)}
 
 
 
 
 {/* ---Sales Invoice MENU (Grouped Tab Style) --- */}
+{hasPermission(user, PERMISSIONS.VOUCHERS) && (
 <div className="nav-section">
   {/* Parent Link */}
   <div
@@ -646,35 +666,10 @@ useEffect(() => {
     
   </div>
 </div>
-
-
-
-
-            {/*<NavLink
-              to="/inventory"
-              onClick={() => isMobile && setMobileOpen(false)}
-              className={({ isActive }) =>
-                "nav-link" + (isActive ? " active" : "")
-              }
-            >
-              <span className="icon"><FaBoxes /></span>
-              <span className="label">Inventory</span>
-            </NavLink>*/}
-
-            
-
-            {/*<NavLink
-              to="/item"
-              onClick={() => isMobile && setMobileOpen(false)}
-              className={({ isActive }) =>
-                "nav-link" + (isActive ? " active" : "")
-              }
-            >
-              <span className="icon"><FaCubes /></span>
-              <span className="label">Item</span>
-            </NavLink>*/}
-
+)}
+           
 {/* --- ITEM MENU (Grouped Tab Style) --- */}
+{hasPermission(user, PERMISSIONS.MASTERS) && (
 <div className="nav-section">
   {/* Parent Link */}
   <div
@@ -711,13 +706,7 @@ useEffect(() => {
     
   </div>
 </div>
-
-
-
-
-
-
-
+)}
           </nav>
         </aside>
 
@@ -747,47 +736,212 @@ useEffect(() => {
     />
   ) : (
     <>
-  <Route path="/Item/CreateItem" element={<CreateItem />}/>
+  <Route path="/Item/CreateItem" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.MASTERS)}>
+    <CreateItem />
+    </ProtectedRoute>
+    }/>
   
-  <Route path="/Item/EditItem" element={<EditItem />} />
-  <Route path="/Item/CompanySetup" element={<CompanySetup user={user} />} />
-  <Route path="/Item/PurchaseInvoiceEditor" element={<PurchaseInvoiceEditor user={user} />} />
-  <Route path="/Item/EditPurchaseInvoice" element={<EditPurchaseInvoice user={user} />} />
-  <Route path="/Item/EditSalesInvoice" element={<EditSalesInvoice user={user} />} />
-  <Route path="/Item/InvoiceEditor" element={<InvoiceEditor user={user} />} />
-  <Route path="/Item/SalesReturnNew" element={<SalesReturnNew user={user} />} />
-  <Route path="/Item/PurchaseReturn" element={<PurchaseReturn user={user} />} />
+  <Route path="/Item/EditItem" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.MASTERS)}>
+    <EditItem />
+    </ProtectedRoute>
+    } />
   
-  <Route path="/Reports/DayBookReport" element={<DayBookReport user={user} />} />
-  <Route path="/Reports/VoucherReport" element={<VoucherReport user={user} />} />
-  <Route path="/Reports/CashBookReport" element={<CashBookReport user={user} />} />
-  <Route path="/Reports/BankBookReport" element={<BankBookReport user={user} />} />
-  <Route path="/Reports/TrialBalance" element={<TrialBalance user={user} />} />
-  <Route path="/Reports/LedgerReport" element={<LedgerReport user={user} />} />
-  <Route path="/Reports/OutstandingReport" element={<OutstandingReport user={user} />} />
-  <Route path="/Reports/ProfitLossReport" element={<ProfitLossReport user={user} />} />
-  <Route path="/Reports/BalanceSheet" element={<BalanceSheet user={user} />} />
-  <Route path="/Reports/StockValuationFIFO" element={<StockValuationFIFO user={user} />} />
-  <Route path="/Reports/StockSummary" element={<StockSummary user={user} />} />
 
-  <Route path="/Item/CustomerPage" element={<CustomerPage user={user} />} />
-  <Route path="/Item/VoucherEditor" element={<VoucherEditor user={user} />} />
-  <Route path="/Item/ExpenseVoucherEditor" element={<ExpenseVoucherEditor user={user} />} />
-  <Route path="/Item/OpeningStockEditor" element={<OpeningStockEditor user={user} />} />
-  <Route path="/Item/StockAdjustmentEditor" element={<StockAdjustmentEditor user={user} />} />
-  <Route path="/Item/ChartOfAccounts" element={<ChartOfAccounts user={user} />} />
-  <Route path="/Item/SupplierPage" element={<SupplierPage user={user} />} />
-  <Route path="/"  element={<Navigate to="/Item/Dashboard" replace />}/>
-  <Route path="/Item/Dashboard" element={<Dashboard user={user} />} />
+  <Route path="/Item/CompanySetup" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.SETTINGS)}>
+    <CompanySetup user={user} />
+    </ProtectedRoute>
+    } />
+  
+  <Route path="/Item/PurchaseInvoiceEditor" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.VOUCHERS)}>
+    <PurchaseInvoiceEditor user={user} />
+    </ProtectedRoute>
+    } />
+  
+  <Route path="/Item/EditPurchaseInvoice" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.VOUCHERS)}>
+    <EditPurchaseInvoice user={user} />
+    </ProtectedRoute>
+    } />
+  
+  <Route path="/Item/EditSalesInvoice" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.VOUCHERS)}>
+    <EditSalesInvoice user={user} />
+    </ProtectedRoute>
+    } />
+  
+  <Route path="/Item/InvoiceEditor" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.VOUCHERS)}>
+    <InvoiceEditor user={user} />
+    </ProtectedRoute>
+    } />
+  
 
-  {user.Role === "Admin" && (
+  <Route path="/Item/SalesReturnNew" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.VOUCHERS)}>
+    <SalesReturnNew user={user} />
+    </ProtectedRoute>
+    } />
+
+
+  <Route path="/Item/PurchaseReturn" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.VOUCHERS)}>
+    <PurchaseReturn user={user} />
+    </ProtectedRoute>
+    } />
+  
+
+  <Route path="/Reports/DayBookReport" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.REPORTS)}>
+    <DayBookReport user={user} />
+    </ProtectedRoute>
+    } />
+  
+  <Route path="/Reports/VoucherReport" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.REPORTS)}>
+    <VoucherReport user={user} />
+    </ProtectedRoute>
+    } />
+  
+  <Route path="/Reports/CashBookReport" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.REPORTS)}>
+    <CashBookReport user={user} />
+    </ProtectedRoute>
+    } />
+
+  <Route path="/Reports/BankBookReport" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.REPORTS)}>
+    <BankBookReport user={user} />
+    </ProtectedRoute>
+    } />
+
+  <Route path="/Reports/TrialBalance" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.REPORTS)}>
+    <TrialBalance user={user} />
+    </ProtectedRoute>
+    } />
+  
+  <Route path="/Reports/LedgerReport" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.REPORTS)}>
+    <LedgerReport user={user} />
+    </ProtectedRoute>
+    } />
+
+
+  <Route path="/Reports/OutstandingReport" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.REPORTS)}>
+    <OutstandingReport user={user} />
+    </ProtectedRoute>
+    } />
+
+  <Route path="/Reports/ProfitLossReport" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.REPORTS)}>
+    <ProfitLossReport user={user} />
+    </ProtectedRoute>
+    } />
+  
+  <Route path="/Reports/BalanceSheet" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.REPORTS)}>
+    <BalanceSheet user={user} />
+    </ProtectedRoute>
+    } />
+
+  <Route path="/Reports/StockValuationFIFO" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.REPORTS)}>
+    <StockValuationFIFO user={user} />
+    </ProtectedRoute>
+    } />
+
+  <Route path="/Reports/StockSummary" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.REPORTS)}>
+    <StockSummary user={user} />
+    </ProtectedRoute>
+    } />
+
+  <Route path="/Item/CustomerPage" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.MASTERS)}>
+    <CustomerPage user={user} />
+    </ProtectedRoute>
+    } />
+  
+  <Route path="/Item/VoucherEditor" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.VOUCHERS)}>
+    <VoucherEditor user={user} />
+    </ProtectedRoute>
+    } />
+
+<Route path="/Item/IncomeVoucherEditor" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.VOUCHERS)}>
+    <IncomeVoucherEditor user={user} />
+    </ProtectedRoute>
+    } />
+
+  <Route path="/Item/ExpenseVoucherEditor" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.VOUCHERS)}>
+    <ExpenseVoucherEditor user={user} />
+    </ProtectedRoute>
+    } />
+
+  <Route path="/Item/OpeningStockEditor" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.VOUCHERS)}>
+    <OpeningStockEditor user={user} />
+    </ProtectedRoute>
+    } />
+
+  <Route path="/Item/StockAdjustmentEditor" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.VOUCHERS)}>
+    <StockAdjustmentEditor user={user} />
+    </ProtectedRoute>
+    } />
+
+
+  <Route path="/Item/ChartOfAccounts" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.VOUCHERS)}>
+    <ChartOfAccounts user={user} />
+     </ProtectedRoute>
+    } />
+  
+  
+  <Route path="/Item/SupplierPage" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.MASTERS)}>
+    <SupplierPage user={user} />
+    </ProtectedRoute>
+    } />
+
+  <Route path="/utils/AccessSettings" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.SETTINGS)}>
+    <AccessSettings user={user} />
+    </ProtectedRoute>
+    } />
+
+  {/*<Route path="/"  element={<Navigate to="/Item/Dashboard" replace />}/>*/}
+
+ <Route path="/Admin/UserList"  element={
+  <ProtectedRoute allow={hasPermission(user, PERMISSIONS.USERS)}>
+  <UserList user={user} sendToCSharp={sendToCSharp} />
+    </ProtectedRoute>
+  }
+/>
+ 
+ <Route path="/" element={<Navigate to="/Item/Dashboard" replace />} />
+ <Route path="/Item/Dashboard" element={<Dashboard user={user} />} />
+
+  
+
+
+
+{/*}  {user.Role === "Admin" && (
   <Route
-    path="/admin/users"
+    path="/Admin/UserList"
     element={<ProtectedRoute allow={hasPermission(user, "users")}>
       <UserList user={user} sendToCSharp={sendToCSharp} />
     </ProtectedRoute>}
   />
-)}
+)}*/}
+
 </>
 )}
   </Routes>

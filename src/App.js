@@ -2,6 +2,8 @@
 import BillingAppLayout from "./BillingAppLayout";
 import React, { useEffect, useState } from "react";
 import LoginPage from "./LoginPage";
+import { session } from "./utils/Session";
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [lastAction, setLastAction] = useState(null);
@@ -25,22 +27,32 @@ const [loginError, setLoginError] = useState("");
 
         switch (msg.Type) {
 
-        case "Login":
+     case "Login":
   if (msg.Status === "Success") {
     setLoginError("");
 
+    // ✅ SET GLOBAL SESSION USER (MANDATORY)
+    session.user = {
+      ...msg.Data,
+      permissions: msg.Data.Permissions,
+      permissionVersion: msg.Data.PermissionVersion
+    };
+
+    console.log("Session user set:", session.user);
+
     // 🔐 FORCE PASSWORD CHANGE CHECK
     if (msg.Data.MustChangePassword) {
-      setUser(msg.Data);              // login user
-      setForceChangePassword(true);   // force password change modal
+      setUser(msg.Data);
+      setForceChangePassword(true);
     } else {
-      handleLogin(msg.Data);          // normal login flow
+      handleLogin(msg.Data);
     }
 
   } else {
     setLoginError(msg.Message);
   }
   break;
+
 
 
 case "ChangePassword":

@@ -38,7 +38,7 @@ function LoginPage({ sendToCSharp, loginError }) {
         {/*<div className="logo-container">
                 <img src={logo} alt="DhanSutra Logo" className="app-logo" />
         </div>*/}
-        <h1 className="login-title">Billhgfg arjhgge</h1>
+        <h1 className="login-title">llhgfg arjhgge</h1>
         <p className="login-subtitle">Sign in to your account</p>
 
         {error && <div className="login-error">{error}</div>}
