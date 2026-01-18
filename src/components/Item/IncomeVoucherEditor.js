@@ -1,4 +1,7 @@
 import "./ItemForms.css";
+import "./ExpenseVoucherEditor.css";
+import { getCreatedBy } from "../../utils/authHelper";
+
 import React, { useEffect, useState } from "react";
 
 const blankLine = () => ({
@@ -57,7 +60,7 @@ export default function IncomeVoucherEditor() {
       if (msg.action === "SaveIncomeVoucherResponse") {
         setSaving(false);
         if (!msg.success) {
-          alert(msg.message);
+          alert(msg.Message);
           return;
         }
         alert(`✅ Income saved\nVoucher No: ${msg.VoucherNo}`);
@@ -129,6 +132,7 @@ export default function IncomeVoucherEditor() {
 
   /* ---------------- SAVE INCOME ---------------- */
   const handleSave = () => {
+    console.log(localStorage);
     if (saving) return;
 
     const validLines = lines.filter(
@@ -141,7 +145,7 @@ export default function IncomeVoucherEditor() {
     }
 
     setSaving(true);
-    const user = JSON.parse(localStorage.getItem("user"));
+    //const user = JSON.parse(localStorage.getItem("user"));
 
     window.chrome.webview.postMessage({
       Action: "SaveIncomeVoucher",
@@ -150,7 +154,7 @@ export default function IncomeVoucherEditor() {
         PaymentMode: paymentMode,
         TotalAmount: totalAmount,
         Notes: notes,
-        CreatedBy: user.email,
+        CreatedBy: getCreatedBy(),
         Items: validLines.map(l => ({
           AccountId: l.AccountId,
           Amount: Number(l.Amount)
@@ -189,10 +193,17 @@ export default function IncomeVoucherEditor() {
             <option value="Credit">Credit</option>
           </select>
         </div>
+
+        <div className="form-group full" style={{ width: "100%" }}>
+            <label>Notes</label>
+            <input value={notes}  style={{ width: "100%" }} onChange={e => setNotes(e.target.value)} />
+          </div>
       </div>
 
       {/* GRID */}
-      <table className="data-table">
+       <div className="table-container compact">
+  <div className="table-box">
+      <table className="data-table compact-center">
         <thead>
           <tr>
             <th>Income Account</th>
@@ -204,6 +215,7 @@ export default function IncomeVoucherEditor() {
           {lines.map((l, i) => (
             <tr key={i}>
               <td style={{ position: "relative" }}>
+                <div className="cell-box">
                 <input
                   value={l.AccountName}
                   placeholder="Search income"
@@ -213,7 +225,7 @@ export default function IncomeVoucherEditor() {
                   }}
                   onFocus={() => setActiveRow(i)}
                 />
-
+</div>
                 {activeRow === i && l.AccountName && (
                   <div className="suggestions-box">
                     {accountList
@@ -240,16 +252,22 @@ export default function IncomeVoucherEditor() {
               </td>
 
               <td>
-                <input
-                  type="number"
-                  value={l.Amount}
-                  onChange={e => updateLine(i, "Amount", e.target.value)}
-                />
+                <div className="cell-box">
+                    <input
+                      type="number"
+                      value={l.Amount}
+                      onChange={e => updateLine(i, "Amount", e.target.value)}
+                      className={
+                        l.AccountId && Number(l.Amount) <= 0 ? "error-input" : ""
+                      }
+                    />
+                    
+                    </div>
               </td>
 
               <td>
                 {lines.length > 1 && (
-                  <button onClick={() => removeRow(i)}>✕</button>
+                  <button className="invaction-btn invaction-delete" onClick={() => removeRow(i)}>✕</button>
                 )}
               </td>
             </tr>
@@ -257,9 +275,21 @@ export default function IncomeVoucherEditor() {
         </tbody>
       </table>
 
+
+          <div className="table-footer">
       <button className="btn-submit small" onClick={addRow}>
         ➕ Add Row
       </button>
+
+<div className="cell-box">
+    <label>Total Amount</label>
+    <input value={totalAmount.toFixed(2)} readOnly />
+  </div>
+</div>
+</div></div>
+
+      
+
 
       <div className="form-actions">
         <button className="btn-submit" onClick={handleSave}>
@@ -277,9 +307,10 @@ export default function IncomeVoucherEditor() {
               <tr>
                 <th>No</th>
                 <th>Date</th>
+                <th>Notes</th>
                 <th>Mode</th>
                 <th>Total</th>
-                <th>Paid</th>
+                <th>Received Amount</th>
                 <th>Action</th>
               </tr>
             </thead>
@@ -289,9 +320,14 @@ export default function IncomeVoucherEditor() {
                 <tr key={i.IncomeVoucherId}>
                   <td>{i.VoucherNo}</td>
                   <td>{i.Date}</td>
+                  <td>{i.Notes}</td>
                   <td>{i.PaymentMode}</td>
                   <td>{i.TotalAmount}</td>
-                  <td>{i.PaidAmount}</td>
+                  <td>
+  {(i.PaymentMode === "Cash" || i.PaymentMode === "Bank")
+    ? "N/A"
+    : i.ReceivedAmount}
+</td>
                   <td>
                     <button
                       className="btn-view compact"
@@ -314,13 +350,37 @@ export default function IncomeVoucherEditor() {
 
       {/* ===================== VIEW INCOME ===================== */}
       {viewIncome && (
-        <div className="saved-summary">
+         <div className="summary-center">
+  <div className="saved-summary compact">
           <h3>📄 Income Voucher – {viewIncome.VoucherNo}</h3>
 
           <div className="summary-row">
             <strong>Date:</strong> {viewIncome.Date}
-            <strong className="ml-20">Mode:</strong> {viewIncome.PaymentMode}
+            <strong className="ml-20">Payment Mode:</strong> {viewIncome.PaymentMode}
           </div>
+
+
+{viewIncome?.Items?.length > 0 && (
+ <div className="table-container compact center">
+  <table className="data-table two-col">
+    <thead>
+      <tr>
+        <th>Income</th>
+        <th>Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      {viewIncome.Items.map((it, i) => (
+        <tr key={i}>
+          <td>{it.AccountName}</td>
+          <td>{it.Amount}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+
+)}
 
           <div className="summary-total">
             <strong>Total:</strong> ₹ {viewIncome.TotalAmount}
@@ -343,16 +403,50 @@ export default function IncomeVoucherEditor() {
                   💳 Receive Payment
                 </button>
               )}
+
+{/* REVERSE */}
+     {viewIncome &&
+ getUnpaidAmount(viewIncome) === viewIncome.TotalAmount && (
+        <button
+          className="btn-submit small"
+          onClick={() => {
+            if (!window.confirm(
+              "This will create an opposite accounting entry. Continue?"
+            )) return;
+            //const user = JSON.parse(localStorage.getItem("user"));
+            window.chrome.webview.postMessage({
+              Action: "ReverseIncomeVoucher",
+              Payload: {
+                IncomeVoucherId: viewIncome.IncomeVoucherId,
+                ReversedBy: getCreatedBy()
+              }
+            });
+          }}
+        >
+          🔄 Reverse Income
+        </button>
+        
+      )}
+
           </div>
         </div>
+        </div>  
       )}
 
       {/* ===================== PAYMENT MODAL ===================== */}
       {showPaymentModal && (
         <div className="modal-overlay">
           <div className="modal-card">
-            <h3>Receive Income</h3>
+            <div className="modal-header">
+        <h3>Receive Income</h3>
+        <button onClick={() => setShowPaymentModal(false)}>✕</button>
+      </div>
 
+             <div className="modal-body">
+
+        <div className="form-grid">
+
+          <div className="form-group">
             <label>Date</label>
             <input
               type="date"
@@ -361,7 +455,9 @@ export default function IncomeVoucherEditor() {
                 setPaymentForm(p => ({ ...p, PaymentDate: e.target.value }))
               }
             />
+</div>
 
+    <div className="form-group">
             <label>Received In *</label>
             <select
               value={paymentForm.ReceivedInAccountId}
@@ -379,7 +475,9 @@ export default function IncomeVoucherEditor() {
                 </option>
               ))}
             </select>
+</div>
 
+<div className="form-group">
             <label>Amount *</label>
             <input
               type="number"
@@ -388,8 +486,20 @@ export default function IncomeVoucherEditor() {
                 setPaymentForm(p => ({ ...p, Amount: e.target.value }))
               }
             />
+</div>
+<div className="form-group">
+            <label>Notes</label>
+            <input
+              value={paymentForm.Notes}
+              onChange={e =>
+                setPaymentForm(p => ({ ...p, Notes: e.target.value }))
+              }
+            />
+          </div>
+          </div>
+        </div>
 
-            <div className="form-actions">
+           <div className="modal-footer">
               <button
                 className="btn-submit"
                 onClick={() => {
@@ -409,7 +519,7 @@ export default function IncomeVoucherEditor() {
                         paymentForm.ReceivedInAccountId,
                       Amount: Number(paymentForm.Amount),
                       Notes: paymentForm.Notes,
-                      CreatedBy: user.email
+                      CreatedBy: getCreatedBy(),
                     }
                   });
                 }}

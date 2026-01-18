@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "./SupplierPage.css"; // keep same css
+import { getCreatedBy } from "../../utils/authHelper";
 
 const emptyCustomer = {
   CustomerId: 0,
@@ -167,10 +168,18 @@ function CustomerPage() {
   };
 
   window.chrome.webview.addEventListener("message", handler);
-  window.chrome.webview.postMessage({
-    Action: "saveCustomer",
-    Payload: customer,
-  });
+  const payload = {
+  ...customer,
+  CreatedBy: customer.CustomerId === 0
+    ? getCreatedBy()
+    : customer.CreatedBy
+};
+
+window.chrome.webview.postMessage({
+  Action: "saveCustomer",
+  Payload: payload,
+});
+
 };
 
 

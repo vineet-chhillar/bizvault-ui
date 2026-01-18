@@ -1,5 +1,7 @@
 import "./ItemForms.css";
 import "./ExpenseVoucherEditor.css";
+import { getCreatedBy } from "../../utils/authHelper";
+
 import React, { useEffect, useState } from "react";
 
 const blankLine = () => ({
@@ -134,9 +136,7 @@ if (msg.action === "LoadExpenseVoucherResponse") {
   }, []);
 const getUnpaidAmount = (exp) => {
   if (!exp) return 0;
-  const total = Number(exp.TotalAmount || 0);
-  const paid = Number(exp.PaidAmount || 0);
-  return total - paid;
+   return Number(exp.TotalAmount) - Number(exp.PaidAmount || 0);
 };
 
 const [paymentForm, setPaymentForm] = useState({
@@ -206,7 +206,7 @@ const resetPaymentForm = (expense) => {
 
     setSaving(true);
 
-    const user = JSON.parse(localStorage.getItem("user"));
+    //const user = JSON.parse(localStorage.getItem("user"));
 
     window.chrome.webview.postMessage({
       Action: "SaveExpenseVoucher",
@@ -215,7 +215,7 @@ const resetPaymentForm = (expense) => {
         PaymentMode: paymentMode,
         TotalAmount: totalAmount,          // ✅ ADD THIS
         Notes: notes,
-        CreatedBy: user.email,
+        CreatedBy: getCreatedBy(),
         Items: validLines.map(l => ({
           AccountId: l.AccountId,
           Amount: Number(l.Amount)
@@ -343,9 +343,7 @@ const resetPaymentForm = (expense) => {
                         l.AccountId && Number(l.Amount) <= 0 ? "error-input" : ""
                       }
                     />
-                    {l.AccountId && Number(l.Amount) <= 0 && (
-                      <div className="error">Amount must be greater than 0</div>
-                    )}
+                    
                     </div>
                   </td>
 
@@ -375,7 +373,7 @@ const resetPaymentForm = (expense) => {
     ➕ Add Row
   </button>
 
-  <div className="total-box">
+  <div className="cell-box">
     <label>Total Amount</label>
     <input value={totalAmount.toFixed(2)} readOnly />
   </div>
@@ -492,7 +490,7 @@ if (!viewExpense) {
                 PaidViaAccountId: paymentForm.PaidViaAccountId,
                 Amount: Number(paymentForm.Amount),
                 Notes: paymentForm.Notes,
-                CreatedBy: user.email
+                CreatedBy: getCreatedBy(),
               }
             });
 
@@ -531,7 +529,11 @@ if (!viewExpense) {
             <td>{e.Notes}</td>
             <td>{e.PaymentMode}</td>
             <td>{e.TotalAmount}</td>
-            <td>{e.PaidAmount}</td>
+            <td>
+  {(e.PaymentMode === "Cash" || e.PaymentMode === "Bank")
+    ? "N/A"
+    : e.PaidAmount}
+</td>
 
             <td>
               <div className="action-buttons">
@@ -625,12 +627,12 @@ if (!viewExpense) {
             if (!window.confirm(
               "This will create an opposite accounting entry. Continue?"
             )) return;
-            const user = JSON.parse(localStorage.getItem("user"));
+            //const user = JSON.parse(localStorage.getItem("user"));
             window.chrome.webview.postMessage({
               Action: "ReverseExpenseVoucher",
               Payload: {
                 ExpenseVoucherId: viewExpense.ExpenseVoucherId,
-                ReversedBy: user.email
+                ReversedBy: getCreatedBy()
               }
             });
           }}

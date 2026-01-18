@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "./SupplierPage.css";
+import { getCreatedBy } from "../../utils/authHelper";
 
 const emptySupplier = {
   SupplierId: 0,
@@ -173,10 +174,18 @@ if (supplier.GSTIN && supplier.GSTIN.trim() !== "") {
     };
 
     window.chrome.webview.addEventListener("message", handler);
-    window.chrome.webview.postMessage({
-      Action: "saveSupplier",
-      Payload: supplier,
-    });
+    const payload = {
+  ...supplier,
+  CreatedBy: supplier.SupplierId === 0
+    ? getCreatedBy()
+    : supplier.CreatedBy
+};
+
+window.chrome.webview.postMessage({
+  Action: "saveSupplier",
+  Payload: payload,
+});
+
   };
 
   const handleChange = (field, value) =>

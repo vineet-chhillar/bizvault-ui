@@ -1,3 +1,1079 @@
+.customer-section {
+  margin: 10px 700px 18px auto;      /* smaller outside spacing */
+  padding: 12px 16px;               /* less padding */
+
+  background: #f8f5ff;              /* lighter and softer */
+  border: 1px solid #e5defa;        /* very soft border */
+  border-radius: 10px;
+
+  box-shadow: 0 1px 3px rgba(110, 80, 200, 0.06);  /* smaller shadow */
+
+  max-width: 360px;                 /* narrower = less screen impact */
+  width: 360px;
+  text-align: left;
+}
+
+/* Labels */
+.customer-section label {
+  font-weight: 600;
+  font-size: 13px;                  /* smaller text */
+  color: #4e3ca3;
+  margin-bottom: 4px;
+}
+
+/* Inputs + Selects */
+.customer-section input,
+.customer-section select {
+  width: 100%;
+  max-width: 240px;                 /* smaller width */
+  height: 34px;                     /* smaller height */
+
+  padding: 4px 8px;                 /* less padding */
+  margin-bottom: 10px;
+
+  border: 1px solid #d3c7f7;
+  border-radius: 5px;
+
+  background: #ffffff;
+  color: #333;
+  font-size: 13px;
+
+  transition: 0.2s border, 0.2s box-shadow;
+}
+
+.customer-section input:focus,
+.customer-section select:focus {
+  border-color: #8a76f7;
+  box-shadow: 0 0 3px rgba(138, 118, 247, 0.4);
+  outline: none;
+}
+
+/* Inner fields spacing */
+.customer-fields {
+  margin-top: 6px;                 /* smaller spacing */
+}
+
+
+
+/* Suggestions dropdown */
+.suggestions-box {
+  background: #ffffff;  
+  border: 1px solid #d8d0f3;            /* soft lavender border */
+  border-radius: 10px;                  /* smoother corners */
+  position: absolute;
+
+  width: 100%;
+  max-height: 500px;                    /* ↑ increased height */
+  overflow-y: auto;
+
+  box-shadow: 0 4px 12px rgba(120, 80, 200, 0.18); /* elegant glow */
+  z-index: 999;
+
+  margin-top: 2px;
+  padding: 4px 0;                       /* better spacing inside */
+}
+
+/* Scrollbar styling (beautiful slim lavender) */
+.suggestions-box::-webkit-scrollbar {
+  width: 6px;
+}
+.suggestions-box::-webkit-scrollbar-thumb {
+  background: #c8b7ff;
+  border-radius: 8px;
+}
+.suggestions-box::-webkit-scrollbar-thumb:hover {
+  background: #b59eff;
+}
+
+/* Suggestion row styling */
+.suggestion-row {
+  padding: 10px 14px;
+  cursor: pointer;
+
+  font-size: 14px;
+  color: #3f2d8f;                       /* soft purple text */
+
+  transition: 0.2s background, 0.2s padding-left;
+}
+
+/* Elegant hover animation */
+.suggestion-row:hover {
+  background: #f4efff;                  /* subtle lavender hover */
+  padding-left: 18px;                   /* small slide animation */
+}
+
+
+/* Customer fields container */
+.customer-fields input {
+  margin-bottom: 8px;
+}
+.data-table input {
+  width: 95%;
+  padding: 4px;
+  box-sizing: border-box;
+  
+}
+
+.data-table th,
+.data-table td {
+  padding: 4px;
+  text-align: left;
+  vertical-align: top;
+   
+}
+
+.data-table th:nth-child(1) { width: 10%; } /* Item */
+.data-table th:nth-child(2) { width: 8%; } /* Batch */
+.data-table th:nth-child(3) { width: 7%; } /* HSN */
+.data-table th:nth-child(4) { width: 5%; }  /* Qty */
+.data-table th:nth-child(5) { width: 5%; } /* Rate */
+.data-table th:nth-child(6) { width: 5%; } /* discount */
+.data-table th:nth-child(7) { width: 5%; }  /* GST% */
+.data-table th:nth-child(8) { width: 5%; }  /* GST% */
+.data-table th:nth-child(9) { width: 5%; }  /* SGST */
+.data-table th:nth-child(10) { width: 5%; }  /* CGST */
+.data-table th:nth-child(11) { width: 5%; }  /* IGST */
+.data-table th:nth-child(12) { width: 5%; } /* Amount */
+.data-table th:nth-child(13) { width: 5%; }  /* Delete */
+.data-table th:nth-child(14) { width: 5%; }  /* IGST */
+.data-table th:nth-child(15) { width: 5%; } /* Amount */
+.data-table th:nth-child(16) { width: 5%; }  /* Delete */
+.data-table th:nth-child(17) { width: 5%; }  /* Delete */
+
+.data-table tbody tr:nth-child(even) {
+  background: #f9f9f9;
+}
+/* Ensure buttons do not have extra margin */
+.inventory-btns button,
+.inventory-btns .btn-submit.small {
+  margin: 0 !important;              /* ✅ removes external button margins */
+  padding: 8px 18px !important;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 6000;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Primary Save button */
+.inventory-btns .btn-submit.small[type="submit"] {
+  background-color: #4e1d7c;
+  color: #fff;
+}
+
+.inventory-btns .btn-submit.small[type="submit"]:hover {
+  background-color: #62349c;
+}
+
+/* Secondary Cancel button */
+.inventory-btns .btn-submit.small[type="button"] {
+  background-color: #4e1d7c;
+  
+  color: #fff;
+  
+  border: 1px solid #d9d3f3;
+}
+
+.inventory-btns .btn-submit.small[type="button"]:hover {
+  background-color: #62349c;
+}
+.cell-box {
+  display: flex;
+  align-items: center;
+
+  background: #faf8ff;                  /* very soft lavender behind cell */
+  border: 1px solid #e4ddff;            /* elegant thin border */
+  border-radius: 6px;
+
+  padding: 2px 4px;
+  margin: 2px;
+
+  box-shadow: 0 1px 2px rgba(120, 80, 200, 0.08);  
+}
+
+/* Input stays normal white & clean */
+.cell-box input {
+  width: 100%;
+  background: #ffffff;       /* normal input background */
+  border: none;              /* no double borders */
+  outline: none;
+  padding: 5px 6px;
+  border-radius: 4px;        /* small round inside */
+  font-size: 14px;
+  color: #333;
+  font-size: medium;
+  
+}
+
+/* Purple focus glow only on input */
+.cell-box input:focus {
+  box-shadow: 0 0 4px rgba(122, 110, 232, 0.4);
+  border: 1px solid #b8a0ff;
+}
+
+
+.button-row-wrapper {
+  text-align: center;   /* centers inline-flex child */
+  width: 100%;
+}
+
+.button-row {
+  display: inline-flex; /* shrink to content width */
+  gap: 6px;             /* spacing between buttons */
+  margin-top: 12px;
+}
+
+
+.btn-submit.small {
+  padding: 4px 12px;      /* compact buttons */
+  font-size: 14px;
+}
+
+
+.button-row .btn-submit {
+  white-space: nowrap;     /* prevents wrapping inside button */
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
+  
+  margin-bottom: 10px;
+}
+
+
+
+/* optional responsive breakpoints */
+@media (max-width: 900px) {
+  .form-row > * {
+    flex: 0 0 47%;          /* 2 per row on tablets */
+    max-width: 47%;
+  }
+}
+
+@media (max-width: 600px) {
+  .form-row > * {
+    flex: 0 0 100%;         /* 1 per row on phones */
+    max-width: 100%;
+  }
+}
+
+
+.form-group {
+  flex: 0;                     /* ✅ equal width for all six */
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+  
+}
+.invoice-totals {
+  margin-top: 25px;
+  padding: 20px 24px;
+
+  background: #f5f1ff;
+  border: 1px solid #d8d0f3;
+  border-radius: 14px;
+
+  box-shadow: 0 2px 6px rgba(110, 80, 200, 0.12);
+
+  width: 280px;
+
+  margin-left: auto;
+  margin-right: 25px;
+  text-align: center;
+}
+
+/* Regular rows */
+.total-row {
+  font-size: 16px;          /* ↑ increased */
+  font-weight: 500;
+  color: #4e3ca3;
+  margin-bottom: 10px;
+}
+
+/* Highlighted total */
+.total-final {
+  font-size: 20px;          /* ↑ bigger & bold */
+  font-weight: 700;
+  padding-top: 10px;
+  border-top: 1px solid #d6c8ff;
+  color: #3b1f91;
+  margin-top: 10px;
+}
+.invoice-date-section {
+  margin: 0px 0;
+  max-width: 260px;
+}
+
+.invoice-date-section label {
+  font-weight: 700;
+  font-size: 16px;
+  color: #4e3ca3;                   /* elegant lavender purple */
+  display: block;
+  margin-bottom: 2px;
+}
+
+.invoice-date-section input[type="date"] {
+  width: 100%;
+  padding: 8px 12px;
+
+  background: #ffffff;
+  border: 1px solid #c9c2ea;        /* soft lavender border */
+  border-radius: 8px;
+
+  font-size: 14px;
+  color: #333;
+
+  transition: 0.25s border, 0.25s box-shadow;
+}
+
+/* Purple glow on focus */
+.invoice-date-section input[type="date"]:focus {
+  border-color: #7a6ee8;
+  box-shadow: 0 0 5px rgba(122, 110, 232, 0.45);
+  outline: none;
+}
+.suggestion-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 16px;
+  white-space: nowrap;         /* keep everything on one line */
+  overflow: hidden;
+  text-overflow: ellipsis;     /* prevent overflow mess */
+}
+
+.suggestion-line .item-name {
+  font-weight: 600;
+  color: #3f2d8f;              /* elegant purple */
+}
+
+.suggestion-line .item-batch {
+  font-size: 15px;
+  color: #6b5bb5;
+}
+
+.suggestion-line .item-price {
+  font-size: 15px;
+  color: #8a7dd8;
+}
+.invoice-date-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 25px;               /* spacing between date and stock */
+  margin-bottom: 10px;
+}
+
+.item-stock-display {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 10px;
+  background: #f3f2ff;     /* soft light-purple background */
+  border: 1px solid #d7d4ff;
+  border-radius: 8px;
+  min-width: 200px;
+  margin-left: 30px;
+}
+
+.stock-line {
+  font-size: 15px;
+  color: #5c47a8;
+  margin: 2px 0;
+}
+.pdf-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.pdf-modal-box {
+  background: white;
+  width: 80%;
+  height: 90%;
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.pdf-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pdf-print-btn {
+  margin-top: 10px;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  background: #473b88;
+  color: white;
+  cursor: pointer;
+}
+.print-section {
+  margin: 10px auto 18px 0;          /* aligned left */
+  padding: 12px 16px;
+
+  background: #f8f5ff;               /* same soft background */
+  border: 1px solid #e5defa;         /* same border */
+  border-radius: 10px;
+
+  box-shadow: 0 1px 3px rgba(110, 80, 200, 0.06);
+
+  max-width: 260px;                  /* slightly narrower than customer-section */
+  width: 260px;
+  text-align: left;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;                           /* spacing between elements */
+}
+
+/* Title */
+.print-section h3 {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0 0 6px 0;
+  color: #4e3ca3;
+}
+
+/* Labels */
+.print-section label {
+  font-weight: 600;
+  font-size: 13px;
+  color: #4e3ca3;
+  margin-bottom: 4px;
+}
+
+/* Inputs + selects */
+.print-section input,
+.print-section select {
+  width: 100%;
+  height: 34px;
+
+  padding: 4px 8px;
+  margin-bottom: 8px;
+
+  border: 1px solid #d3c7f7;
+  border-radius: 5px;
+
+  background: #fff;
+  color: #333;
+  font-size: 13px;
+
+  transition: 0.2s border, 0.2s box-shadow;
+}
+
+.print-section input:focus,
+.print-section select:focus {
+  border-color: #8a76f7;
+  box-shadow: 0 0 3px rgba(138, 118, 247, 0.4);
+  outline: none;
+}
+
+/* Print button */
+.print-section button {
+  margin-top: 4px;
+  background: #6d5af9;
+  color: white;
+
+  border: none;
+  border-radius: 6px;
+
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+
+  transition: 0.2s background;
+}
+
+.print-section button:hover {
+  background: #5846e6;
+}
+.invoice-top-sections {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+.top-sections {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;                /* spacing between the two sections */
+  align-items: flex-start;  /* align to top */
+  width: 100%;
+  flex-wrap: nowrap;        /* prevents print section pushing customer section down */
+}
+.inv-error {
+  border: 2px solid red !important;
+  background: #ffe6e6 !important;
+}
+/* Make container a positioning context */
+.invoice-editor {
+  position: relative;
+}
+
+/* Floating details panel (popup) */
+.floating-details-panel {
+  position: absolute;
+  background: #ffffff;
+  border: 1px solid #dcdcdc;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  border-radius: 8px;
+  padding: 16px;
+  z-index: 9999;
+  max-height: 400px;
+  overflow-y: auto;
+  animation: fadeSlideIn 0.15s ease-out;
+}
+
+/* Small fade / slide animation */
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header row of the panel */
+.floating-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 12px;
+}
+
+.floating-panel-header strong {
+  font-size: 15px;
+  color: #333;
+}
+
+/* Use your existing button theme */
+.floating-panel-header button {
+  
+  color: white;
+  border: none;
+  padding: 5px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.floating-panel-header button:hover {
+  opacity: 0.85;
+}
+
+/* Inputs grid, consistent with other forms */
+.item-details-panel {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3 columns like your form rows */
+  gap: 14px;
+}
+
+/* Label + input wrapper */
+.detail-row {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Match your label style */
+.detail-row label {
+  font-size: 13px;
+  color: #444;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+/* Match your existing input box theme */
+.detail-row input {
+  padding: 7px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 13px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.detail-row input:focus {
+  border-color: #007bff;
+  outline: none;
+  box-shadow: 0 0 3px rgba(0, 123, 255, 0.4);
+}
+
+.floating-details-panel {
+  width: 700px !important;        /* ← compact, clean width */
+  max-width: 700px !important;
+}
+
+/* Dark background overlay */
+.details-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+/* Modal box */
+.details-modal {
+  background: #fff;
+  width: 500px;
+  max-width: 95vw;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0px 6px 25px rgba(0,0,0,0.25);
+  animation: fadeInScale 0.15s ease-out;
+}
+
+/* Modal animation */
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Header */
+.details-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 8px;
+  margin-bottom: 14px;
+}
+
+.details-modal-header strong {
+  font-size: 16px;
+  color: #333;
+}
+
+/* Close button matches your theme */
+.close-btn {
+  background: #d9534f;
+  color: white;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.close-btn:hover {
+  opacity: 0.85;
+}
+
+/* Compact grid layout */
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+/* Label and input style aligned with your table inputs */
+.detail-row label {
+  font-size: 13px;
+  margin-bottom: 4px;
+  color: #444;
+}
+
+.detail-row input {
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 13px;
+  width: 95%;
+}
+.detail-row input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 3px rgba(0,123,255,0.4);
+  outline: none;
+}
+
+.item-info-bar {
+  background: #f5f7fa;
+  border: 1px solid #dcdcdc;
+  padding: 8px 10px;
+  border-radius: 6px;
+  margin-bottom: 14px;
+
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #333;
+}
+
+.item-info-bar strong {
+  color: #000;
+}
+.details-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.save-btn {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.cancel-btn {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.save-btn:hover,
+.cancel-btn:hover {
+  opacity: 0.85;
+}
+/* Wrap the invoice number inside the existing form-group */
+.invoice-no-wrapper {
+  margin: 12px 0;
+  width: 100%; 
+  max-width: 240px;                /* ensures full width */
+}
+
+.invoice-no-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #4a3fbf;
+  margin-bottom: 4px;
+}
+
+/* WIDE BEAUTIFUL BAR */
+.invoice-no-display {
+  background: #f1ecff;                 /* soft lavender */
+  border: 1px solid #c4b6ff;
+  padding: 12px 20px;
+  border-radius: 8px;
+
+  font-size: 20px;
+  font-weight: 700;
+  color: #32256e;
+
+  width: 100%;                          /* full row width */
+  max-width: 600px;                     /* << adjust here for exact width */
+  display: block;
+
+  letter-spacing: 0.6px;
+  box-shadow: 0 2px 5px rgba(110, 90, 200, 0.2);
+
+  user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  transition: 0.2s ease;
+}
+
+/* Hover effect for interaction */
+.invoice-no-display:hover {
+  background: #e9e1ff;
+  border-color: #a899ff;
+  box-shadow: 0 3px 8px rgba(110, 90, 200, 0.3);
+  transform: translateY(-1px);
+}
+.detail-row td {
+  background: #fafafa;
+  padding: 10px;
+}
+
+.details-box {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.detail-field {
+  display: flex;
+  flex-direction: column;
+  width: 180px;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0,0,0,0.45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 5000;
+}
+
+.big-modal {
+  width: 700px;
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  max-height: 85vh;
+  overflow-y: auto;
+
+  /* centering via CSS */
+  display: block;
+  position: relative;
+}
+
+.details-modal-body {
+  margin-top: 10px;
+}
+
+.details-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-actions {
+  margin-top: 20px;
+  text-align: right;
+}
+.big-modal {
+  width: 520px;             /* reduced width */
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;   /* two equal columns */
+  gap: 10px 25px;                   /* row gap 10, col gap 25 */
+  align-items: center;
+}
+
+.detail-field {
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;  /* minimum width for readable inputs */
+}
+
+.detail-field label {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.detail-field input,
+.detail-field textarea {
+  padding: 6px;
+  font-size: 13px;
+  border: 1px solid #bbb;
+  border-radius: 6px;
+}
+
+.modal-actions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.modal-actions button {
+  padding: 6px 14px;
+  height: 32px;
+  margin: 0 !important;       /* removes browser default spacing */
+}
+
+.modal-actions button + button {
+  margin-left: 4px !important;  /* very small gap */
+}
+.row-flex {
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+}
+.inv-error {
+  border: 2px solid red !important;
+  background: #ffe7e7;
+}
+.input-disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+}
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-card {
+  background: #fff;
+  width: 420px;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+  overflow: hidden;
+}
+
+.modal-header {
+  padding: 14px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.modal-body {
+  padding: 16px 18px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group.full {
+  grid-column: span 2;
+}
+
+.form-group label {
+  font-size: 12px;
+  margin-bottom: 4px;
+  color: #555;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.hint {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #888;
+}
+
+.modal-footer {
+  padding: 12px 18px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid #eee;
+}
+
+.btn-outline {
+  background: #fff;
+  border: 1px solid #aaa;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.modal-card {
+  position: absolute;
+  background: #fff;
+  width: 420px;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+}
+
+
+.draggable-header {
+  cursor: move;
+  user-select: none;
+}
+.input-locked {
+  background: #f1ecff;
+  cursor: not-allowed;
+}
+
+.edit-warning {
+  background: #fff3cd;
+  border: 1px solid #ffeeba;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+.input-disabled {
+  background: #eee;
+  cursor: not-allowed;
+}
+.item-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.item-name-input {
+  font-weight: 500;
+}
+
+.stock-meta {
+  display: flex;
+  gap: 10px;
+  font-size: 11px;
+  color: #6b7280; /* muted gray */
+  line-height: 1.2;
+}
+
+.batch-stock {
+  padding-left: 6px;
+  border-left: 1px solid #ddd;
+}
 /* Container similar to customer-section */
 .access-section {
   margin: 10px auto 18px auto;
