@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import "./Invoice.css";
 import "./ItemForms.css";
-
+import { getCreatedBy } from "../../utils/authHelper";
 const blankLine = () => ({
   ItemId: 0,
   ItemName: "",
@@ -154,7 +154,7 @@ const [invoiceNum, setInvoiceNum] = useState("");
 const [invoiceFY, setInvoiceFY] = useState("");
 const [invoiceNo, setInvoiceNo] = useState("");
 
-const [paymentMode, setPaymentMode] = useState("Credit");
+const [paymentMode, setPaymentMode] = useState("Cash");
 const [paidAmount, setPaidAmount] = useState(0);
 
   const [invoiceId, setInvoiceId] = useState(null);
@@ -459,7 +459,7 @@ if (paymentMode === "Credit" && !supplierId) {
     BalanceAmount: balanceAmount,
     PaidVia: paidVia,
     Items,
-    CreatedBy: user?.email
+    CreatedBy: getCreatedBy()
   };
 
   // ---------------- CHECK DUPLICATE ----------------

@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import "./Invoice.css";
 import "./ItemForms.css";
-
+import { getCreatedBy } from "../../utils/authHelper";
 const blankLine = () => ({
   InvoiceItemId: 0,
   ItemId: 0,
@@ -309,7 +309,7 @@ useEffect(() => {
       RoundOff: totals.roundOff,
       SubTotal: totals.subTotal,
       Notes: notes,
-      CreatedBy: user?.email || "system",
+      CreatedBy: getCreatedBy(),
       BalanceAmount:outstanding,
       PaidAmount:paidAmount,
       OriginalPaymentMode: paymentMode,
@@ -345,7 +345,7 @@ if (refundMode === "Adjust" && refundAmount > 0) {
       RoundOff: totals.roundOff,
       SubTotal: totals.subTotal,
       Notes: notes,
-      CreatedBy: user?.email || "system",
+      CreatedBy: getCreatedBy(),
       BalanceAmount:outstanding,
       PaidAmount:paidAmount,
       OriginalPaymentMode: paymentMode,

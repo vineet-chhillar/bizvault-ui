@@ -1,18 +1,26 @@
 import React, { useEffect, useState } from "react";
+import { getCreatedBy } from "../../utils/authHelper";
 
 export default function ChartOfAccounts() {
   const [rows, setRows] = useState([]);
   const [form, setForm] = useState({
   AccountId: 0,
   AccountName: "",
-  AccountType: "",
+  AccountType: "Asset",
   ParentAccountId: 0,
   NormalSide: "Debit",
   OpeningBalanceType: "DR",
   OpeningBalance: 0,
-  IsGroup: false
+  IsGroup: false,
+
+  // 🔹 AUDIT FIELDS
+  CreatedBy: null,
+  UpdatedBy: null
+  
 });
+
 const [isEditing, setIsEditing] = useState(false);
+
 
 const hasChildren = (accountId) =>
   rows.some(r => r.ParentAccountId === accountId);
@@ -80,7 +88,6 @@ const onParentChange = (id) => {
 
   // 🔄 Refresh chart of accounts
   window.chrome.webview.postMessage({ action: "fetchCoA" });
-
   // 🔁 Reset form
   setForm({
   AccountId: 0,
@@ -90,10 +97,10 @@ const onParentChange = (id) => {
   NormalSide: "Debit",
   OpeningBalanceType: "DR",
   OpeningBalance: 0,
-  IsGroup: true        // 👈 MUST ADD
+  IsGroup: true   ,
+   CreatedBy: null,
+  UpdatedBy: null     // 👈 MUST ADD
 });
-
-
 
   setIsEditing(false);
 }
@@ -105,19 +112,28 @@ const onParentChange = (id) => {
       window.chrome.webview.removeEventListener("message", handler);
   }, []);
 
-  const save = () => {
-    if (isEditing) {
-      window.chrome.webview.postMessage({
-        action: "updateAccount",
-        Payload: form,
-      });
-    } else {
-      window.chrome.webview.postMessage({
-        action: "createAccount",
-        Payload: form,
-      });
-    }
+const save = () => {
+  const userId = getCreatedBy();
+
+  const payload = {
+    ...form
   };
+
+  if (isEditing) {
+    payload.UpdatedBy = userId;
+    payload.CreatedBy = form.CreatedBy; // preserve original
+  } else {
+    payload.CreatedBy = userId;
+    payload.UpdatedBy = null;
+  }
+
+  window.chrome.webview.postMessage({
+    action: isEditing ? "updateAccount" : "createAccount",
+    Payload: payload
+  });
+};
+
+
 
  const edit = (r) => {
   if (r.IsSystemAccount === 1) {
@@ -259,6 +275,34 @@ const onParentChange = (id) => {
             </div>
           </div>
 
+ <div className="form-row">
+{isEditing && (
+  <>
+    <div className="form-group">
+      <label>Created By</label>
+      <input value={form.CreatedBy ?? ""} disabled />
+    </div>
+
+    <div className="form-group">
+      <label>Updated By</label>
+      <input value={form.UpdatedBy ?? ""} disabled />
+    </div>
+
+    <div className="form-group">
+      <label>Last Updated At</label>
+      <input
+        value={
+          form.UpdatedAt
+            ? new Date(form.UpdatedAt).toLocaleString()
+            : ""
+        }
+        disabled
+      />
+    </div>
+  </>
+)}
+</div>
+
           {/* Buttons */}
           <div className="inventory-btns">
             <button
@@ -290,6 +334,7 @@ const onParentChange = (id) => {
           </div>
         </div>
       </div>
+
 
       {/* TABLE SECTION — Uses your exact table container + data-table styling */}
       <div className="table-container">

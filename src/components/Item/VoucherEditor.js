@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "./Voucher.css";
-
+import { getCreatedBy } from "../../utils/authHelper";
 import { useLocation } from "react-router-dom";
 
 const blankLine = () => ({
@@ -223,6 +223,7 @@ if (msg.action === "GetVoucherIdsByDateResponse") {
         VoucherDate: voucherDate,
         Narration: narration,
         ReferenceId: referenceId,
+        CreatedBy:getCreatedBy(),
         Lines: lines.filter(l => l.AccountId)
       }
     });
@@ -239,7 +240,8 @@ const reverseVoucher = () => {
   window.chrome.webview.postMessage({
     Action: "ReverseVoucher",
     Payload: {
-      JournalEntryId: journalEntryId
+      JournalEntryId: journalEntryId,
+      CreatedBy: getCreatedBy()
     }
   });
 };

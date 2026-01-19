@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import "./Invoice.css";
 import "./ItemForms.css";
-
+import { getCreatedBy } from "../../utils/authHelper";
 const blankLine = () => ({
   ItemId: 0,
   ItemName: "",
@@ -407,7 +407,7 @@ useEffect(() => {
       RoundOff: totals.roundOff,
       SubTotal: totals.subTotal,
       Notes: notes,
-      CreatedBy: user?.email || "system",
+      CreatedBy: getCreatedBy(),
       PaymentMode: paymentMode,
 PaidAmount: paidAmount,
 BalanceAmount: balanceAmount,
@@ -438,7 +438,7 @@ PaidVia:paidVia,
       RoundOff: totals.roundOff,
       SubTotal: totals.subTotal,
       Notes: notes,
-      CreatedBy: user?.email,
+      CreatedBy: getCreatedBy(),
       PaymentMode: paymentMode,
 PaidAmount: paidAmount,
 BalanceAmount: balanceAmount,
@@ -1224,7 +1224,7 @@ setLines([ blankLine() ]);
                 Amount: paymentForm.Amount,
                 PaymentMode: paymentForm.PaymentMode,
                 Notes: paymentForm.Notes,
-                CreatedBy: user?.email || "system",
+                CreatedBy: getCreatedBy(),
                 SupplierAccountId: supplierId
               }
             });

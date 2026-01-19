@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useLayoutEffect } from "react";
 import "./ItemForms.css";
 import ItemNavBar from "./ItemNavBar";
-
+import { getCreatedBy } from "../../utils/authHelper";
 import { User } from "lucide-react";
 
 import { validateItemForm } from "../../utils/validateItemForm";
@@ -200,7 +200,7 @@ const finalDateTime = `${dateFromCalendar} ${timePart}`;
        UnitName: itemData.unitname,
        GstId: parseInt(itemData.gstid),
        GstPercent: itemData.gstpercent,
-      CreatedBy: user.email, 
+      CreatedBy: getCreatedBy(), 
       CreatedAt: new Date().toISOString(),
        ReorderLevel: Number(itemData.reorderlevel),   // ⭐ NEW FIELD TO SEND
     };

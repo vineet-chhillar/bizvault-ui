@@ -1,5 +1,6 @@
 
 import "./ItemForms.css";
+import { getCreatedBy } from "../../utils/authHelper";
 import React, { useEffect, useState } from "react";
 const blankLine = () => ({
   ItemId: 0,
@@ -100,7 +101,7 @@ const user = JSON.parse(localStorage.getItem("user"));
   const payload = {
     AsOnDate: asOnDate,
     Notes: notes,
-    CreatedBy: user.email, 
+    CreatedBy: getCreatedBy(), 
     Items: validLines
       .filter(l => l.ItemId && Number(l.Qty) > 0)
       .map(l => ({

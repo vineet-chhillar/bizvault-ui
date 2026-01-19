@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import "./Invoice.css";
 import "./ItemForms.css";
 import validateInvoiceForm from "../../utils/validateInvoiceForm";
-
+import { getCreatedBy } from "../../utils/authHelper";
 
 
 import { validateString, validateDecimal, validatePositiveDecimal, validateInteger,validateDropdown,isValidInvoiceDate} from "../../utils/validators";
@@ -542,7 +542,7 @@ Notes: l.Notes || "",
 
 }));
 
-
+console.log(getCreatedBy);
   const payload = {
     Action: "CreateInvoice",
     Payload: {
@@ -563,7 +563,7 @@ BalanceAmount: balanceAmount,
 //BalanceBatchWise:selectedBatchBalance,
 ItemName:Items.ItemName,
       Items: Items,
-      CreatedBy: user?.email,
+      CreatedBy: getCreatedBy(),
       Notes: notes
     }
   };

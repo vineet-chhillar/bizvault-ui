@@ -25,7 +25,9 @@ const emptyCustomer = {
   CreditDays: 0,
   CreditLimit: 0,
   CreatedBy: "",
-  CreatedAt: ""
+  CreatedAt: "",
+  UpdatedBy: "",
+  UpdatedAt: ""
 };
 
 function CustomerPage() {
@@ -48,28 +50,31 @@ function CustomerPage() {
 
   // LOAD CUSTOMERS
   const loadCustomers = (kw = "") => {
-    if (!window.chrome?.webview) return;
+  if (!window.chrome?.webview) return;
 
-    setLoading(true);
+  setLoading(true);
 
-    const handler = (event) => {
-      const msg = event.data;
-      if (!msg || msg.action !== "searchCustomers") return;
+  const handler = (event) => {
+    const msg = event.data;
 
-      window.chrome.webview.removeEventListener("message", handler);
+    if (!msg || msg.action !== "searchCustomersResult") return;
 
-      if (msg.success) setCustomers(msg.data || []);
-      else console.error(msg.error);
+    window.chrome.webview.removeEventListener("message", handler);
 
-      setLoading(false);
-    };
+    if (msg.success) setCustomers(msg.data || []);
+    else console.error(msg.error);
 
-    window.chrome.webview.addEventListener("message", handler);
-    window.chrome.webview.postMessage({
-      Action: "searchCustomers",
-      Payload: { Keyword: kw || "" },
-    });
+    setLoading(false);
   };
+
+  window.chrome.webview.addEventListener("message", handler);
+
+  window.chrome.webview.postMessage({
+    Action: "searchCustomers",
+    Payload: { Keyword: kw || "" },
+  });
+};
+
 
   useEffect(() => {
     loadCustomers("");
@@ -168,12 +173,22 @@ function CustomerPage() {
   };
 
   window.chrome.webview.addEventListener("message", handler);
-  const payload = {
-  ...customer,
-  CreatedBy: customer.CustomerId === 0
-    ? getCreatedBy()
-    : customer.CreatedBy
+ const user = getCreatedBy();
+
+const payload = {
+  ...customer
 };
+
+if (customer.CustomerId === 0) {
+  // 🔹 CREATE
+  payload.CreatedBy = user;
+  payload.UpdatedBy = null;
+} else {
+  // 🔹 UPDATE
+  payload.CreatedBy = customer.CreatedBy; // preserve
+  payload.UpdatedBy = user;
+}
+
 
 window.chrome.webview.postMessage({
   Action: "saveCustomer",

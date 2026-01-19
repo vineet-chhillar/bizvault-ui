@@ -1,6 +1,6 @@
 import "./ItemForms.css";
 import React, { useEffect, useState } from "react";
-
+import { getCreatedBy } from "../../utils/authHelper";
 const blankLine = () => ({
   ItemId: 0,
   ItemName: "",
@@ -197,7 +197,7 @@ if (!date) {
       AdjustmentType: type,
       Reason: reason,
       Notes: notes,
-      CreatedBy: user.email,
+      CreatedBy: getCreatedBy(),
       Items: validLines.map(l => ({
   ItemId: l.ItemId,
   BatchNo: l.BatchNo || null,
@@ -442,7 +442,7 @@ if (!date) {
           Action: "ReverseStockAdjustment",
           Payload: {
             AdjustmentId: a.AdjustmentId,   // 👈 USE ROW ID DIRECTLY
-            ReversedBy: user.email
+            ReversedBy: getCreatedBy()
           }
         });
       }}

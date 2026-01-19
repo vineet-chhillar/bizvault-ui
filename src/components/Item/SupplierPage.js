@@ -16,6 +16,8 @@ const emptySupplier = {
   Balance: 0,
   CreatedBy: "",
   CreatedAt: "",
+  UpdatedBy: "",
+  UpdatedAt: "",
   State: ""  // ← NEW
 };
 
@@ -174,12 +176,21 @@ if (supplier.GSTIN && supplier.GSTIN.trim() !== "") {
     };
 
     window.chrome.webview.addEventListener("message", handler);
-    const payload = {
-  ...supplier,
-  CreatedBy: supplier.SupplierId === 0
-    ? getCreatedBy()
-    : supplier.CreatedBy
+   const user = getCreatedBy();
+
+const payload = {
+  ...supplier
 };
+
+if (supplier.SupplierId === 0) {
+  // 🔹 CREATE
+  payload.CreatedBy = user;
+  payload.UpdatedBy = null;
+} else {
+  // 🔹 UPDATE
+  payload.CreatedBy = supplier.CreatedBy; // preserve original
+  payload.UpdatedBy = user;
+}
 
 window.chrome.webview.postMessage({
   Action: "saveSupplier",

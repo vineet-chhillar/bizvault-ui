@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import "./Invoice.css";
 import "./ItemForms.css";
-
+import { getCreatedBy } from "../../utils/authHelper";
 const blankLine = () => ({
   InvoiceItemId: 0,
   ItemId: 0,
@@ -29,8 +29,8 @@ const blankLine = () => ({
   SgstValue: 0,
   IgstPercent: 0,
   IgstValue: 0,
-
-  LineTotal: 0
+  LineTotal: 0,
+  Notes: ""
 });
 
 export default function EditSalesInvoice({ user }) {
@@ -71,7 +71,7 @@ const [originalPaymentMode, setOriginalPaymentMode] = useState(null);
   const [confirmModal, setConfirmModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 const [selectedItemBalance, setSelectedItemBalance] = useState(null);
-
+const [notes, setNotes] = useState("");
 
   const [paymentForm, setPaymentForm] = useState({
     PaymentDate: new Date().toISOString().slice(0, 10),
@@ -339,7 +339,7 @@ const removeLine = (i) => {
     alert("Invoice ID missing. Reload the invoice.");
     return;
   }
-
+console.log(getCreatedBy);
   window.chrome.webview.postMessage({
     Action: "UpdateSalesInvoice",
     Payload: {
@@ -356,8 +356,9 @@ const removeLine = (i) => {
       TotalTax: totals.tax,
       RoundOff: totals.roundOff,
       TotalAmount: totals.total,
-      CreatedBy: user?.email || "system",
-      Items: lines
+      CreatedBy: getCreatedBy(),
+      Items: lines,
+      Notes: notes,
     }
   });
 };
@@ -448,6 +449,7 @@ if (msg.action === "CanEditSalesInvoiceResponse") {
 
   setInvoiceNo(d.InvoiceNo);
   setInvoiceNum(d.InvoiceNum);
+  setNotes(d.Notes || "");
   setInvoiceDate(d.InvoiceDate);
 
   setCustomerId(d.CustomerId);
@@ -579,6 +581,7 @@ if (msg.action === "SaveSalesPaymentResponse") {
     setOriginalPaidAmount(0);
     setInvoiceNo("");
   setInvoiceNum("");
+  setNotes("");
     setInvoiceId(null);
     setCustomerId(null);
     setSelectedCustomer(null);
@@ -886,6 +889,29 @@ useEffect(() => {
         </tbody>
       </table>
 
+{/* NOTES */}
+      <div className="form-row">
+         <div className="form-group" style={{ width: "100%" }}>
+    <label>Sales Invoice Notes</label>
+    <textarea
+     value={notes}
+          onChange={e => setNotes(e.target.value)}
+          rows={3}
+      style={{
+        width: "100%",
+        padding: "8px",
+        borderRadius: "6px",
+        border: "1px solid #ccc",
+        resize: "vertical",
+        fontSize: "14px",
+      }}
+      placeholder="Enter additional notes or remarks (optional)"
+    />
+  </div>
+       
+        
+      </div>
+
       {/* TOTALS */}
       <div className="invoice-totals">
         <div>Subtotal: {totals.subTotal.toFixed(2)}</div>
@@ -1064,7 +1090,7 @@ useEffect(() => {
     PaymentMode: paymentForm.PaymentMode,
     Notes: paymentForm.Notes,
     CustomerAccountId: customerId,
-    CreatedBy: user.email
+    CreatedBy: getCreatedBy()
   }
 }
 

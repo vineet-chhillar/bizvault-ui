@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import "./ItemForms.css";
 import ItemNavBar from "./ItemNavBar";
 import { validateItemForm } from "../../utils/validateItemForm";
-
+import { getCreatedBy } from "../../utils/authHelper";
 const EditItem = () => {
   const [items, setItems] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -164,6 +164,7 @@ const EditItem = () => {
           unitid: formData.UnitId,
           gstid: formData.GstId,
           reorderlevel: Number(formData.ReorderLevel),
+          updatedby: getCreatedBy(),
         },
       });
     }

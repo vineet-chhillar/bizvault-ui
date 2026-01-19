@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import "./Invoice.css";
 import "./ItemForms.css";
-
+import { getCreatedBy } from "../../utils/authHelper";
 const blankLine = () => ({
   ItemId: 0,
   ItemName: "",
@@ -44,7 +44,7 @@ export default function EditPurchaseInvoice({ user }) {
   const [invoiceId, setInvoiceId] = useState("");
   const [invoiceList, setInvoiceList] = useState([]);
 const [detailsModal, setDetailsModal] = useState({ open: false, index: null });
-const [refundMode, setRefundMode] = useState("ADJUST"); // ADJUST | CASH | BANK
+const [refundMode, setRefundMode] = useState("Cash"); // ADJUST | CASH | BANK
 const [paidVia, setPaidVia] = useState("");             // CASH | BANK | ""
 const [outstanding, setOutstanding] = useState(0);   // BalanceAmount
 const [paidAmount, setPaidAmount] = useState(0);     // PaidAmount
@@ -222,8 +222,8 @@ const isInterState = () => {
     });
   };
 useEffect(() => {
-  if (refundMode === "CASH") setPaidVia("CASH");
-  else if (refundMode === "BANK") setPaidVia("BANK");
+  if (refundMode === "Cash") setPaidVia("Cash");
+  else if (refundMode === "Bank") setPaidVia("Bank");
   else setPaidVia("");
 }, [refundMode]);
 
@@ -307,7 +307,7 @@ useEffect(() => {
       RoundOff: totals.roundOff,
       SubTotal: totals.subTotal,
       Notes: notes,
-      CreatedBy: user?.email || "system",
+      CreatedBy: getCreatedBy(),
         RefundMode: refundMode,   // ✅ ADD
   PaidVia: paidVia, 
   BalanceAmount: outstanding,
@@ -338,7 +338,7 @@ useEffect(() => {
       RoundOff: totals.roundOff,
       SubTotal: totals.subTotal,
       Notes: notes,
-      CreatedBy: user?.email,
+      CreatedBy: getCreatedBy(),
         RefundMode: refundMode,   // ✅ ADD
   PaidVia: paidVia,         // ✅ ADD
       Items: lines
@@ -446,7 +446,7 @@ AvailableQty: item.AvailableQty || 0,
     setNotes("");
      setPurchaseDate("");   // blank
    setInvoiceNo("");      // blank
-   setRefundMode("ADJUST");
+   setRefundMode("Cash");
 setPaidVia("");
 setOutstanding(0);
 setPaidAmount(0);
@@ -540,8 +540,8 @@ setPaidAmount(0);
     onChange={(e) => setRefundMode(e.target.value)}
   >
     <option value="ADJUST">Adjust Against Supplier Dues</option>
-    <option value="CASH">Cash Refund</option>
-    <option value="BANK">Bank Refund</option>
+    <option value="Cash">Cash Refund</option>
+    <option value="Bank">Bank Refund</option>
   </select>
 </div>
 {refundMode !== "ADJUST" && (
