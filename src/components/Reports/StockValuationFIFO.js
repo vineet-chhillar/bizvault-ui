@@ -7,8 +7,10 @@ export default function StockValuationFIFO() {
     return d.toISOString().slice(0, 10);
   });
   const [to, setTo] = useState(() => new Date().toISOString().slice(0, 10));
+
   const [rows, setRows] = useState([]);
   const [totals, setTotals] = useState({ closingStock: 0, cogs: 0 });
+  const [loaded, setLoaded] = useState(false); // ✅
 
   useEffect(() => {
     const handler = (e) => {
@@ -16,6 +18,7 @@ export default function StockValuationFIFO() {
 
       if (msg.action === "getFIFOValuationResult") {
         setRows(msg.data || []);
+        setLoaded(true); // ✅
       }
 
       if (msg.action === "getFIFOTotalsResult") {
@@ -23,6 +26,17 @@ export default function StockValuationFIFO() {
           closingStock: msg.closingStock || 0,
           cogs: msg.cogs || 0
         });
+      }
+
+      if (msg.action === "generateStockValuationPdfResult") {
+        if (msg.success) {
+          window.chrome.webview.postMessage({
+            action: "openFile",
+            data: { path: msg.path }
+          });
+        } else {
+          alert("PDF generation failed");
+        }
       }
     };
 
@@ -32,6 +46,8 @@ export default function StockValuationFIFO() {
   }, []);
 
   const load = () => {
+    setLoaded(false);
+
     window.chrome.webview.postMessage({
       action: "getFIFOValuation",
       payload: { AsOf: to, From: from, To: to }
@@ -43,6 +59,19 @@ export default function StockValuationFIFO() {
     });
   };
 
+  // ✅ EXPORT PDF
+  const exportPdf = () => {
+    if (!loaded) {
+      alert("Load report first");
+      return;
+    }
+
+    window.chrome.webview.postMessage({
+      action: "exportStockValuationPdf",
+      payload: { From: from, To: to }
+    });
+  };
+
   return (
     <div className="form-container">
       <h2 className="form-title">Stock Valuation (FIFO)</h2>
@@ -50,7 +79,6 @@ export default function StockValuationFIFO() {
       {/* FILTER BAR */}
       <div className="form-inner">
         <div className="form-row-horizontal">
-
           <div className="form-group">
             <label>From</label>
             <input
@@ -70,15 +98,22 @@ export default function StockValuationFIFO() {
           </div>
 
           <div className="inventory-btns">
-            <button className="btn-submit small" type="button" onClick={load}>
-              Load FIFO Valuation
+            <button className="btn-submit small" onClick={load}>
+              Load
+            </button>
+
+            <button
+              className="btn-submit small"
+              type="button"
+              onClick={exportPdf}
+            >
+              Export PDF
             </button>
           </div>
-
         </div>
       </div>
 
-      {/* TOTALS BOX */}
+      {/* TOTALS */}
       <div
         className="table-container"
         style={{ marginTop: "15px", padding: "12px", textAlign: "center" }}
@@ -94,9 +129,10 @@ export default function StockValuationFIFO() {
       <div className="table-container" style={{ marginTop: "20px" }}>
         <h3 className="table-title">FIFO Movement Summary</h3>
 
-        <table className="data-table">
+        <table className="stocksummarydata-table">
           <thead>
             <tr>
+              <th>S.No</th> {/* ✅ */}
               <th>Item</th>
               <th>Opening Qty</th>
               <th>Opening Value</th>
@@ -110,8 +146,17 @@ export default function StockValuationFIFO() {
           </thead>
 
           <tbody>
-            {rows.map((r) => (
+            {rows.length === 0 && (
+              <tr>
+                <td colSpan={10} style={{ textAlign: "center" }}>
+                  No data
+                </td>
+              </tr>
+            )}
+
+            {rows.map((r, i) => (
               <tr key={r.ItemId}>
+                <td>{i + 1}</td> {/* ✅ SERIAL NO */}
                 <td>{r.ItemName || "Item " + r.ItemId}</td>
 
                 <td style={{ textAlign: "right" }}>{r.OpeningQty}</td>

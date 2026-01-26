@@ -7,7 +7,7 @@ export default function VoucherReport() {
   const [to, setTo] = useState(
     new Date().toISOString().slice(0, 10)
   );
-  
+    const [loaded, setLoaded] = useState(false);
   const [report, setReport] = useState({
    OpeningBalance: 0,
    ClosingBalance: 0,
@@ -15,7 +15,16 @@ export default function VoucherReport() {
  });
  
  const rows = report?.Rows || [];
- 
+ const exportPdf = () => {
+    if (!loaded) {
+      alert("Load report first");
+      return;
+    }
+    window.chrome.webview.postMessage({
+      action: "exportBankBookPdf",
+      payload: { From: from, To: to },
+    });
+  };
 
 {/*useEffect(() => {
   window.chrome.webview.postMessage({
@@ -38,8 +47,18 @@ export default function VoucherReport() {
       const msg = e.data;
       if (msg.action === "getBankBookResult") {
   setReport(msg);
+  setLoaded(true);
 }
-
+if (msg.action === "generateBankBookPdfResult") {
+        if (msg.success) {
+          window.chrome.webview.postMessage({
+            action: "openFile",
+            data: { path: msg.path },
+          });
+        } else {
+          alert("PDF generation failed");
+        }
+      }
     };
 
     window.chrome.webview.addEventListener("message", handler);
@@ -64,20 +83,24 @@ const totalCredit = rows.reduce(
   0
 );
 const groupedByVoucher = rows.reduce((acc, row) => {
-  const voucherNo = row.VoucherNo && row.VoucherNo.trim() !== ""
-    ? row.VoucherNo
-    : null;
+  const key = `${row.VoucherType}|${row.VoucherId}`;
 
-  // fallback grouping key
-  const groupKey = voucherNo ?? `VID_${row.VoucherId || row.JournalId}`;
+  if (!acc[key]) {
+    acc[key] = {
+      voucherType: row.VoucherType,
+      voucherId: row.VoucherId,
+      rows: []
+    };
+  }
 
-  if (!acc[groupKey]) acc[groupKey] = [];
-  acc[groupKey].push(row);
-
+  acc[key].rows.push(row);
   return acc;
 }, {});
 
+
 let runningBalance = report.OpeningBalance;
+let pageSerialNo = 1;
+
   return (
     <div className="form-container">
       <h2 className="form-title">Bank Book</h2>
@@ -119,6 +142,20 @@ let runningBalance = report.OpeningBalance;
             <button className="btn-submit small" onClick={load}>
               Load
             </button>
+            <button
+              className="btn-submit small"
+              type="button"
+              onClick={exportPdf}
+            >
+              Export PDF
+            </button>
+             <button
+              className="btn-submit small"
+              type="button"
+              onClick={exportPdf}
+            >
+              Export Excel
+            </button>
           </div>
         </div>
       </div>
@@ -130,12 +167,13 @@ let runningBalance = report.OpeningBalance;
     Opening Balance : {report.OpeningBalance.toFixed(2)}
   </p>
 )}
-        <table className="daybookdata-table">
+        <table className="cashbookdata-table">
           <thead>
   <tr>
+     <th>S.No</th>
     <th>Date</th>
     <th>Voucher Type</th>
-    <th>Voucher No</th>
+    
     <th>Description</th>
     <th>Account</th>
     <th style={{ textAlign: "right" }}>Debit</th>
@@ -155,31 +193,37 @@ let runningBalance = report.OpeningBalance;
     </tr>
   )}
 
-  {Object.entries(groupedByVoucher).map(([groupKey, lines]) => {
+  {Object.values(groupedByVoucher).map((group) => {
+    const { voucherType, voucherId, rows: lines } = group;
+    const currentSerial = pageSerialNo++;
+
     const voucherDebit = lines.reduce(
       (s, r) => s + Number(r.Debit || 0),
       0
     );
+
     const voucherCredit = lines.reduce(
       (s, r) => s + Number(r.Credit || 0),
       0
     );
 
     return (
-      <React.Fragment key={groupKey}>
+      <React.Fragment key={`${voucherType}-${voucherId}`}>
         {lines.map((r, li) => {
-          runningBalance +=
-            Number(r.Debit || 0) - Number(r.Credit || 0);
+          // ✅ Update balance ONLY on Bank line
+          if (r.AccountName === "Bank") {
+            runningBalance +=
+              Number(r.Debit || 0) -
+              Number(r.Credit || 0);
+          }
 
           return (
-            <tr key={`${groupKey}-${li}`}>
+            <tr key={`${voucherType}-${voucherId}-${li}`}>
               {li === 0 && (
                 <>
+                  <td rowSpan={lines.length}>{currentSerial}</td>
                   <td rowSpan={lines.length}>{r.Date}</td>
-                  <td rowSpan={lines.length}>{r.VoucherType}</td>
-                  <td rowSpan={lines.length}>
-                    {r.VoucherNo?.trim() || "—"}
-                  </td>
+                  <td rowSpan={lines.length}>{voucherType}</td>
                   <td rowSpan={lines.length}>{r.Description}</td>
                 </>
               )}
@@ -187,22 +231,24 @@ let runningBalance = report.OpeningBalance;
               <td>{r.AccountName}</td>
 
               <td style={{ textAlign: "right" }}>
-                {Number(r.Debit).toFixed(2)}
+                {Number(r.Debit || 0).toFixed(2)}
               </td>
 
               <td style={{ textAlign: "right" }}>
-                {Number(r.Credit).toFixed(2)}
+                {Number(r.Credit || 0).toFixed(2)}
               </td>
 
-              {/* RUNNING BALANCE */}
+              {/* ✅ Balance shown ONLY on Bank line */}
               <td style={{ textAlign: "right", fontWeight: 600 }}>
-                {runningBalance.toFixed(2)}
+                {r.AccountName === "Bank"
+                  ? runningBalance.toFixed(2)
+                  : ""}
               </td>
             </tr>
           );
         })}
 
-        {/* Voucher subtotal (NO effect on running balance) */}
+        {/* Voucher Total (NO balance impact) */}
         <tr style={{ background: "#fafafa", fontWeight: 600 }}>
           <td colSpan={5} style={{ textAlign: "right" }}>
             Voucher Total :
@@ -213,12 +259,13 @@ let runningBalance = report.OpeningBalance;
           <td style={{ textAlign: "right" }}>
             {voucherCredit.toFixed(2)}
           </td>
-          <td /> {/* empty balance cell */}
+          <td />
         </tr>
       </React.Fragment>
     );
   })}
 </tbody>
+
 
 
 

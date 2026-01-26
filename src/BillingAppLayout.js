@@ -56,7 +56,7 @@ import {
 } from "react-router-dom";
 import "./App.css";
 import "./BillingAppLayout.css";
-import logo from "./assets/brandlogo1.png"; // <-- add this at the top
+import logo from "./assets/brandlogo111.png"; // <-- add this at the top
 import {
   FaHome,
   FaChartBar,

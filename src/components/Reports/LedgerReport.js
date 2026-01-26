@@ -7,29 +7,42 @@ export default function LedgerReport() {
   const [from, setFrom] = useState(() => new Date().toISOString().slice(0, 10));
   const [to, setTo] = useState(() => new Date().toISOString().slice(0, 10));
   const [report, setReport] = useState(null);
-const [searchParams] = useSearchParams();
-const accountIdFromUrl = Number(searchParams.get("accountId"));
-const source = searchParams.get("source"); // 👈 important
-useEffect(() => {
-  if (!accountIdFromUrl) return;
 
-  // 🔑 If coming from Outstanding, expand date range
-  if (source === "outstanding") {
-    setFrom("2000-01-01"); // or company start date
-    setTo(new Date().toISOString().slice(0, 10));
-  }
+  const [searchParams] = useSearchParams();
+  const accountIdFromUrl = Number(searchParams.get("accountId"));
+  const source = searchParams.get("source");
+const [loaded, setLoaded] = useState(false);
+  // -----------------------------
+  // Handle URL navigation
+  // -----------------------------
+  useEffect(() => {
+    if (!accountIdFromUrl) return;
 
-  setAccountId(accountIdFromUrl);
-}, [accountIdFromUrl, source]);
+    if (source === "outstanding") {
+      setFrom("2000-01-01");
+      setTo(new Date().toISOString().slice(0, 10));
+    }
 
+    setAccountId(accountIdFromUrl);
+  }, [accountIdFromUrl, source]);
+
+  // -----------------------------
+  // Initial load (CoA + handlers)
+  // -----------------------------
   useEffect(() => {
     window.chrome.webview.postMessage({ action: "fetchCoA" });
 
     const handler = (e) => {
       const msg = e.data;
 
-      if (msg.action === "fetchCoAResult") setAccounts(msg.rows);
-      if (msg.action === "getLedgerReportResult") setReport(msg.report);
+      if (msg.action === "fetchCoAResult") {
+        setAccounts(msg.rows || []);
+      }
+
+      if (msg.action === "getLedgerReportResult") {
+        setReport(msg.report);
+        setLoaded(true);
+      }
 
       if (msg.action === "generateLedgerPdfResult") {
         if (msg.success) {
@@ -38,7 +51,7 @@ useEffect(() => {
             data: { path: msg.path },
           });
         } else {
-          alert("PDF generation failed: " + (msg.message || "unknown"));
+          alert("PDF generation failed");
         }
       }
     };
@@ -48,63 +61,51 @@ useEffect(() => {
       window.chrome.webview.removeEventListener("message", handler);
   }, []);
 
+  // -----------------------------
+  // Load report
+  // -----------------------------
   const load = () => {
     if (!accountId) {
       alert("Select account");
       return;
     }
+
     window.chrome.webview.postMessage({
       action: "getLedgerReport",
-      payload: { AccountId: accountId, From: from, To: to },
+      payload: {
+        AccountId: accountId,
+        From: from,
+        To: to,
+      },
     });
   };
-useEffect(() => {
-  if (!accountIdFromUrl) return;
 
-  setAccountId(accountIdFromUrl);
-
-  window.chrome.webview.postMessage({
-    action: "getLedgerReport",
-    payload: {
-      AccountId: accountIdFromUrl,
-      From: from,
-      To: to,
-    },
-  });
-}, [accountIdFromUrl, from, to]);
-useEffect(() => {
-  if (!accountId || !from || !to) return;
-
-  window.chrome.webview.postMessage({
-    action: "getLedgerReport",
-    payload: {
-      AccountId: accountId,
-      From: from,
-      To: to,
-    },
-  });
-}, [accountId, from, to]);
-
-
+  // -----------------------------
+  // Export PDF
+  // -----------------------------
   const exportPdf = () => {
-    if (!report) {
+    if (!loaded) {
       alert("Load report first");
       return;
     }
     window.chrome.webview.postMessage({
       action: "generateLedgerPdf",
-      payload: { AccountId: accountId, From: from, To: to },
+      payload: { AccountId: accountId,From: from, To: to },
     });
   };
+  // -----------------------------
+  // Helpers
+  // -----------------------------
+  const fmtDate = (d) =>
+    new Date(d).toLocaleDateString("en-GB");
 
   return (
     <div className="form-container">
-      <h2 className="form-title">Account Statement Report</h2>
+      <h2 className="form-title">Account Statement</h2>
 
-      {/* FILTER AREA */}
+      {/* FILTERS */}
       <div className="form-inner">
         <div className="form-row-horizontal">
-
           <div className="form-group">
             <label>Account</label>
             <select
@@ -131,36 +132,40 @@ useEffect(() => {
 
           <div className="form-group">
             <label>To</label>
-            <input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+            <input
+              type="date"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+            />
           </div>
 
           <div className="inventory-btns">
-            <button className="btn-submit small" type="button" onClick={load}>
+            <button className="btn-submit small" onClick={load}>
               Load
             </button>
-            <button className="btn-submit small" type="button" onClick={exportPdf}>
+            <button className="btn-submit small" onClick={exportPdf}>
               Export PDF
             </button>
           </div>
-
         </div>
       </div>
 
-      {/* REPORT SECTION */}
+      {/* REPORT */}
       {report && (
-        <div className="table-container" style={{ marginTop: "20px" }}>
+        <div className="table-container" style={{ marginTop: 20 }}>
           <h3 className="table-title">
-            {report.AccountName} — {report.From} to {report.To}
+            {report.AccountName} ({fmtDate(report.From)} → {fmtDate(report.To)})
           </h3>
 
-          <p style={{ fontWeight: "600", margin: "8px 0" }}>
+          <p style={{ fontWeight: 600 }}>
             Opening Balance: {report.OpeningBalance.toFixed(2)}{" "}
             {report.OpeningSide}
           </p>
 
-          <table className="data-table">
+          <table className="ledgerdata-table">
             <thead>
               <tr>
+                <th>S.No</th>
                 <th>Date</th>
                 <th>Narration</th>
                 <th>Voucher</th>
@@ -171,12 +176,21 @@ useEffect(() => {
             </thead>
 
             <tbody>
-              {report.Rows.map((r) => (
+              {report.Rows.length === 0 && (
+                <tr>
+                  <td colSpan={7} style={{ textAlign: "center" }}>
+                    No entries
+                  </td>
+                </tr>
+              )}
+
+              {report.Rows.map((r, i) => (
                 <tr key={r.LineId}>
-                  <td>{r.Date}</td>
+                  <td>{i + 1}</td>
+                  <td>{fmtDate(r.Date)}</td>
                   <td>{r.Narration}</td>
                   <td>
-                    {r.VoucherType}#{r.VoucherId}
+                    {r.VoucherType} #{r.VoucherId}
                   </td>
                   <td style={{ textAlign: "right" }}>
                     {r.Debit.toFixed(2)}
@@ -185,7 +199,7 @@ useEffect(() => {
                     {r.Credit.toFixed(2)}
                   </td>
                   <td style={{ textAlign: "right" }}>
-                    {r.RunningBalance.toFixed(2)}
+                    {r.RunningBalance.toFixed(2)} {r.RunningSide}
                   </td>
                 </tr>
               ))}
@@ -193,7 +207,7 @@ useEffect(() => {
 
             <tfoot>
               <tr>
-                <th colSpan={3}>Closing</th>
+                <th colSpan={4}>Closing Balance</th>
                 <th colSpan={3} style={{ textAlign: "right" }}>
                   {report.ClosingBalance.toFixed(2)} {report.ClosingSide}
                 </th>

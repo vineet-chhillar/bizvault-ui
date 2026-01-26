@@ -4,12 +4,34 @@ export default function ProfitLossReport() {
   const [from, setFrom] = useState("2025-04-01");
   const [to, setTo] = useState(new Date().toISOString().slice(0, 10));
   const [report, setReport] = useState(null);
+  const [loaded, setLoaded] = useState(false);
+const exportPdf = () => {
+    if (!loaded) {
+      alert("Load report first");
+      return;
+    }
+    window.chrome.webview.postMessage({
+      action: "exportProfitLossPdf",
+      payload: { From: from, To: to },
+    });
+  };
 
   useEffect(() => {
     const handler = (e) => {
       const msg = e.data;
       if (msg.action === "getProfitLossResult") {
         setReport(msg.report);
+        setLoaded(true);
+      }
+      if (msg.action === "generateProfitLossPdfResult") {
+        if (msg.success) {
+          window.chrome.webview.postMessage({
+            action: "openFile",
+            data: { path: msg.path },
+          });
+        } else {
+          alert("PDF generation failed");
+        }
       }
     };
 
@@ -46,6 +68,20 @@ export default function ProfitLossReport() {
           <div className="inventory-btns">
             <button className="btn-submit small" type="button" onClick={load}>
               Load
+            </button>
+            <button
+              className="btn-submit small"
+              type="button"
+              onClick={exportPdf}
+            >
+              Export PDF
+            </button>
+             <button
+              className="btn-submit small"
+              type="button"
+              onClick={exportPdf}
+            >
+              Export Excel
             </button>
           </div>
 

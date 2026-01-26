@@ -9,6 +9,7 @@ export default function DayBookReport() {
   );
   const [rows, setRows] = useState([]);
   const [loaded, setLoaded] = useState(false);
+let pageSerialNo = 1;
 
   useEffect(() => {
     const handler = (e) => {
@@ -59,7 +60,7 @@ export default function DayBookReport() {
       return;
     }
     window.chrome.webview.postMessage({
-      action: "generateDayBookPdf",
+      action: "exportDayBookPdf",
       payload: { From: from, To: to },
     });
   };
@@ -73,11 +74,20 @@ export default function DayBookReport() {
     0
   );
 const groupedByVoucher = rows.reduce((acc, row) => {
-  const key = row.VoucherNo || "UNKNOWN";
-  if (!acc[key]) acc[key] = [];
-  acc[key].push(row);
+  const key = `${row.VoucherType || "UNKNOWN"}|${row.VoucherId}`;
+
+  if (!acc[key]) {
+    acc[key] = {
+      voucherType: row.VoucherType || "UNKNOWN",
+      voucherId: row.VoucherId,
+      rows: []
+    };
+  }
+
+  acc[key].rows.push(row);
   return acc;
 }, {});
+
 
 
 
@@ -118,8 +128,17 @@ const groupedByVoucher = rows.reduce((acc, row) => {
             >
               Export PDF
             </button>
+             <button
+              className="btn-submit small"
+              type="button"
+              onClick={exportPdf}
+            >
+              Export Excel
+            </button>
           </div>
-        </div>
+
+
+         </div>
       </div>
 
       {/* REPORT SECTION */}
@@ -132,9 +151,9 @@ const groupedByVoucher = rows.reduce((acc, row) => {
           <table className="daybookdata-table">
             <thead>
               <tr>
+                <th>S.No</th>
                 <th>Date</th>
                 <th>Voucher Type</th>
-                <th>Voucher No</th>
                 <th>Description</th>
                 <th>Account</th>
                 <th style={{ textAlign: "right" }}>Debit</th>
@@ -146,78 +165,95 @@ const groupedByVoucher = rows.reduce((acc, row) => {
            <tbody>
   {rows.length === 0 && (
     <tr>
-      <td colSpan={7} style={{ textAlign: "center" }}>
+      <td colSpan={6} style={{ textAlign: "center" }}>
         No records found
       </td>
     </tr>
   )}
 
-  {Object.entries(groupedByVoucher).map(([voucherNo, lines], gi) => {
-    const voucherDebit = lines.reduce(
-      (s, r) => s + Number(r.Debit || 0),
-      0
-    );
-    const voucherCredit = lines.reduce(
-      (s, r) => s + Number(r.Credit || 0),
-      0
-    );
+ {Object.values(groupedByVoucher).map((group, gi) => {
+  const { voucherType, voucherId, rows } = group;
 
-    return (
-      <React.Fragment key={gi}>
-        {/* Voucher Lines */}
-        {lines.map((r, li) => (
-          <tr key={`${gi}-${li}`}>
-            {li === 0 && (
-              <>
-                <td rowSpan={lines.length}>{r.EntryDate}</td>
-                <td rowSpan={lines.length}>{r.VoucherType}</td>
-                <td rowSpan={lines.length}>{voucherNo}</td>
-                <td rowSpan={lines.length}>{r.Description}</td>
-              </>
-            )}
+  const currentSerial = pageSerialNo++; // 👈 ONE per voucher
 
-            <td>{r.AccountName}</td>
-            <td style={{ textAlign: "right" }}>
-              {Number(r.Debit).toFixed(2)}
-            </td>
-            <td style={{ textAlign: "right" }}>
-              {Number(r.Credit).toFixed(2)}
-            </td>
-          </tr>
-        ))}
+  const voucherDebit = rows.reduce(
+    (s, r) => s + Number(r.Debit || 0),
+    0
+  );
 
-        {/* Voucher Subtotal Row */}
-        <tr style={{ background: "#fafafa", fontWeight: "600" }}>
-          <td colSpan={4} style={{ textAlign: "right" }}>
-            Voucher Total :
-          </td>
+  const voucherCredit = rows.reduce(
+    (s, r) => s + Number(r.Credit || 0),
+    0
+  );
+
+  return (
+    <React.Fragment key={gi}>
+      {/* Voucher Lines */}
+      {rows.map((r, li) => (
+        <tr key={`${gi}-${li}`}>
+          {li === 0 && (
+            <>
+              {/* ✅ SERIAL NO (rowSpan) */}
+              <td rowSpan={rows.length}>{currentSerial}</td>
+
+              <td rowSpan={rows.length}>{r.EntryDate}</td>
+
+              <td rowSpan={rows.length}>
+                {voucherType}/{voucherId}
+              </td>
+
+              <td rowSpan={rows.length}>
+                {r.Description}
+              </td>
+            </>
+          )}
+
+          <td>{r.AccountName}</td>
+
           <td style={{ textAlign: "right" }}>
-            {voucherDebit.toFixed(2)}
+            {Number(r.Debit || 0).toFixed(2)}
           </td>
+
           <td style={{ textAlign: "right" }}>
-            {voucherCredit.toFixed(2)}
+            {Number(r.Credit || 0).toFixed(2)}
           </td>
         </tr>
-      </React.Fragment>
-    );
-  })}
+      ))}
+
+      {/* Voucher Subtotal Row */}
+      <tr style={{ background: "#fafafa", fontWeight: 600 }}>
+        <td colSpan={5} style={{ textAlign: "right" }}>
+          Voucher Total :
+        </td>
+        <td style={{ textAlign: "right" }}>
+          {voucherDebit.toFixed(2)}
+        </td>
+        <td style={{ textAlign: "right" }}>
+          {voucherCredit.toFixed(2)}
+        </td>
+      </tr>
+    </React.Fragment>
+  );
+})}
+
+
 </tbody>
 
 
 
 
             <tfoot>
-              <tr>
-                <th colSpan={5}>TOTAL</th>
-                <th style={{ textAlign: "right" }}>
-                  {totalDebit.toFixed(2)}
-                </th>
-                <th style={{ textAlign: "right" }}>
-                  {totalCredit.toFixed(2)}
-                </th>
-                <th />
-              </tr>
-            </tfoot>
+  <tr>
+    <th colSpan={5}>TOTAL</th>
+    <th style={{ textAlign: "right" }}>
+      {totalDebit.toFixed(2)}
+    </th>
+    <th style={{ textAlign: "right" }}>
+      {totalCredit.toFixed(2)}
+    </th>
+  </tr>
+</tfoot>
+
           </table>
         </div>
       )}

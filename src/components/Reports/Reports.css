@@ -91,13 +91,13 @@ tfoot th {
 /* --- Custom Column Widths (adjust to your liking) --- */
 .daybookdata-table th:nth-child(1), /* Item Name */
 .daybookdata-table td:nth-child(1) {
-  width: 15%;
+  width: 5%;
   text-align: center; /* center align Unit, GST %, and buttons */
 }
 
 .daybookdata-table th:nth-child(2), /* Item Code */
 .daybookdata-table td:nth-child(2) {
-  width: 10%;
+  width: 15%;
   text-align: center; /* center align Unit, GST %, and buttons */
 }
 
@@ -115,7 +115,7 @@ tfoot th {
 
 .daybookdata-table th:nth-child(5), /* Description */
 .daybookdata-table td:nth-child(5) {
-  width: 15%; /* small column */
+  width: 20%; /* small column */
   text-align: center; /* center align Unit, GST %, and buttons */
 }
 
@@ -124,13 +124,362 @@ tfoot th {
   width: 10%; /* small column */
   text-align: center; /* center align Unit, GST %, and buttons */
 }
-.daybookdata-table th:nth-child(7), /* GST % */
+
+.daybookdata-table th:nth-child(7), /* Unit % */
 .daybookdata-table td:nth-child(7) {
   width: 10%; /* small column */
   text-align: center; /* center align Unit, GST %, and buttons */
 }
-.daybookdata-table th:nth-child(8), /* GST % */
-.daybookdata-table td:nth-child(8) {
+
+
+
+
+.cashbookdata-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  table-layout: fixed;
+  border: 1px solid #ddd; /* ✅ outer border */
+}
+
+.cashbookdata-table th,
+.cashbookdata-table td {
+  border: 1px solid #ddd; /* ✅ inner grid lines */
+  padding: 4px 8px;
+  line-height: 1.2;
+  font-size: 0.95rem;
+  vertical-align: middle;
+}
+
+.cashbbookdata-table th {
+  background-color: #f4e9ff;
+  color: #4e1d7c;
+  font-weight: 600;
+  text-align: center;
+}
+
+.cashbbookdata-table tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+/* Optional: make border lines a bit darker for better visibility */
+.cashbbookdata-table th,
+.-table td {
+  border-color: #ccc;
+}
+
+
+/* --- Custom Column Widths (adjust to your liking) --- */
+.cashbbookdata-table th:nth-child(1), /* Item Name */
+.cashbbookdata-table td:nth-child(1) {
+  width: 2%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.cashbbookdata-table th:nth-child(2), /* Item Code */
+.cashbbookdata-table td:nth-child(2) {
+  width: 25%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.cashbbookdata-table th:nth-child(3), /* Category */
+.cashbbookdata-table td:nth-child(3) {
+  width: 20%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.cashbookdata-table th:nth-child(4), /* Date */
+.cashbookdata-table td:nth-child(4) {
+  width: 25%; /* more width for longer text */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.cashbookdata-table th:nth-child(5), /* Description */
+.cashbookdata-table td:nth-child(5) {
+  width: 20%; /* small column */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.cashbookdata-table th:nth-child(6), /* Unit % */
+.cashbookdata-table td:nth-child(6) {
+  width: 8%; /* small column */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.cashbookdata-table th:nth-child(7), /* Unit % */
+.cashbookdata-table td:nth-child(7) {
+  width: 8%; /* small column */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+.cashbookdata-table th:nth-child(8), /* Unit % */
+.cashbookdata-table td:nth-child(8) {
+  width: 8%; /* small column */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+
+
+.ledgerdata-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  table-layout: fixed;
+  border: 1px solid #ddd; /* ✅ outer border */
+}
+
+.ledgerdata-table th,
+.ledgerdata-table td {
+  border: 1px solid #ddd; /* ✅ inner grid lines */
+  padding: 4px 8px;
+  line-height: 1.2;
+  font-size: 0.95rem;
+  vertical-align: middle;
+}
+
+.ledgerdata-table th {
+  background-color: #f4e9ff;
+  color: #4e1d7c;
+  font-weight: 600;
+  text-align: center;
+}
+
+.ledgerdata-table tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+/* Optional: make border lines a bit darker for better visibility */
+.ledgerdata-table th,
+.ledgerdata-table td {
+  border-color: #ccc;
+}
+.-table td {
+  border-color: #ccc;
+}
+
+
+/* --- Custom Column Widths (adjust to your liking) --- */
+.ledgerdata-table th:nth-child(1), /* Item Name */
+.ledgerdata-table td:nth-child(1) {
+  width: 5%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.ledgerdata-table th:nth-child(2), /* Item Code */
+.ledgerdata-table td:nth-child(2) {
+  width: 25%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.ledgerdata-table th:nth-child(3), /* Category */
+.ledgerdata-table td:nth-child(3) {
+  width: 20%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.ledgerdata-table th:nth-child(4), /* Date */
+.ledgerdata-table td:nth-child(4) {
+  width: 25%; /* more width for longer text */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.ledgerdata-table th:nth-child(5), /* Description */
+.ledgerdata-table td:nth-child(5) {
+  width: 20%; /* small column */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.ledgerdata-table th:nth-child(6), /* Unit % */
+.ledgerdata-table td:nth-child(6) {
+  width: 8%; /* small column */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.ledgerdata-table th:nth-child(7), /* Unit % */
+.ledgerdata-table td:nth-child(7) {
+  width: 8%; /* small column */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+
+.outstandingdata-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  table-layout: fixed;
+  border: 1px solid #ddd; /* ✅ outer border */
+}
+
+.outstandingdata-table th,
+.outstandingdata-table td {
+  border: 1px solid #ddd; /* ✅ inner grid lines */
+  padding: 4px 8px;
+  line-height: 1.2;
+  font-size: 0.95rem;
+  vertical-align: middle;
+}
+
+.outstandingdata-table th {
+  background-color: #f4e9ff;
+  color: #4e1d7c;
+  font-weight: 600;
+  text-align: center;
+}
+
+.outstandingdata-table tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+/* Optional: make border lines a bit darker for better visibility */
+.outstandingdata-table th,
+.outstandingdata-table td {
+  border-color: #ccc;
+}
+.outstandingdata-table td {
+  border-color: #ccc;
+}
+.outstandingdata-table td {
+  border-color: #ccc;
+}
+
+
+/* --- Custom Column Widths (adjust to your liking) --- */
+.outstandingdata-table th:nth-child(1), /* Item Name */
+.outstandingdata-table td:nth-child(1) {
+  width: 5%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.outstandingdata-table th:nth-child(2), /* Item Code */
+.outstandingdata-table td:nth-child(2) {
+  width: 25%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.outstandingdata-table th:nth-child(3), /* Category */
+.outstandingdata-table td:nth-child(3) {
+  width: 20%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.outstandingdata-table th:nth-child(4), /* Date */
+.outstandingdata-table td:nth-child(4) {
+  width: 25%; /* more width for longer text */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.outstandingdata-table th:nth-child(5), /* Description */
+.outstandingdata-table td:nth-child(5) {
+  width: 20%; /* small column */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+
+
+
+.stocksummarydata-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  table-layout: fixed;
+  border: 1px solid #ddd; /* ✅ outer border */
+}
+
+.stocksummarydata-table th,
+.stocksummarydata-table td {
+  border: 1px solid #ddd; /* ✅ inner grid lines */
+  padding: 4px 8px;
+  line-height: 1.2;
+  font-size: 0.95rem;
+  vertical-align: middle;
+}
+
+.stocksummarydata-table th {
+  background-color: #f4e9ff;
+  color: #4e1d7c;
+  font-weight: 600;
+  text-align: center;
+}
+
+.stocksummarydata-table tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+/* Optional: make border lines a bit darker for better visibility */
+.stocksummarydata-table th,
+.stocksummarydata-table td {
+  border-color: #ccc;
+}
+.stocksummarydata-table td {
+  border-color: #ccc;
+}
+.stocksummarydata-table td {
+  border-color: #ccc;
+}
+.stocksummarydata-table td {
+  border-color: #ccc;
+}
+
+
+/* --- Custom Column Widths (adjust to your liking) --- */
+.stocksummarydata-table th:nth-child(1), /* Item Name */
+.stocksummarydata-table td:nth-child(1) {
+  width: 3%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.stocksummarydata-table th:nth-child(2), /* Item Code */
+.stocksummarydata-table td:nth-child(2) {
+  width: 15%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.stocksummarydata-table th:nth-child(3), /* Category */
+.stocksummarydata-table td:nth-child(3) {
+  width: 5%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.stocksummarydata-table th:nth-child(4), /* Date */
+.stocksummarydata-table td:nth-child(4) {
+  width: 10%; /* more width for longer text */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.stocksummarydata-table th:nth-child(5), /* Description */
+.stocksummarydata-table td:nth-child(5) {
+  width: 10%; /* small column */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+.stocksummarydata-table th:nth-child(6), /* Description */
+.stocksummarydata-table td:nth-child(6) {
+  width: 10%; /* small column */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+.stocksummarydata-table th:nth-child(7), /* Description */
+.stocksummarydata-table td:nth-child(7) {
+  width: 10%; /* small column */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+.stocksummarydata-table th:nth-child(8), /* Description */
+.stocksummarydata-table td:nth-child(8) {
+  width: 10%; /* small column */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+.stocksummarydata-table th:nth-child(9), /* Description */
+.stocksummarydata-table td:nth-child(9) {
+  width: 10%; /* small column */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+.stocksummarydata-table th:nth-child(10), /* Description */
+.stocksummarydata-table td:nth-child(10) {
   width: 10%; /* small column */
   text-align: center; /* center align Unit, GST %, and buttons */
 }

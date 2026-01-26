@@ -35,16 +35,16 @@ function LoginPage({ sendToCSharp, loginError }) {
   return (
     <div className="login-container">
       <div className="login-card">
-        {/*<div className="logo-container">
+        <div className="logo-container">
                 <img src={logo} alt="DhanSutra Logo" className="app-logo" />
-        </div>*/}
-        <h1 className="login-title">llhgfg arjhgge</h1>
+        </div>
+        {/*<h1 className="login-title">DhanSutra</h1>*/}
         <p className="login-subtitle">Sign in to your account</p>
 
         {error && <div className="login-error">{error}</div>}
 
         <form className="login-form" onSubmit={handleSubmit}>
-          <label>Email</label>
+          <label>UserId</label>
           <input
             value={email}
             onChange={(e) => setEmail(e.target.value)}
