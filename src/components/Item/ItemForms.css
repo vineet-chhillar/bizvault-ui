@@ -1325,3 +1325,157 @@ button:disabled {
   font-size: 13px;
   line-height: 1.2;
 }
+.hsn-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 0;
+  margin-bottom: 14px;
+}
+
+.hsn-header-center {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #1d0236; /* purple */
+}
+
+.hsn-icon {
+  font-size: 22px;
+}
+
+.hsn-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1d0741;
+}
+
+.hsn-help {
+  cursor: pointer;
+  font-size: 18px;
+  opacity: 0.75;
+}
+
+.hsn-help:hover {
+  opacity: 1;
+}
+.btn-cancel {
+  background: #e5e7eb;
+  color: #111827;
+  border: 1px solid #d1d5db;
+  padding: 6px 14px;
+  margin-left: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-cancel:hover {
+  background: #d1d5db;
+}
+.gst-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 0;
+  margin-bottom: 14px;
+}
+
+.gst-header-center {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #6d28d9;
+}
+
+.gst-icon {
+  font-size: 22px;
+}
+
+.gst-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #6d28d9;
+}
+
+.gst-help {
+  cursor: pointer;
+  font-size: 18px;
+  opacity: 0.75;
+}
+
+.gst-help:hover {
+  opacity: 1;
+}
+.unit-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 0;
+  margin-bottom: 14px;
+}
+
+.unit-header-center {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #6d28d9;
+}
+
+.unit-icon {
+  font-size: 22px;
+}
+
+.unit-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #6d28d9;
+}
+
+.unit-help {
+  cursor: pointer;
+  font-size: 18px;
+  opacity: 0.75;
+}
+
+.unit-help:hover {
+  opacity: 1;
+}
+.category-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 0;
+  margin-bottom: 14px;
+}
+
+.category-header-center {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #6d28d9;
+}
+
+.category-icon {
+  font-size: 22px;
+}
+
+.category-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #6d28d9;
+}
+
+.category-help {
+  cursor: pointer;
+  font-size: 18px;
+  opacity: 0.75;
+}
+
+.category-help:hover {
+  opacity: 1;
+}
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from "react";
 import CreateItem from "./components/Item/CreateItem";
+import HsnMaster from "./components/Item/HsnMaster";
+import UnitMaster from "./components/Item/UnitMaster";
+import GstMaster from "./components/Item/GstMaster";
+import CategoryMaster from "./components/Item/CategoryMaster";
 import EditItem from "./components/Item/EditItem";
 import CompanySetup from "./components/Item/CompanySetup";
 import PurchaseInvoiceEditor from "./components/Item/PurchaseInvoiceEditor";
@@ -296,7 +300,7 @@ useEffect(() => {
             </NavLink>
 )}
 
-{hasPermission(user, PERMISSIONS.SETTINGS) && (
+{/*{hasPermission(user, PERMISSIONS.SETTINGS) && (
            <NavLink
               to="/Masters"
               onClick={() => isMobile && setMobileOpen(false)}
@@ -307,7 +311,63 @@ useEffect(() => {
               <span className="icon"><FaMoneyBillWave /></span>
               <span className="label">Masters</span>
             </NavLink>
+)}*/}
+{/* Individual Links under Masters */}
+{hasPermission(user, PERMISSIONS.MASTERS) && (
+<div className="nav-section">
+  {/* Parent Link */}
+  <div
+    className="nav-link item-parent"
+    onClick={() => setIsItemOpen(!isItemOpen)}
+    style={{ cursor: "pointer" }}
+  >
+    <span className="icon"><FaMoneyBillWave /></span>
+    <span className="label">Masters</span>
+    <span className="arrow">{isItemOpen ? "▲" : "▼"}</span>
+  </div>
+
+  {/* Collapsible Children */}
+  <div className={`nav-children-tabs ${isItemOpen ? "open" : ""}`}>
+    <NavLink
+      to="/item/HsnMaster"
+      onClick={() => isMobile && setMobileOpen(false)}
+      className={({ isActive }) =>
+        "nav-tab-link" + (isActive ? " active" : "")
+      }
+    >
+     HSN Master
+    </NavLink>
+<NavLink
+      to="/item/GstMaster"
+      onClick={() => isMobile && setMobileOpen(false)}
+      className={({ isActive }) =>
+        "nav-tab-link" + (isActive ? " active" : "")
+      }
+    >
+      GST Master
+    </NavLink>
+   <NavLink
+      to="/item/UnitMaster"
+      onClick={() => isMobile && setMobileOpen(false)}
+      className={({ isActive }) =>
+        "nav-tab-link" + (isActive ? " active" : "")
+      }
+    >
+      Unit Master
+    </NavLink>
+     <NavLink
+      to="/item/CategoryMaster"
+      onClick={() => isMobile && setMobileOpen(false)}
+      className={({ isActive }) =>
+        "nav-tab-link" + (isActive ? " active" : "")
+      }
+    >
+      Category Master
+    </NavLink>
+  </div>
+</div>
 )}
+
 
 {hasPermission(user, PERMISSIONS.VOUCHERS) && (
             <NavLink
@@ -741,7 +801,29 @@ useEffect(() => {
     <CreateItem />
     </ProtectedRoute>
     }/>
+
+    <Route path="/Item/HsnMaster" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.MASTERS)}>
+    <HsnMaster />
+    </ProtectedRoute>
+    }/>
+    <Route path="/Item/UnitMaster" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.MASTERS)}>
+    <UnitMaster />
+    </ProtectedRoute>
+    }/>
+
+    <Route path="/Item/GstMaster" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.MASTERS)}>
+    <GstMaster />
+    </ProtectedRoute>
+    }/>
   
+  <Route path="/Item/CategoryMaster" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.MASTERS)}>
+    <CategoryMaster />
+    </ProtectedRoute>
+    }/>
   <Route path="/Item/EditItem" element={
     <ProtectedRoute allow={hasPermission(user, PERMISSIONS.MASTERS)}>
     <EditItem />

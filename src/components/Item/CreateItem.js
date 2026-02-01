@@ -9,17 +9,6 @@ import { validateItemForm } from "../../utils/validateItemForm";
 
 
 export default function CreateItem() {
-{/*}  const now = new Date();
-const formatted =
-  now.getFullYear() + "-" +
-  String(now.getMonth() + 1).padStart(2, "0") + "-" +
-  String(now.getDate()).padStart(2, "0") + " " +
-  String(now.getHours()).padStart(2, "0") + ":" +
-  String(now.getMinutes()).padStart(2, "0") + ":" +
-  String(now.getSeconds()).padStart(2, "0");
-  */}
-
-
   const [itemData, setItemData] = useState({
     name: "",
     itemcode: "",
@@ -35,40 +24,16 @@ const formatted =
     createdby: "",
     createdat: "",
      reorderlevel: "",  // ⭐ NEW FIELD
+      isactive: true,
   });
-
   const [errors, setErrors] = useState({});
   const [items, setItems] = useState([]);
   
-
-  
-  
-  
-
- 
-
-
 {/*const [categoryId, setCategoryId] = useState("");*/}
   const [category, setCategory] = useState(null);
 const [categories, setCategories] = useState([]);
-
-
-
   const [unit, setUnit] = useState(null);
 const [units, setUnits] = useState([]);
-
-
- 
-
-
-
-
-
-
-
-
-
-
 useLayoutEffect(() => {
   // Check height + overflow for parent containers
   const containers = document.querySelectorAll(".app-container, .main-layout, .main-content, .form-container, .inventory-form");
@@ -109,7 +74,7 @@ useEffect(() => {
         }
       }
 
-       if (msg.Type === "deleteItemResponse") {
+       {/*if (msg.Type === "deleteItemResponse") {
          if (msg.Status === "Success") {
           alert("✅ " + msg.Message);
           fetchItems(); // ✅ Reload items from DB
@@ -117,7 +82,7 @@ useEffect(() => {
           alert("❌ " + msg.Message);
         }
 
-       }
+       }*/}
 
       if (msg.Type === "GetItems" && msg.Status === "Success") {
         setItems(msg.Data);
@@ -202,7 +167,8 @@ const finalDateTime = `${dateFromCalendar} ${timePart}`;
        GstPercent: itemData.gstpercent,
       CreatedBy: getCreatedBy(), 
       CreatedAt: new Date().toISOString(),
-       ReorderLevel: Number(itemData.reorderlevel),   // ⭐ NEW FIELD TO SEND
+       ReorderLevel: Number(itemData.reorderlevel), 
+       
     };
 
     if (window.chrome?.webview) {
@@ -224,6 +190,7 @@ const finalDateTime = `${dateFromCalendar} ${timePart}`;
       createdby: "",
       createdat: "",
       reorderlevel: "",   // ⭐ RESET THIS TOO
+      
     });
   };
 
@@ -283,9 +250,10 @@ const finalDateTime = `${dateFromCalendar} ${timePart}`;
   useEffect(() => {
     if (window.chrome?.webview) {
       window.chrome.webview.postMessage({
-        Action: "GetCategoryList",
-        Payload: {},
-      });
+  Action: "getActiveCategoryList",
+  Payload: {},
+});
+
     }
 
     const handler = (event) => {
@@ -293,9 +261,9 @@ const finalDateTime = `${dateFromCalendar} ${timePart}`;
         let msg = event.data;
         if (typeof msg === "string") msg = JSON.parse(msg);
 
-        if (msg.Type === "GetCategoryList" && msg.Status === "Success") {
+        if (msg.action === "getActiveCategoryListResult" && msg.success) {
            console.log("📩 Received category:", msg.Data);
-          setCategories(msg.Data || []);
+          setCategories(msg.data || []);
         }
       } catch (err) {
         console.error("Error parsing message:", err);
@@ -310,7 +278,7 @@ const finalDateTime = `${dateFromCalendar} ${timePart}`;
   useEffect(() => {
     if (window.chrome?.webview) {
       window.chrome.webview.postMessage({
-        Action: "GetAllUnitsList",
+        Action: "getActiveUnitList",
         Payload: {},
       });
     }
@@ -320,9 +288,9 @@ const finalDateTime = `${dateFromCalendar} ${timePart}`;
         let msg = event.data;
         if (typeof msg === "string") msg = JSON.parse(msg);
 
-        if (msg.Type === "GetAllUnits" && msg.Status === "Success") {
-           console.log("📩 Received Units:", msg.Data);
-          setUnits(msg.Data || []);
+        if (msg.action === "getActiveUnitListResult" && msg.success) {
+           console.log("📩 Received Units:", msg.data);
+          setUnits(msg.data || []);
         }
       } catch (err) {
         console.error("Error parsing message:", err);
@@ -332,6 +300,7 @@ const finalDateTime = `${dateFromCalendar} ${timePart}`;
     window.chrome?.webview?.addEventListener("message", handler);
     return () => window.chrome?.webview?.removeEventListener("message", handler);
   }, []);
+
 
 // ✅ Function to call C# method
   const GetUnitNameById = (id) => {
@@ -377,13 +346,13 @@ const finalDateTime = `${dateFromCalendar} ${timePart}`;
 
 
 // ✅ Function to call C# DeleteItemIfNoInventory
-  const deleteItem = (itemId) => {
+  {/*const deleteItem = (itemId) => {
     window.chrome.webview.postMessage({
       action: "deleteItem",
       Payload: { Item_Id: itemId }
       
     });
-  };
+  };*/}
 
 
 
@@ -540,6 +509,7 @@ const finalDateTime = `${dateFromCalendar} ${timePart}`;
 
 
 
+
         </div>
         <div className="inventory-btns">
         <button type="submit" className="btn-submit small">
@@ -564,7 +534,8 @@ const finalDateTime = `${dateFromCalendar} ${timePart}`;
                 <th>Unit</th>
                 <th>GST %</th>
                 <th>Reorder Level</th>
-                <th>Add/View Inventory</th>
+                <th>Is Active</th>
+                
                 
               </tr>
             </thead>
@@ -580,14 +551,12 @@ const finalDateTime = `${dateFromCalendar} ${timePart}`;
                   <td>{i.UnitName}</td>
                   <td>{i.GstPercent}</td>
                   <td>{i.ReorderLevel}</td>
+                  <td>{Number(i.IsActive) === 1 ? "Active" : "Inactive"}</td>
+
+
                 
-                 <td>  
-  
- 
- 
-  
-     
-<button
+                 {/*<td>       
+           } <button
             className="invaction-btn invaction-delete"
             onClick={() => {
               if (
@@ -609,18 +578,13 @@ const finalDateTime = `${dateFromCalendar} ${timePart}`;
     strokeLinejoin="round"
     className="invaction-icon small-icon"
   >
-    {/* Trash/Delete Icon */}
     <polyline points="3 6 5 6 21 6" />
     <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m5 0V4a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v2" />
     <line x1="10" y1="11" x2="10" y2="17" />
     <line x1="14" y1="11" x2="14" y2="17" />
-  </svg>
-
-  {/* Delete Inventory */}
-</button>
-
-             
-                </td>
+  </svg> 
+          </button>             
+                </td>*/}
 
 
                 </tr>

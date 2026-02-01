@@ -164,6 +164,7 @@ const EditItem = () => {
           unitid: formData.UnitId,
           gstid: formData.GstId,
           reorderlevel: Number(formData.ReorderLevel),
+          isactive: Number(formData.IsActive),   // 🔥 ADD THIS
           updatedby: getCreatedBy(),
         },
       });
@@ -173,14 +174,7 @@ const EditItem = () => {
   // -----------------------------------------------------------
   // Delete item
   // -----------------------------------------------------------
-  const deleteItem = (itemId) => {
-    if (!window.chrome?.webview) return;
-
-    window.chrome.webview.postMessage({
-      action: "deleteItem",
-      Payload: { Item_Id: itemId },
-    });
-  };
+  
 
   // -----------------------------------------------------------
   // UI Rendering
@@ -217,6 +211,7 @@ const EditItem = () => {
               <th>Unit</th>
               <th>GST %</th>
               <th>Reorder</th>
+              <th>Status</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -234,6 +229,13 @@ const EditItem = () => {
                   <td>{i.UnitName}</td>
                   <td>{i.GstPercent}</td>
                   <td>{i.ReorderLevel}</td>
+<td>
+  <span
+    className={Number(i.IsActive) === 1 ? "status-active" : "status-inactive"}
+  >
+    {Number(i.IsActive) === 1 ? "Active" : "Inactive"}
+  </span>
+</td>
 
                   <td>
                     {/* Edit */}
@@ -241,29 +243,23 @@ const EditItem = () => {
                       className="invaction-btn invaction-modify"
                       onClick={() =>
                         setFormData({
-                          ...i,
-                          CategoryId: String(i.CategoryId),
-                          UnitId: String(i.UnitId),
-                          GstId: String(i.GstId),
-                          GstPercent: i.GstPercent,
-                          Date: formatDateForInput(i.Date),
-                          ReorderLevel: i.ReorderLevel || "",
-                        })
+  ...i,
+  IsActive: Number(i.IsActive), // 🔥 important
+  CategoryId: String(i.CategoryId),
+  UnitId: String(i.UnitId),
+  GstId: String(i.GstId),
+  GstPercent: i.GstPercent,
+  Date: formatDateForInput(i.Date),
+  ReorderLevel: i.ReorderLevel || "",
+})
+
                       }
                     >
                       ✏️
                     </button>
 
                     {/* Delete */}
-                    <button
-                      className="invaction-btn invaction-delete"
-                      onClick={() =>
-                        window.confirm(`Delete "${i.Name}"?`) &&
-                        deleteItem(i.Id)
-                      }
-                    >
-                      🗑️
-                    </button>
+                    
                   </td>
                 </tr>
               ))
@@ -395,6 +391,24 @@ const EditItem = () => {
                 onChange={handleChange}
               />
             </div>
+{/* STATUS */}
+<div className="form-group checkbox-group">
+  <label>
+    <input
+      type="checkbox"
+      checked={Number(formData.IsActive) === 1}
+      onChange={(e) =>
+        setFormData((prev) => ({
+          ...prev,
+          IsActive: e.target.checked ? 1 : 0,
+        }))
+      }
+    />
+    Active
+  </label>
+</div>
+
+
           </div>
 
           {/* Buttons */}

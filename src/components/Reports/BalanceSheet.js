@@ -25,10 +25,25 @@ const exportPdf = () => {
       payload: { From: from, To: to },
     });
   };
+  const exportExcel = () => {
+  if (!loaded) {
+    alert("Load report first");
+    return;
+  }
+
+  window.chrome.webview.postMessage({
+    action: "exportBalanceSheetExcel",
+    payload: { From: from, To: to },
+  });
+};
+
   const [report, setReport] = useState(null);
 
   useEffect(() => {
+    
     const handler = (e) => {
+      console.log("📩 BalanceSheet message:", e.data);
+
       const msg = e.data;
       if (msg.action === "getBalanceSheetResult") {
         setReport(msg.report);
@@ -44,6 +59,12 @@ const exportPdf = () => {
           alert("PDF generation failed");
         }
       }
+if (msg.action === "exportBalanceSheetExcelResponse" && msg.success) {
+  window.chrome.webview.postMessage({
+    action: "openFile",
+    path: msg.path
+  });
+}
     };
 
     window.chrome.webview.addEventListener("message", handler);
@@ -95,12 +116,13 @@ const exportPdf = () => {
               Export PDF
             </button>
              <button
-              className="btn-submit small"
-              type="button"
-              onClick={exportPdf}
-            >
-              Export Excel
-            </button>
+  className="btn-submit small"
+  type="button"
+  onClick={exportExcel}
+>
+  Export Excel
+</button>
+
           </div>
         </div>
       </div>
