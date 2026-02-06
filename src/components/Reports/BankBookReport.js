@@ -13,7 +13,35 @@ export default function VoucherReport() {
    ClosingBalance: 0,
    Rows: [],
  });
+ const toastRef = React.useRef(null);
+ function showToast(message) {
+   if (toastRef.current) return;
  
+   const toast = document.createElement("div");
+   toast.innerText = message;
+ 
+   toast.style.position = "fixed";
+   toast.style.top = "50%";
+   toast.style.left = "50%";
+   toast.style.transform = "translate(-50%, -50%)";
+   toast.style.background = "#333";
+   toast.style.color = "#fff";
+   toast.style.padding = "14px 22px";
+   toast.style.borderRadius = "8px";
+   toast.style.zIndex = 9999;
+   toast.style.fontSize = "15px";
+   toast.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
+ 
+   document.body.appendChild(toast);
+   toastRef.current = toast;
+ }
+ 
+ function hideToast() {
+   if (toastRef.current) {
+     toastRef.current.remove();
+     toastRef.current = null;
+   }
+ }
  const rows = report?.Rows || [];
  const exportPdf = () => {
     if (!loaded) {
@@ -24,6 +52,19 @@ export default function VoucherReport() {
       action: "exportBankBookPdf",
       payload: { From: from, To: to },
     });
+  };
+
+  const exportExcel = () => {
+    if (!loaded) {
+      alert("Load report first");
+      return;
+    }
+    showToast("Exporting Excel...");
+   window.chrome.webview.postMessage({
+  action: "exportBankBookExcel",
+  payload: { From: from, To: to }
+});
+
   };
 
 {/*useEffect(() => {
@@ -59,6 +100,10 @@ if (msg.action === "generateBankBookPdfResult") {
           alert("PDF generation failed");
         }
       }
+      if (msg.action === "exportBankBookExcelResponse" && msg.success) {
+  hideToast();
+}
+
     };
 
     window.chrome.webview.addEventListener("message", handler);
@@ -152,7 +197,7 @@ let pageSerialNo = 1;
              <button
               className="btn-submit small"
               type="button"
-              onClick={exportPdf}
+              onClick={exportExcel}
             >
               Export Excel
             </button>

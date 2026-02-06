@@ -6,7 +6,35 @@ export default function StockSummary() {
   );
   const [rows, setRows] = useState([]);
   const [loaded, setLoaded] = useState(false);
-
+const toastRef = React.useRef(null);
+ function showToast(message) {
+   if (toastRef.current) return;
+ 
+   const toast = document.createElement("div");
+   toast.innerText = message;
+ 
+   toast.style.position = "fixed";
+   toast.style.top = "50%";
+   toast.style.left = "50%";
+   toast.style.transform = "translate(-50%, -50%)";
+   toast.style.background = "#333";
+   toast.style.color = "#fff";
+   toast.style.padding = "14px 22px";
+   toast.style.borderRadius = "8px";
+   toast.style.zIndex = 9999;
+   toast.style.fontSize = "15px";
+   toast.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
+ 
+   document.body.appendChild(toast);
+   toastRef.current = toast;
+ }
+ 
+ function hideToast() {
+   if (toastRef.current) {
+     toastRef.current.remove();
+     toastRef.current = null;
+   }
+ }
   useEffect(() => {
     const handler = (e) => {
       const msg = e.data;
@@ -26,6 +54,10 @@ export default function StockSummary() {
           alert("PDF generation failed");
         }
       }
+      if (msg.action === "exportStockSummaryExcelResponse" && msg.success) {
+  hideToast();
+}
+
     };
 
     window.chrome.webview.addEventListener("message", handler);
@@ -51,7 +83,18 @@ export default function StockSummary() {
       payload: { AsOf: asOf },
     });
   };
+const exportExcel = () => {
+    if (!loaded) {
+      alert("Load stock summary first");
+      return;
+    }
+    showToast("Exporting Excel...");
+    window.chrome.webview.postMessage({
+  action: "exportStockSummaryExcel",
+  payload: { AsOf: asOf }
+});
 
+  };
   return (
     <div className="form-container">
       <h2 className="form-title">Stock Summary</h2>
@@ -79,6 +122,13 @@ export default function StockSummary() {
               onClick={exportPdf}
             >
               Export PDF
+            </button>
+            <button
+              className="btn-submit small"
+              type="button"
+              onClick={exportExcel}
+            >
+              Export Excel
             </button>
           </div>
         </div>

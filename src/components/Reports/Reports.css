@@ -1,3 +1,10 @@
+.table-container {
+  margin-top: 0px;
+  padding-top: 0px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
 .report-page {
   padding: 16px;
 }
@@ -38,14 +45,14 @@ td {
 }
 
 thead th {
-  background: #f2f2f2;
+  background: #f2ebf8;
   position: sticky;
   top: 0;
   z-index: 1;
 }
 
 tfoot th {
-  background: #fafafa;
+  background: #f2ebf8;
 }
 
 .right {
@@ -154,7 +161,7 @@ tfoot th {
 }
 
 .cashbbookdata-table th {
-  background-color: #f4e9ff;
+  background-color: #52089c;
   color: #4e1d7c;
   font-weight: 600;
   text-align: center;

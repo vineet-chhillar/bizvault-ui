@@ -10,6 +10,43 @@ export default function BalanceSheet() {
         : new Date(today.getFullYear() - 1, 3, 1);
     return fyStart.toISOString().slice(0, 10);
   });
+const toastRef = React.useRef(null);
+
+
+function showToast(message) {
+  if (toastRef.current) return;
+
+  const toast = document.createElement("div");
+  toast.innerText = message;
+
+  toast.style.position = "fixed";
+  toast.style.top = "50%";
+  toast.style.left = "50%";
+  toast.style.transform = "translate(-50%, -50%)";
+  toast.style.background = "#333";
+  toast.style.color = "#fff";
+  toast.style.padding = "14px 22px";
+  toast.style.borderRadius = "8px";
+  toast.style.zIndex = 9999;
+  toast.style.fontSize = "15px";
+  toast.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
+
+  document.body.appendChild(toast);
+  toastRef.current = toast;
+}
+
+function hideToast() {
+  if (toastRef.current) {
+    toastRef.current.remove();
+    toastRef.current = null;
+  }
+}
+
+
+
+
+
+
 
   const [to, setTo] = useState(
     new Date().toISOString().slice(0, 10)
@@ -30,7 +67,7 @@ const exportPdf = () => {
     alert("Load report first");
     return;
   }
-
+showToast("Opening Excel…");
   window.chrome.webview.postMessage({
     action: "exportBalanceSheetExcel",
     payload: { From: from, To: to },
@@ -44,6 +81,7 @@ const exportPdf = () => {
     const handler = (e) => {
       console.log("📩 BalanceSheet message:", e.data);
 
+      
       const msg = e.data;
       if (msg.action === "getBalanceSheetResult") {
         setReport(msg.report);
@@ -60,10 +98,8 @@ const exportPdf = () => {
         }
       }
 if (msg.action === "exportBalanceSheetExcelResponse" && msg.success) {
-  window.chrome.webview.postMessage({
-    action: "openFile",
-    path: msg.path
-  });
+  console.log("Excel exported at:", msg.path);
+  hideToast();
 }
     };
 

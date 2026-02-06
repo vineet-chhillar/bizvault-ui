@@ -171,7 +171,7 @@ const refreshUsers = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isItemOpen, setIsItemOpen] = useState(false);
   const [isStockOpen, setIsStockOpen] = useState(false);
-  const [isSalesOpen, setIsSalesOpen] = useState(true);
+  const [isSalesOpen, setIsSalesOpen] = useState(false);
   const [isPurchaseOpen, setIsPurchaseOpen] = useState(false);
   const [isReportsOpen, setIsReportsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(

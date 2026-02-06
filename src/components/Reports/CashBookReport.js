@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-
-export default function VoucherReport() {
+import "./Reports.css";
+export default function CashBookReport() {
   const [from, setFrom] = useState(
     new Date().toISOString().slice(0, 10)
   );
@@ -13,6 +13,35 @@ export default function VoucherReport() {
   ClosingBalance: 0,
   Rows: [],
 });
+const toastRef = React.useRef(null);
+function showToast(message) {
+  if (toastRef.current) return;
+
+  const toast = document.createElement("div");
+  toast.innerText = message;
+
+  toast.style.position = "fixed";
+  toast.style.top = "50%";
+  toast.style.left = "50%";
+  toast.style.transform = "translate(-50%, -50%)";
+  toast.style.background = "#333";
+  toast.style.color = "#fff";
+  toast.style.padding = "14px 22px";
+  toast.style.borderRadius = "8px";
+  toast.style.zIndex = 9999;
+  toast.style.fontSize = "15px";
+  toast.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
+
+  document.body.appendChild(toast);
+  toastRef.current = toast;
+}
+
+function hideToast() {
+  if (toastRef.current) {
+    toastRef.current.remove();
+    toastRef.current = null;
+  }
+}
 
 const rows = report?.Rows || [];
 
@@ -25,6 +54,18 @@ const exportPdf = () => {
       action: "exportCashBookPdf",
       payload: { From: from, To: to },
     });
+  };
+  const exportExcel = () => {
+    if (!loaded) {
+      alert("Load report first");
+      return;
+    }
+    showToast("Exporting Excel...");
+    window.chrome.webview.postMessage({
+  action: "exportCashBookExcel",
+  payload: { From: from, To: to }
+});
+
   };
 {/*useEffect(() => {
   window.chrome.webview.postMessage({
@@ -64,6 +105,10 @@ if (msg.action === "generateCashBookPdfResult") {
           alert("PDF generation failed");
         }
       }
+      if (msg.action === "exportCashBookExcelResponse" && msg.success) {
+  hideToast();
+}
+
     };
 
     window.chrome.webview.addEventListener("message", handler);
@@ -112,27 +157,11 @@ let pageSerialNo = 1;
       <h2 className="form-title">Cash Book</h2>
 
 
-      {/* FILTERS */}
+      
       <div className="form-inner">
         <div className="form-row-horizontal">
           
-          {/*<div className="form-group">
-            <label>Voucher Type</label>
-            <select
-  value={voucherType}
-  onChange={(e) => setVoucherType(e.target.value)}
->
-  <option value="">-- All --</option>
-
-  {voucherTypes.map((vt) => (
-    <option key={vt} value={vt}>
-  {vt.replace(/([A-Z])/g, " $1").trim()}
-</option>
-
-  ))}
-</select>
-
-          </div>*/}
+         
 
           <div className="form-group">
             <label>From</label>
@@ -158,7 +187,7 @@ let pageSerialNo = 1;
              <button
               className="btn-submit small"
               type="button"
-              onClick={exportPdf}
+              onClick={exportExcel}
             >
               Export Excel
             </button>
@@ -166,16 +195,14 @@ let pageSerialNo = 1;
         </div>
       </div>
 
-      {/* TABLE */}
+      
       <div className="table-container" style={{ marginTop: 20 }}>
         {report && (
   <p style={{ fontWeight: 600 }}>
     Opening Balance : {report.OpeningBalance.toFixed(2)}
   </p>
 )}
-
-
-        <table className="cashbookdata-table">
+       <table className="cashbookdata-table">
           <thead>
   <tr>
     <th>S.No</th>
@@ -185,12 +212,9 @@ let pageSerialNo = 1;
     <th>Account</th>
     <th style={{ textAlign: "right" }}>Debit</th>
     <th style={{ textAlign: "right" }}>Credit</th>
-     <th style={{ textAlign: "right" }}>Balance</th> {/* NEW */}
+     <th style={{ textAlign: "right" }}>Balance</th> 
   </tr>
 </thead>
-
-
-
           <tbody>
   {rows.length === 0 && (
     <tr>
@@ -203,7 +227,7 @@ let pageSerialNo = 1;
   {Object.values(groupedByVoucher).map((group) => {
   const { voucherType, voucherId, rows: lines } = group;
 
-  const currentSerial = pageSerialNo++; // ✅ one per voucher
+  const currentSerial = pageSerialNo++; 
 
   const voucherDebit = lines.reduce(
     (s, r) => s + Number(r.Debit || 0),
@@ -218,57 +242,42 @@ let pageSerialNo = 1;
 
   return (
     <React.Fragment key={`${voucherType}-${voucherId}`}>
-      {lines.map((r, li) => {
-
-  // ✅ Update balance ONLY on Cash account
+    {lines.map((r, li) => {
   if (r.AccountName === "Cash") {
-    runningBalance +=
-      Number(r.Debit || 0) -
-      Number(r.Credit || 0);
+    runningBalance += Number(r.Debit || 0) - Number(r.Credit || 0);
   }
+
+  const cells = [];
+
+  if (li === 0) {
+    cells.push(
+      <td key="sn" rowSpan={lines.length}>{currentSerial}</td>,
+      <td key="date" rowSpan={lines.length}>{r.Date}</td>,
+      <td key="vt" rowSpan={lines.length}>{voucherType}</td>,
+      <td key="desc" rowSpan={lines.length}>{r.Description}</td>
+    );
+  }
+
+  cells.push(
+    <td key="acc">{r.AccountName}</td>,
+    <td key="dr" style={{ textAlign: "right" }}>
+      {Number(r.Debit || 0).toFixed(2)}
+    </td>,
+    <td key="cr" style={{ textAlign: "right" }}>
+      {Number(r.Credit || 0).toFixed(2)}
+    </td>,
+    <td key="bal" style={{ textAlign: "right", fontWeight: 600 }}>
+      {r.AccountName === "Cash" ? runningBalance.toFixed(2) : ""}
+    </td>
+  );
 
   return (
     <tr key={`${voucherType}-${voucherId}-${li}`}>
-      {li === 0 && (
-        <>
-          {/* SERIAL NO */}
-          <td rowSpan={lines.length}>{currentSerial}</td>
-
-          <td rowSpan={lines.length}>{r.Date}</td>
-
-          <td rowSpan={lines.length}>
-            {voucherType}
-          </td>
-
-          <td rowSpan={lines.length}>
-            {r.Description}
-          </td>
-        </>
-      )}
-
-      <td>{r.AccountName}</td>
-
-      <td style={{ textAlign: "right" }}>
-        {Number(r.Debit || 0).toFixed(2)}
-      </td>
-
-      <td style={{ textAlign: "right" }}>
-        {Number(r.Credit || 0).toFixed(2)}
-      </td>
-
-      {/* RUNNING BALANCE */}
-     <td style={{ textAlign: "right", fontWeight: 600 }}>
-  {r.AccountName === "Cash"
-    ? runningBalance.toFixed(2)
-    : ""}
-</td>
-
+      {cells}
     </tr>
   );
 })}
 
-
-      {/* Voucher subtotal (does NOT affect running balance) */}
       <tr style={{ background: "#fafafa", fontWeight: 600 }}>
         <td colSpan={5} style={{ textAlign: "right" }}>
           Voucher Total :
@@ -302,9 +311,6 @@ let pageSerialNo = 1;
     <th />
   </tr>
 </tfoot>
-
-
-
 
         </table>
         {report && (

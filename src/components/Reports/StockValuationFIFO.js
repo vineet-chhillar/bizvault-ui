@@ -11,7 +11,35 @@ export default function StockValuationFIFO() {
   const [rows, setRows] = useState([]);
   const [totals, setTotals] = useState({ closingStock: 0, cogs: 0 });
   const [loaded, setLoaded] = useState(false); // ✅
-
+const toastRef = React.useRef(null);
+ function showToast(message) {
+   if (toastRef.current) return;
+ 
+   const toast = document.createElement("div");
+   toast.innerText = message;
+ 
+   toast.style.position = "fixed";
+   toast.style.top = "50%";
+   toast.style.left = "50%";
+   toast.style.transform = "translate(-50%, -50%)";
+   toast.style.background = "#333";
+   toast.style.color = "#fff";
+   toast.style.padding = "14px 22px";
+   toast.style.borderRadius = "8px";
+   toast.style.zIndex = 9999;
+   toast.style.fontSize = "15px";
+   toast.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
+ 
+   document.body.appendChild(toast);
+   toastRef.current = toast;
+ }
+ 
+ function hideToast() {
+   if (toastRef.current) {
+     toastRef.current.remove();
+     toastRef.current = null;
+   }
+ }
   useEffect(() => {
     const handler = (e) => {
       const msg = e.data;
@@ -38,6 +66,10 @@ export default function StockValuationFIFO() {
           alert("PDF generation failed");
         }
       }
+      if (msg.action === "exportStockValuationExcelResponse" && msg.success) {
+  hideToast();
+}
+
     };
 
     window.chrome.webview.addEventListener("message", handler);
@@ -72,6 +104,18 @@ export default function StockValuationFIFO() {
     });
   };
 
+   const exportExcel = () => {
+    if (!loaded) {
+      alert("Load report first");
+      return;
+    }
+    showToast("Opening Excel…");
+    window.chrome.webview.postMessage({
+  action: "exportStockValuationExcel",
+  payload: { From: from, To: to }
+});
+
+  };
   return (
     <div className="form-container">
       <h2 className="form-title">Stock Valuation (FIFO)</h2>
@@ -108,6 +152,13 @@ export default function StockValuationFIFO() {
               onClick={exportPdf}
             >
               Export PDF
+            </button>
+            <button
+              className="btn-submit small"
+              type="button"
+              onClick={exportExcel}
+            >
+              Export Excel
             </button>
           </div>
         </div>
