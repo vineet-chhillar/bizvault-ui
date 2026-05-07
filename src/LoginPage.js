@@ -1,0 +1,113 @@
+import React, { useState, useEffect } from "react";
+import "./LoginPage.css";
+import logo from "./assets/brandlogo111.png"; // <-- add this at the top
+function LoginPage({ sendToCSharp, loginError, loginAttempt }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  
+const [modal, setModal] = useState({
+  show: false,
+  message: "",
+  type: "info"
+});
+  // 🔁 Reset loading on error from App.js
+ useEffect(() => {
+
+  setLoading(false);
+
+  if (loginError) {
+
+    setModal({
+      show: true,
+      message: loginError,
+      type: "error"
+    });
+  }
+
+}, [loginAttempt]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+
+  if (!email || !password) {
+
+  setModal({
+    show: true,
+    message: "Please enter username and password",
+    type: "error"
+  });
+
+  return;
+}
+
+    setLoading(true);
+
+    sendToCSharp("Login", {
+      username: email,
+      password: password
+    });
+  };
+
+  return (
+    <>
+    <div className="login-container">
+      <div className="login-card">
+        <div className="logo-container">
+                <img src={logo} alt="DhanSutra Logo" className="app-logo" />
+        </div>
+        {/*<h1 className="login-title">DhanSutra</h1>*/}
+        <p className="login-subtitle">Sign in to your account</p>
+
+        {/*{error && <div className="login-error">{error}</div>}*/}
+
+        <form className="login-form" onSubmit={handleSubmit}>
+          <label  className="login-label">User Id</label>
+          <input
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+
+          <label  className="login-label">Password</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+
+          <button disabled={loading} className="login-btn">
+            {loading ? "Logging in..." : "Login"}
+          </button>
+        </form>
+      </div>
+    </div>
+    {modal.show && (
+  <div className="modal-overlay">
+    <div className="modal-box">
+
+      <p>{modal.message}</p>
+
+      <div className="modal-actions">
+        <button
+          className="modal-btn ok"
+          onClick={() => {
+            modal.onClose?.();
+
+            setModal({
+              show: false
+            });
+          }}
+        >
+          OK
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}
+    </>
+  );
+}
+
+export default LoginPage;

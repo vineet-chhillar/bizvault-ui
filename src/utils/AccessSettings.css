@@ -1,0 +1,231 @@
+/* Layout */
+.access-page {
+  padding: 24px;
+  background: #f5f7fa;
+}
+
+.access-card {
+  max-width: 520px;
+  margin: auto;
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.access-title {
+  margin-bottom: 16px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.role-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.role-label {
+  width: 60px;
+  font-weight: 600;
+}
+
+.permissions {
+  border-top: 1px solid #eee;
+  margin-top: 12px;
+}
+
+.permission-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.permission-name {
+  text-transform: capitalize;
+  font-weight: 500;
+}
+
+/* ✅ CLEAR CHECKBOX (very visible) */
+.clear-checkbox {
+  position: relative;
+  padding-left: 28px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.clear-checkbox input {
+  position: absolute;
+  opacity: 0;
+}
+
+.clear-checkbox .checkmark {
+  position: absolute;
+  left: 0;
+  top: 2px;
+  height: 18px;
+  width: 18px;
+  border: 2px solid #310655;
+  border-radius: 4px;
+  background-color: #fff;
+}
+
+.clear-checkbox input:checked ~ .checkmark {
+  background-color: #310655;
+}
+
+.clear-checkbox .checkmark::after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+.clear-checkbox input:checked ~ .checkmark::after {
+  display: block;
+}
+
+.clear-checkbox .checkmark::after {
+  left: 5px;
+  top: 1px;
+  width: 4px;
+  height: 9px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* Info */
+.info-text {
+  margin-top: 12px;
+  color: #2ecc71;
+  font-weight: 600;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.access-denied {
+  color: #c0392b;
+  font-weight: 600;
+}
+/* ===============================
+   ACCESS SETTINGS – ROLE DROPDOWN
+================================ */
+
+/* ===============================
+   ACCESS SETTINGS – ROLE DROPDOWN
+   (Refined – slightly smaller)
+================================ */
+
+.access-settings-role {
+  max-width: 260px;          /* ⬅ reduced width */
+  margin-bottom: 14px;
+}
+
+/* Label */
+.access-settings-role label {
+  display: block;
+  font-size: 14px;           /* ⬅ slightly smaller */
+  font-weight: 700;
+  color: #4e1d7c;
+  margin-bottom: 4px;
+}
+
+/* Dropdown */
+.access-settings-role select {
+  width: 100%;
+  height: 38px;              /* ⬅ reduced height */
+  padding: 6px 12px;         /* ⬅ tighter padding */
+
+  font-size: 14px;
+  font-weight: 500;
+
+  border-radius: 8px;        /* ⬅ softer, not bulky */
+  border: 1.6px solid #cbbbe6;
+  background: #faf8fd;
+
+  color: #3a246d;
+
+  transition: border-color 0.2s ease,
+              box-shadow 0.2s ease,
+              background 0.2s ease;
+}
+
+/* Focus */
+.access-settings-role select:focus {
+  border-color: #4e1d7c;
+  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(78, 29, 124, 0.16); /* ⬅ subtler glow */
+  outline: none;
+}
+
+/* Hover */
+.access-settings-role select:hover {
+  border-color: #7a3db8;
+}
+/* ===============================
+   ACCESS SETTINGS – CHECKBOXES
+================================ */
+
+/* ===============================
+   ACCESS SETTINGS – CHECKBOXES
+   (Narrowed)
+================================ */
+
+.access-settings-permissions {
+  max-width: 360px;      /* ⬅ limits width */
+  margin-top: 10px;
+}
+
+/* Each permission row */
+.access-settings-permissions label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  width: fit-content;    /* ⬅ key fix */
+  min-width: 220px;      /* ⬅ consistent size */
+  max-width: 100%;
+
+  padding: 6px 12px;
+  margin-bottom: 6px;
+
+  background: #faf8fd;
+  border: 1px solid #e1d9f0;
+  border-radius: 8px;
+
+  font-size: 14px;
+  font-weight: 500;
+  color: #3a246d;
+
+  cursor: pointer;
+  transition: background 0.2s ease,
+              border-color 0.2s ease;
+}
+
+/* Hover */
+.access-settings-permissions label:hover {
+  background: #f1ecff;
+  border-color: #cbbbe6;
+}
+
+/* Checkbox */
+.access-settings-permissions input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #4e1d7c;
+}
+
+/* Checked text emphasis */
+.access-settings-permissions input[type="checkbox"]:checked + span {
+  font-weight: 600;
+  color: #4e1d7c;
+}
+

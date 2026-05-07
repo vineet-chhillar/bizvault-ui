@@ -1,0 +1,939 @@
+.form-group {
+  margin-bottom: 0 !important;
+}
+.inventory-form {
+  width: 100%;
+}
+
+.inventory-form .form-body {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  flex-direction: row !important;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 12px 18px;
+}
+
+.inventory-form .form-group {
+  flex: 1 1 260px;          /* full horizontal flow */
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+.inventory-btns {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding-top: 5px !important;
+  border-top: 1px dashed #ddd;
+  margin-top: 5px !important;
+  margin-bottom: 5px !important;
+}
+
+.inventory-btns button,
+.inventory-btns .btn-submit.small {
+  margin: 0 !important;              /* ✅ removes external button margins */
+  padding: 8px 18px !important;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 6000;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Save button */
+/* Primary Save button */
+.inventory-btns .btn-submit.small[type="submit"] {
+  background-color: #4e1d7c;
+  color: #fff;
+}
+
+.inventory-btns .btn-submit.small[type="submit"]:hover {
+  background-color: #62349c;
+}
+
+/* Secondary Cancel button */
+.inventory-btns .btn-submit.small[type="button"] {
+  background-color: #4e1d7c;
+  
+  color: #fff;
+  
+  border: 1px solid #d9d3f3;
+}
+
+.inventory-btns .btn-submit.small[type="button"]:hover {
+  background-color: #62349c;
+}
+
+/* Edit Form Container */
+.inventory-form .form-body {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  gap: 4px 10px !important;
+  margin-bottom: 0px !important;
+  
+}
+.supplier-table-wrapper {
+  max-height: 450px;   /* approx 15 rows */
+
+  overflow-y: auto;
+
+  border: 1px solid #d8dbe2;
+
+  border-radius: 10px;
+
+  background: #fff;
+}
+.data-suppliertable thead th {
+  position: sticky;
+
+  top: 0;
+
+  z-index: 2;
+
+  background: #f7f8fc;
+}
+.customer-table-wrapper {
+  max-height: 450px;   /* approx 15 rows */
+
+  overflow-y: auto;
+
+  border: 1px solid #d8dbe2;
+
+  border-radius: 10px;
+
+  background: #fff;
+}
+.data-customertable thead th {
+  position: sticky;
+
+  top: 0;
+
+  z-index: 2;
+
+  background: #f7f8fc;
+}
+/* Compact spacing between controls */
+.inventory-form .form-group {
+  flex: 0 1 240px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.form-group.small  { width: 160px; }
+.form-group.mid    { width: 220px; }
+.form-group.wide   { width: 300px; }
+.form-group.full   { width: 100% !important; max-width: none; }
+
+.form-group label {
+  font-weight: 600;
+  
+  color: #333;
+  font-size: 1rem;
+   
+    margin-bottom: 2px !important;
+  padding: 0 !important;
+  line-height: 1.2;
+}
+
+.form-group input {
+  width: 80%;
+  max-width: 200px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  padding: 6px 8px !important;
+}
+.form-group input:focus {
+  border-color: #4e1d7c;
+  box-shadow: 0 0 3px rgba(78, 29, 124, 0.2);
+}
+
+.form-group textarea {
+  width: 100% !important;
+  padding: 6px 8px !important;
+   min-height: 40px !important;
+}
+.inventory-form .form-body {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 4px 10px;
+}
+.inventory-title-supplier {
+  color: #4e1d7c;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+.inventory-supplier-btns button,
+.inventory-supplier-btns .btn-submit.small {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  padding: 8px 18px !important;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+}
+/* Small panel on the left */
+.supplier-left-panel {
+  width: 265px;
+  background: #fafafa;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 8px;                /* reduced padding */
+  display: flex;
+  flex-direction: column;
+  gap: 4px;                    /* very small gap */
+  margin-bottom: 10px;
+}
+
+/* Compact alignment of search controls */
+.supplier-left-panel .toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;                    /* reduced gap between input & search button */
+  margin: 0;
+  padding: 0;
+}
+
+/* Remove external margins that cause space */
+.supplier-left-panel input,
+.supplier-left-panel button {
+  margin: 0 !important;        /* remove default margins */
+}
+
+/* Input compact height */
+.supplier-left-panel input {
+  padding: 6px 8px !important;
+}
+
+/* Compact buttons */
+.supplier-left-panel .btn-submit.small {
+  padding: 6px 8px !important;
+  font-size: 0.85rem !important;
+  
+}
+.supplier-left-panel .btn-submit.search {
+  padding: 6px 8px !important;
+  font-size: 0.85rem !important;
+  background-color: #9d63b8;
+}
+/* Make new supplier button full width */
+.supplier-left-panel .fullwidth {
+  width: 100%;
+}
+.page-header {
+  width: 100%;
+  text-align: center;                 /* center the heading */
+  padding: 8px 0 14px 0;              /* spacing around */
+  margin-bottom: 10px;
+  border-bottom: 1px solid #e2e2e2;   /* subtle elegant underline */
+}
+
+.page-header h2 {
+  font-size: 1.45rem;                 /* slightly larger */
+  font-weight: 700;                   /* bolder look */
+  color: #4e1d7c;                     /* elegant highlight color (purple theme) */
+  letter-spacing: 0.5px;              /* stylish spacing */
+  margin: 0;
+}
+/* Header container boxed */
+.card-header {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e6e6e6;
+  border-radius: 10px;
+  padding: 14px 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06); /* subtle shadow */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Flex wrapper for icon + title */
+.header-icon-title {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* spacing between icon and text */
+}
+
+/* Icon styling */
+.header-icon {
+  width: 28px;
+  height: 28px;
+  color: #4e1d7c; /* theme color */
+}
+
+/* Title styling */
+.card-header h2 {
+  font-size: 1.55rem;
+  font-weight: 700;
+  margin: 0;
+  color: #4e1d7c;
+  letter-spacing: 0.6px;
+  text-align: center;
+}
+/* 🔧 Force compact row height ONLY */
+.data-suppliertable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  table-layout: fixed;
+  border: 1px solid #ddd; /* ✅ outer border */
+}
+
+.data-suppliertable th,
+.data-suppliertable td {
+  border: 1px solid #ddd;
+
+  padding: 4px 8px !important;   /* 🔻 reduced */
+  line-height: 1.2 !important;     /* 🔻 tighter text */
+  font-size: 0.95rem;             /* slight reduce */
+  vertical-align: middle;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.data-suppliertable th {
+  background-color: #f4e9ff;
+  color: #4e1d7c;
+  font-weight: 600;
+  text-align: center;
+}
+
+.data-suppliertable tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+/* Optional: make border lines a bit darker for better visibility */
+.data-suppliertable th,
+.data-suppliertable td {
+  border-color: #ccc;
+}
+
+
+/* --- Custom Column Widths (adjust to your liking) --- */
+.data-suppliertable th:nth-child(1), /* Item Name */
+.data-suppliertable td:nth-child(1) {
+  width: 6%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.data-suppliertable th:nth-child(2), /* Item Code */
+.data-suppliertable td:nth-child(2) {
+  width: 13%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.data-suppliertable th:nth-child(3), /* Category */
+.data-suppliertable td:nth-child(3) {
+  width: 9%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.data-suppliertable th:nth-child(4), /* Date */
+.data-suppliertable  td:nth-child(4) {
+  width: 9%; /* more width for longer text */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.data-suppliertable th:nth-child(5), /* Description */
+.data-suppliertable td:nth-child(5) {
+  width: 10%; /* small column */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.data-suppliertable th:nth-child(6), /* Unit % */
+.data-suppliertable td:nth-child(6) {
+  width: 10%; /* small column */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+.data-suppliertable th:nth-child(7), /* GST % */
+.data-suppliertable td:nth-child(7) {
+  width: 10%; /* small column */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.data-suppliertable th:nth-child(8), /* Action buttons */
+.data-suppliertable td:nth-child(8) {
+  width: 10%;
+  text-align: center;
+  white-space: nowrap;
+}
+.data-suppliertable th:nth-child(9), /* Action buttons */
+.data-suppliertable td:nth-child(9) {
+  width: 10%;
+  text-align: center;
+  white-space: nowrap;
+}
+.data-suppliertable th:nth-child(10), /* Action buttons */
+.data-suppliertable td:nth-child(10) {
+  width: 8%;
+  text-align: center;
+  white-space: nowrap;
+}
+.data-suppliertable th:nth-child(11), /* Action buttons */
+.data-suppliertable td:nth-child(11) {
+  width: 8%;
+  text-align: center;
+  white-space: nowrap;
+}
+.data-suppliertable th:nth-child(12), /* Action buttons */
+.data-suppliertable td:nth-child(12) {
+  width: 8%;
+  text-align: center;
+  white-space: nowrap;
+}
+.data-suppliertable th:nth-child(13), /* Action buttons */
+.data-suppliertable td:nth-child(13) {
+  width: 8%;
+  text-align: center;
+  white-space: nowrap;
+}
+/* 🔧 Prevent buttons from increasing row height */
+.invaction-btn {
+  padding: 2px 4px !important;
+  height: 22px !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* SVG icon size control */
+.invaction-icon.small-icon {
+  width: 13px !important;
+  height: 13px !important;
+}
+/* 🔧 Force compact rows (applies to BOTH th + td) */
+.data-suppliertable tr {
+  height: 28px !important;
+}
+
+/* Ensure cells don’t stretch */
+.data-suppliertable td {
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+  line-height: 1 !important;
+}
+/* 🔧 Allow header text to wrap */
+.data-suppliertable th {
+  white-space: normal !important;   /* allow wrapping */
+  word-break: break-word;           /* break long words */
+  overflow-wrap: anywhere;          /* modern wrap support */
+  text-align: center;               /* keep it clean */
+}
+.data-customertable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  table-layout: fixed;
+  border: 1px solid #ddd; /* ✅ outer border */
+}
+
+.data-customertable th,
+.data-customertable td {
+  border: 1px solid #ddd;
+
+  padding: 4px 8px !important;   /* 🔻 reduced */
+  line-height: 1.2 !important;     /* 🔻 tighter text */
+  font-size: 0.95rem;             /* slight reduce */
+  vertical-align: middle;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.data-customertable th {
+  background-color: #f4e9ff;
+  color: #4e1d7c;
+  font-weight: 600;
+  text-align: center;
+}
+
+.data-customertable tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+/* Optional: make border lines a bit darker for better visibility */
+.data-customertable th,
+.data-customertable td {
+  border-color: #ccc;
+}
+
+
+/* --- Custom Column Widths (adjust to your liking) --- */
+.data-customertable th:nth-child(1), /* Customer Name */
+.data-customertable td:nth-child(1) {
+  width: 6%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.data-customertable th:nth-child(2), /* Contact Person */
+.data-customertable td:nth-child(2) {
+  width: 13%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.data-customertable th:nth-child(3), /* Category */
+.data-customertable td:nth-child(3) {
+  width: 9%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.data-customertable th:nth-child(4), /* Date */
+.data-customertable  td:nth-child(4) {
+  width: 9%; /* more width for longer text */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.data-customertable th:nth-child(5), /* Description */
+.data-customertable td:nth-child(5) {
+  width: 10%; /* small column */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.data-customertable th:nth-child(6), /* Unit % */
+.data-customertable td:nth-child(6) {
+  width: 10%; /* small column */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+.data-customertable th:nth-child(7), /* GST % */
+.data-customertable td:nth-child(7) {
+  width: 10%; /* small column */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.data-customertable th:nth-child(8), /* Action buttons */
+.data-customertable td:nth-child(8) {
+  width: 10%;
+  text-align: center;
+  white-space: nowrap;
+}
+.data-customertable th:nth-child(9), /* Action buttons */
+.data-customertable td:nth-child(9) {
+  width: 10%;
+  text-align: center;
+  white-space: nowrap;
+}
+.data-customertable th:nth-child(10), /* Action buttons */
+.data-customertable td:nth-child(10) {
+  width: 8%;
+  text-align: center;
+  white-space: nowrap;
+}
+.data-customertable tr {
+  height: 28px !important;
+}
+
+/* Ensure cells don’t stretch */
+.data-customertable td {
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+  line-height: 1 !important;
+}
+/* 🔧 Allow header text to wrap */
+.data-customertable th {
+  white-space: normal !important;   /* allow wrapping */
+  word-break: break-word;           /* break long words */
+  overflow-wrap: anywhere;          /* modern wrap support */
+  text-align: center;               /* keep it clean */
+}
+.data-hsntable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  table-layout: fixed;
+  border: 1px solid #ddd; /* ✅ outer border */
+}
+
+.data-hsntable th,
+.data-hsntable td {
+  border: 1px solid #ddd;
+
+  padding: 4px 8px !important;   /* 🔻 reduced */
+  line-height: 1.2 !important;     /* 🔻 tighter text */
+  font-size: 0.95rem;             /* slight reduce */
+  vertical-align: middle;
+}
+
+.data-hsntable th {
+  background-color: #f4e9ff;
+  color: #4e1d7c;
+  font-weight: 600;
+  text-align: center;
+}
+
+.data-hsntable tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+/* Optional: make border lines a bit darker for better visibility */
+.data-hsntable th,
+.data-hsntable td {
+  border-color: #ccc;
+}
+
+
+/* --- Custom Column Widths (adjust to your liking) --- */
+.data-hsntable th:nth-child(1), /* HSN Code */
+.data-hsntable td:nth-child(1) {
+  width: 6%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.data-hsntable th:nth-child(2), /* Description */
+.data-hsntable td:nth-child(2) {
+  width: 13%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.data-hsntable th:nth-child(3), /* Active */
+.data-hsntable td:nth-child(3) {
+  width: 40%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.data-hsntable th:nth-child(4), /* Date */
+.data-hsntable  td:nth-child(4) {
+  width: 9%; /* more width for longer text */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.data-hsntable th:nth-child(5), /* Description */
+.data-hsntable td:nth-child(5) {
+  width: 10%; /* small column */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+
+.data-hsntable tr {
+  height: 28px !important;
+}
+
+/* Ensure cells don’t stretch */
+.data-hsntable td {
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+  line-height: 1 !important;
+}
+/* 🔧 Allow header text to wrap */
+.data-hsntable th {
+  white-space: normal !important;   /* allow wrapping */
+  word-break: break-word;           /* break long words */
+  overflow-wrap: anywhere;          /* modern wrap support */
+  text-align: center;               /* keep it clean */
+}
+
+.data-gsttable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  table-layout: fixed;
+  border: 1px solid #ddd; /* ✅ outer border */
+}
+
+.data-gsttable th,
+.data-gsttable td {
+  border: 1px solid #ddd;
+
+  padding: 4px 8px !important;   /* 🔻 reduced */
+  line-height: 1.2 !important;     /* 🔻 tighter text */
+  font-size: 0.95rem;             /* slight reduce */
+  vertical-align: middle;
+}
+
+.data-gsttable th {
+  background-color: #f4e9ff;
+  color: #4e1d7c;
+  font-weight: 600;
+  text-align: center;
+}
+
+.data-gsttable tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+/* Optional: make border lines a bit darker for better visibility */
+.data-gsttable th,
+.data-gsttable td {
+  border-color: #ccc;
+}
+
+
+/* --- Custom Column Widths (adjust to your liking) --- */
+.data-gsttable th:nth-child(1), /* GST % */
+.data-gsttable td:nth-child(1) {
+  width: 6%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.data-gsttable th:nth-child(2), /* Description */
+.data-gsttable td:nth-child(2) {
+  width: 13%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.data-gsttable th:nth-child(3), /* Active */
+.data-gsttable td:nth-child(3) {
+  width: 40%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.data-gsttable th:nth-child(4), /* Date */
+.data-gsttable  td:nth-child(4) {
+  width: 9%; /* more width for longer text */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+
+
+
+.data-gsttable tr {
+  height: 28px !important;
+}
+
+/* Ensure cells don’t stretch */
+.data-gsttable td {
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+  line-height: 1 !important;
+}
+/* 🔧 Allow header text to wrap */
+.data-gsttable th {
+  white-space: normal !important;   /* allow wrapping */
+  word-break: break-word;           /* break long words */
+  overflow-wrap: anywhere;          /* modern wrap support */
+  text-align: center;               /* keep it clean */
+}
+
+.data-unittable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  table-layout: fixed;
+  border: 1px solid #ddd; /* ✅ outer border */
+}
+
+.data-unittable th,
+.data-unittable td {
+  border: 1px solid #ddd;
+
+  padding: 4px 8px !important;   /* 🔻 reduced */
+  line-height: 1.2 !important;     /* 🔻 tighter text */
+  font-size: 0.95rem;             /* slight reduce */
+  vertical-align: middle;
+}
+
+.data-unittable th {
+  background-color: #f4e9ff;
+  color: #4e1d7c;
+  font-weight: 600;
+  text-align: center;
+}
+
+.data-unittable tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+/* Optional: make border lines a bit darker for better visibility */
+.data-unittable th,
+.data-unittable td {
+  border-color: #ccc;
+}
+
+
+/* --- Custom Column Widths (adjust to your liking) --- */
+.data-unittable th:nth-child(1), /* Unit */
+.data-unittable td:nth-child(1) {
+  width: 6%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.data-unittable th:nth-child(2), /* Description */
+.data-unittable td:nth-child(2) {
+  width: 15%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.data-unittable th:nth-child(3), /* Active */
+.data-unittable td:nth-child(3) {
+  width: 10%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+.data-unittable th:nth-child(4), /* Active */
+.data-unittable td:nth-child(4) {
+  width: 10%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+
+.data-unittable tr {
+  height: 28px !important;
+}
+
+/* Ensure cells don’t stretch */
+.data-unittable td {
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+  line-height: 1 !important;
+}
+/* 🔧 Allow header text to wrap */
+.data-unittable th {
+  white-space: normal !important;   /* allow wrapping */
+  word-break: break-word;           /* break long words */
+  overflow-wrap: anywhere;          /* modern wrap support */
+  text-align: center;               /* keep it clean */
+}
+
+.data-categorytable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  table-layout: fixed;
+  border: 1px solid #ddd; /* ✅ outer border */
+}
+
+.data-categorytable th,
+.data-categorytable td {
+  border: 1px solid #ddd;
+
+  padding: 4px 8px !important;   /* 🔻 reduced */
+  line-height: 1.2 !important;     /* 🔻 tighter text */
+  font-size: 0.95rem;             /* slight reduce */
+  vertical-align: middle;
+}
+
+.data-categorytable th {
+  background-color: #f4e9ff;
+  color: #4e1d7c;
+  font-weight: 600;
+  text-align: center;
+}
+
+.data-categorytable tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+/* Optional: make border lines a bit darker for better visibility */
+.data-categorytable th,
+.data-categorytable td {
+  border-color: #ccc;
+}
+
+
+/* --- Custom Column Widths (adjust to your liking) --- */
+.data-categorytable th:nth-child(1), /* Unit */
+.data-categorytable td:nth-child(1) {
+  width: 6%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.data-categorytable th:nth-child(2), /* Description */
+.data-categorytable td:nth-child(2) {
+  width: 15%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.data-categorytable th:nth-child(3), /* Active */
+.data-categorytable td:nth-child(3) {
+  width: 10%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+.data-categorytable th:nth-child(4), /* Active */
+.data-categorytable td:nth-child(4) {
+  width: 10%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+.data-categorytable th:nth-child(5), /* Active */
+.data-categorytable td:nth-child(5) {
+  width: 10%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+.data-categorytable th:nth-child(6), /* Active */
+.data-categorytable td:nth-child(6) {
+  width: 10%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+.data-categorytable tr {
+  height: 28px !important;
+}
+
+/* Ensure cells don’t stretch */
+.data-categorytable td {
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+  line-height: 1 !important;
+}
+/* 🔧 Allow header text to wrap */
+.data-categorytable th {
+  white-space: normal !important;   /* allow wrapping */
+  word-break: break-word;           /* break long words */
+  overflow-wrap: anywhere;          /* modern wrap support */
+  text-align: center;               /* keep it clean */
+}
+.invaction-group {
+  display: flex;
+  align-items: center;
+  gap: 6px; /* spacing between buttons */
+}
+
+.invaction-btn {
+  display: inline-flex;   /* prevents full-width behavior */
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+}
+.table-search-bar {
+  margin-bottom: 4px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.table-search-input {
+  width: 260px;
+
+  padding: 9px 12px;
+
+  border: 1px solid #d0d5dd;
+
+  border-radius: 8px;
+
+  font-size: 14px;
+
+  outline: none;
+
+  transition: border-color 0.2s ease;
+}
+
+.table-search-input:focus {
+  border-color: #3b1f73;
+
+  box-shadow:
+    0 0 0 3px rgba(59, 31, 115, 0.12);
+}
