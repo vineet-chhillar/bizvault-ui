@@ -44,6 +44,9 @@ export default function EditPurchaseInvoice({ user }) {
 const [isDragging, setIsDragging] = React.useState(false);
 const modalRef = React.useRef(null);
 
+
+const [errors, setErrors] = useState({});
+
 const onMouseDown = (e) => {
   const rect = modalRef.current.getBoundingClientRect();
   setDragOffset({
@@ -392,36 +395,70 @@ return;
      
 // --------------- SAVE PAYMENT RESPONSE ---------------
 if (msg.action === "SavePurchasePaymentResponse") {
+
+  // =====================================================
+  // VALIDATION / SAVE FAILURE
+  // =====================================================
+
   if (!msg.success) {
+
+    // Store field-level errors
+    if (msg.errors) {
+      setErrors(msg.errors);
+    }
+
+    // Show ALL validation messages
+    setModal({
+      show: true,
+      message:
+        msg.message ||
+        "Validation failed",
+
+      type: "error"
+    });
+
+    return;
+  }
+
+  // =====================================================
+  // SUCCESS
+  // =====================================================
+
+  // Clear old validation errors
+  setErrors({});
+
   setModal({
     show: true,
-    message: msg.message || "Payment save failed",
-    type: "error"
+    message: "Payment added successfully",
+    type: "success",
+
+    onClose: () => {
+
+      const amt = Number(msg.amount);
+
+      setPaidAmount(prev => prev + amt);
+
+      setOriginalPaidAmount(prev => prev + amt);
+
+      setBalanceAmount(prev =>
+        Math.max(0, prev - amt)
+      );
+
+      setShowPaymentModal(false);
+
+      setPaymentForm({
+        PaymentDate: new Date()
+          .toISOString()
+          .slice(0, 10),
+
+        PaymentMode: "Cash",
+
+        Amount: 0,
+
+        Notes: ""
+      });
+    }
   });
-  return;
-}
-
-setModal({
-  show: true,
-  message: "Payment added successfully",
-  type: "success",
-  onClose: () => {
-    const amt = Number(msg.amount);
-
-    setPaidAmount(prev => prev + amt);
-    setOriginalPaidAmount(prev => prev + amt);
-    setBalanceAmount(prev => Math.max(0, prev - amt));
-
-    setShowPaymentModal(false);
-
-    setPaymentForm({
-      PaymentDate: new Date().toISOString().slice(0, 10),
-      PaymentMode: "Cash",
-      Amount: 0,
-      Notes: ""
-    });
-  }
-});
 }
 if (msg.action === "CanMakePurchasePaymentResponse") {
   if (!msg.CanPay) {
@@ -1205,7 +1242,12 @@ if (paymentForm.Amount > balanceAmount) {
     {modal.show && (
   <div className="modal-overlay">
     <div className="modal-box">
-      <p>{modal.message}</p>
+
+      <div className="modal-message">
+        {modal.message?.split("\n").map((line, index) => (
+          <div key={index}>{line}</div>
+        ))}
+      </div>
 
       <div className="modal-actions">
         {modal.type === "confirm" ? (

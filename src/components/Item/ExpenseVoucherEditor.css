@@ -7,6 +7,7 @@
   padding: 0;
   background: transparent;
   box-shadow: none;
+   overflow: visible;
 }
 
 /* ACTUAL WHITE BOX */
@@ -16,6 +17,7 @@
   background: white;
   border-radius: 12px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+   overflow: visible;
 }
 
 

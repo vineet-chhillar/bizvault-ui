@@ -50,7 +50,7 @@ const [selectedCustomer, setSelectedCustomer] = useState(null);
 const [customerList, setCustomerList] = useState([]);
 const [customerInfo, setCustomerInfo] = useState(null);
 const [editLocked, setEditLocked] = useState(false); // for sales return lock
-
+const [errors, setErrors] = useState({});
 const paymentModeChangedByUser = React.useRef(false);
 const [originalPaymentMode, setOriginalPaymentMode] = useState(null);
 const [modal, setModal] = useState({
@@ -486,33 +486,77 @@ if (msg.action === "GetItemBalanceBatchWiseResponse") {
 
 
 if (msg.action === "SaveSalesPaymentResponse") {
+
+  // =====================================================
+  // VALIDATION / SAVE FAILURE
+  // =====================================================
+
   if (!msg.success) {
+
+    // Store field-level validation errors
+    if (msg.errors) {
+      setErrors(msg.errors);
+    }
+
+    // Build full validation message list
+    let errorMessage = "Payment failed";
+
+    if (msg.errors) {
+
+      const validationMessages =
+        Object.values(msg.errors);
+
+      errorMessage =
+        validationMessages.join("\n");
+
+    } else if (msg.message) {
+
+      errorMessage = msg.message;
+    }
+
+    // Show modal popup
+    setModal({
+      show: true,
+      message: errorMessage,
+      type: "error"
+    });
+
+    return;
+  }
+
+  // =====================================================
+  // SUCCESS
+  // =====================================================
+
+  // Clear old validation errors
+  setErrors({});
+
   setModal({
     show: true,
-    message: msg.message || "Payment failed",
-    type: "error"
+    message: "Payment added successfully",
+    type: "success",
+
+    onClose: () => {
+
+      setPaidAmount(msg.newPaidAmount);
+
+      setOriginalPaidAmount(msg.newPaidAmount);
+
+      setShowPaymentModal(false);
+
+      setPaymentForm({
+        PaymentDate: new Date()
+          .toISOString()
+          .slice(0, 10),
+
+        PaymentMode: "Cash",
+
+        Amount: 0,
+
+        Notes: ""
+      });
+    }
   });
-  return;
-}
-
-setModal({
-  show: true,
-  message: "Payment added successfully",
-  type: "success",
-  onClose: () => {
-    setPaidAmount(msg.newPaidAmount);
-    setOriginalPaidAmount(msg.newPaidAmount);
-
-    setShowPaymentModal(false);
-
-    setPaymentForm({
-      PaymentDate: new Date().toISOString().slice(0, 10),
-      PaymentMode: "Cash",
-      Amount: 0,
-      Notes: ""
-    });
-  }
-});
 }
 
 

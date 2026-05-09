@@ -450,7 +450,11 @@ if (copy[idx].AvailableStock != null && Number(val) > Number(copy[idx].Available
     });
 }
 
-if (copy[idx].BalanceBatchWise != null && Number(val) > Number(copy[idx].BalanceBatchWise)) {
+if (
+    key === "Qty" &&
+    copy[idx].BalanceBatchWise != null &&
+    Number(copy[idx].Qty) > Number(copy[idx].BalanceBatchWise)
+) {
     setValidationErrors(prev => ({
         ...prev,
         [`BatchStock_${idx}`]: `Line ${idx+1}: Qty exceeds batch stock (${copy[idx].BalanceBatchWise})`

@@ -2,7 +2,7 @@ import "./ItemForms.css";
 import "./ExpenseVoucherEditor.css";
 import { getCreatedBy } from "../../utils/authHelper";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 
 const blankLine = () => ({
   AccountId: 0,
@@ -32,6 +32,8 @@ const [showPaymentModal, setShowPaymentModal] = useState(false);
 const [viewExpense, setViewExpense] = useState(null);
 const [cashBankAccounts, setCashBankAccounts] = useState([]);
 const [expenseList, setExpenseList] = useState([]);
+const [errors, setErrors] = useState({});
+const tableRef = useRef(null);
 const [modal, setModal] = useState({
   show: false,
   message: "",
@@ -42,7 +44,28 @@ const [modal, setModal] = useState({
 
 
 
+useEffect(() => {
+  const handleClickOutside = (event) => {
+    if (
+      tableRef.current &&
+      !tableRef.current.contains(event.target)
+    ) {
+      setActiveRow(null);
+    }
+  };
 
+  document.addEventListener(
+    "mousedown",
+    handleClickOutside
+  );
+
+  return () => {
+    document.removeEventListener(
+      "mousedown",
+      handleClickOutside
+    );
+  };
+}, []);
 useEffect(() => {
   window.chrome?.webview?.postMessage({
     Action: "GetCashBankAccounts"
@@ -116,49 +139,89 @@ setModal({
 });
       }
       if (msg.action === "SaveExpensePaymentResponse") {
+
+  // 🔹 Validation errors
+  if (!msg.success && msg.validationErrors) {
+    setErrors(msg.validationErrors);
+
+    setModal({
+      show: true,
+      message: "Please fix the validation errors",
+      type: "error"
+    });
+
+    return;
+  }
+
+  // 🔹 General failure
   if (!msg.success) {
+    setModal({
+      show: true,
+      message: msg.message || "Payment failed",
+      type: "error"
+    });
+
+    return;
+  }
+
+  // 🔹 Success
+  setErrors({});
+
   setModal({
     show: true,
-    message: msg.message || "Payment failed",
-    type: "error"
-  });
-  return;
-}
+    message: msg.message || "Expense payment saved",
+    type: "success",
+    onClose: () => {
+      resetPaymentForm(viewExpense);
 
-setModal({
-  show: true,
-  message: "Expense payment saved",
-  type: "success",
-  onClose: () => {
-    resetPaymentForm(viewExpense);
-    window.chrome.webview.postMessage({
-      Action: "GetExpenseVouchers"
-    });
-  }
-});
+      window.chrome.webview.postMessage({
+        Action: "GetExpenseVouchers"
+      });
+    }
+  });
 }
 
 if (msg.action === "ReverseExpenseVoucherResponse") {
+
+  // 🔹 Validation errors
+  if (!msg.success && msg.validationErrors) {
+    setErrors(msg.validationErrors);
+
+    setModal({
+      show: true,
+      message: "Please fix the validation errors",
+      type: "error"
+    });
+
+    return;
+  }
+
+  // 🔹 General failure
   if (!msg.success) {
+    setModal({
+      show: true,
+      message: msg.message || "Reversal failed",
+      type: "error"
+    });
+
+    return;
+  }
+
+  // 🔹 Success
+  setErrors({});
+
   setModal({
     show: true,
-    message: msg.message || "Reversal failed",
-    type: "error"
-  });
-  return;
-}
+    message: msg.message || "Expense reversed successfully",
+    type: "success",
+    onClose: () => {
+      setViewExpense(null);
 
-setModal({
-  show: true,
-  message: "Expense reversed successfully",
-  type: "success",
-  onClose: () => {
-    setViewExpense(null);
-    window.chrome.webview.postMessage({
-      Action: "GetExpenseVouchers"
-    });
-  }
-});
+      window.chrome.webview.postMessage({
+        Action: "GetExpenseVouchers"
+      });
+    }
+  });
 }
 if (msg.action === "GetCashBankAccountsResponse") {
   setCashBankAccounts(msg.data || []);
@@ -330,6 +393,7 @@ const resetPaymentForm = (expense) => {
         {/* ---------------- GRID ---------------- */}
        <div className="table-container compact">
   <div className="table-box">
+    <div ref={tableRef}>
     <table className="data-table compact-center">
             <thead>
               <tr>
@@ -423,7 +487,7 @@ const resetPaymentForm = (expense) => {
               ))}
             </tbody>
           </table>
-
+</div>
 {/* ---------------- FOOTER ---------------- */}
      
 

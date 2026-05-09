@@ -2,7 +2,7 @@ import "./ItemForms.css";
 import "./ExpenseVoucherEditor.css";
 import { getCreatedBy } from "../../utils/authHelper";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 
 const blankLine = () => ({
   AccountId: 0,
@@ -31,6 +31,7 @@ const [errors, setErrors] = useState({});
   /* ---------------- PAYMENT ---------------- */
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [cashBankAccounts, setCashBankAccounts] = useState([]);
+  const tableRef = useRef(null);
   const [paymentForm, setPaymentForm] = useState({
     PaymentDate: new Date().toISOString().split("T")[0],
     ReceivedInAccountId: "",
@@ -44,6 +45,28 @@ const [modal, setModal] = useState({
   onConfirm: null,
   onClose: null
 });
+useEffect(() => {
+  const handleClickOutside = (event) => {
+    if (
+      tableRef.current &&
+      !tableRef.current.contains(event.target)
+    ) {
+      setActiveRow(null);
+    }
+  };
+
+  document.addEventListener(
+    "mousedown",
+    handleClickOutside
+  );
+
+  return () => {
+    document.removeEventListener(
+      "mousedown",
+      handleClickOutside
+    );
+  };
+}, []);
   /* ---------------- LOAD DATA ---------------- */
   useEffect(() => {
     window.chrome.webview.postMessage({ Action: "GetIncomeAccounts" });
@@ -126,48 +149,91 @@ const [modal, setModal] = useState({
         setViewIncome(msg.data);
       }
 
-      if (msg.action === "SaveIncomePaymentResponse") {
-        if (!msg.success) {
+    if (msg.action === "SaveIncomePaymentResponse") {
+
+  // 🔹 Validation errors
+  if (!msg.success && msg.validationErrors) {
+    setErrors(msg.validationErrors);
+
+    setModal({
+      show: true,
+      message: "Please fix the validation errors",
+      type: "error"
+    });
+
+    return;
+  }
+
+  // 🔹 General error
+  if (!msg.success) {
+    setModal({
+      show: true,
+      message: msg.message || "Payment failed",
+      type: "error"
+    });
+
+    return;
+  }
+
+  // 🔹 Success
+  setErrors({});
+
   setModal({
     show: true,
-    message: msg.message || "Payment failed",
-    type: "error"
-  });
-  return;
-}
+    message: msg.message || "Income payment received",
+    type: "success",
+    onClose: () => {
+      setShowPaymentModal(false);
 
-setModal({
-  show: true,
-  message: "Income payment received",
-  type: "success",
-  onClose: () => {
-    setShowPaymentModal(false);
-    window.chrome.webview.postMessage({ Action: "GetIncomeVouchers" });
-  }
-});
-        
-      }
+      window.chrome.webview.postMessage({
+        Action: "GetIncomeVouchers"
+      });
+    }
+  });
+}
 
       if (msg.action === "ReverseIncomeVoucherResponse") {
-        if (!msg.success) {
+
+  // 🔹 Validation errors
+  if (!msg.success && msg.validationErrors) {
+    setErrors(msg.validationErrors);
+
+    setModal({
+      show: true,
+      message: "Please fix the validation errors",
+      type: "error"
+    });
+
+    return;
+  }
+
+  // 🔹 General failure
+  if (!msg.success) {
+    setModal({
+      show: true,
+      message: msg.message || "Reversal failed",
+      type: "error"
+    });
+
+    return;
+  }
+
+  // 🔹 Success
+  setErrors({});
+
   setModal({
     show: true,
-    message: msg.message || "Reversal failed",
-    type: "error"
-  });
-  return;
-}
+    message: msg.message || "Income voucher reversed",
+    type: "success",
+    onClose: () => {
+      setViewIncome(null);
 
-setModal({
-  show: true,
-  message: "Income voucher reversed",
-  type: "success",
-  onClose: () => {
-    setViewIncome(null);
-    window.chrome.webview.postMessage({ Action: "GetIncomeVouchers" });
-  }
-});
-      }
+      window.chrome.webview.postMessage({
+        Action: "GetIncomeVouchers"
+      });
+    }
+  });
+}
 
       if (msg.action === "GetCashBankAccountsResponse") {
         setCashBankAccounts(msg.data || []);
@@ -281,6 +347,7 @@ return;
       {/* GRID */}
        <div className="table-container compact">
   <div className="table-box">
+  <div ref={tableRef}>
       <table className="data-table compact-center">
         <thead>
           <tr>
@@ -355,7 +422,7 @@ return;
           ))}
         </tbody>
       </table>
-
+</div>
 
           <div className="table-footer">
       <button className="btn-submit small" onClick={addRow}>
