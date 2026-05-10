@@ -58,7 +58,21 @@ useEffect(() => {
   }
 }, [form.ParentAccountId, isEditing]);
 
+useEffect(() => {
+  let normalSide = "Debit";
 
+  if (
+    form.AccountType === "Liability" ||
+    form.AccountType === "Income"
+  ) {
+    normalSide = "Credit";
+  }
+
+  setForm(f => ({
+    ...f,
+    NormalSide: normalSide
+  }));
+}, [form.AccountType]);
 
 useEffect(() => {
   setForm(f => ({
@@ -231,7 +245,7 @@ const save = () => {
                 <option>Liability</option>
                 <option>Income</option>
                 <option>Expense</option>
-                <option>Equity</option>
+                
               </select>
             </div>
 
@@ -291,7 +305,7 @@ const save = () => {
 <div className="form-group">
   <label>Account Nature</label>
   <select
-    value={form.IsGroup ? 1 : 0}
+    value={form.IsGroup ? 0 : 1}
     onChange={e =>
       setForm({ ...form, IsGroup: e.target.value === "1" })
     }

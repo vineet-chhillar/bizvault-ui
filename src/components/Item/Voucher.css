@@ -152,11 +152,11 @@
    Save Button (default)
 ================================ */
 .voucher-container button:not(.reverse-btn) {
-  background: #2d89ef;
+  background: #4a0c83;
   color: #ffffff;
   border: none;
   border-radius: 4px;
-  margin-top: 12px;
+  margin-top: 0px;
 }
 
 .voucher-container button:not(.reverse-btn):hover {
@@ -549,4 +549,27 @@
 .voucher-container .btn-submit.small:disabled {
   background-color: #cfc6e8 !important;
   cursor: not-allowed;
+}
+
+.invaction-btn.invaction-delete {
+  background-color: #7a22cc; /* same purple tone */
+  color: white;
+  border: none;
+  padding: 3px 5px; /* half the original */
+  font-size: 0.8rem; /* slightly smaller text */
+  border-radius: 6px;
+  
+  cursor: pointer;
+  transition: 0.3s ease;
+  
+}
+
+.invaction-btn.invaction-delete:hover {
+  background-color: #7a22cc; /* darker purple on hover */
+}
+
+.invaction-icon {
+  width: 12px;
+  height: 12px;
+  vertical-align: middle;
 }

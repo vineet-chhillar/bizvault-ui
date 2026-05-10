@@ -55,6 +55,8 @@ import UserList from "./components/Admin/UserList";
 import AccessSettings from "./utils/AccessSettings";
 import { hasPermission } from "./utils/Permissions";
 import { PERMISSIONS } from "./utils/PermissionKeys";
+import YearClosing from "./utils/YearClosing";
+
 
 
 import {
@@ -83,7 +85,10 @@ import {
   FaCubes,
   FaKey,
   FaUserPlus,
-  FaSignOutAlt
+  FaSignOutAlt,
+  FaTools,
+  FaDatabase,
+  FaCalendarCheck
 } from "react-icons/fa";
 
 
@@ -122,12 +127,28 @@ function TopNavbar({
   onCreateUser,
   forceChangePassword
 }) {
-
+const [showUtilities, setShowUtilities]
+  = useState(false);
+  const navigate = useNavigate();
   {/*const title = usePageTitle();*/}
   // label for the header toggle button
   const buttonLabel = isMobile ? "☰" : collapsed ? "▶" : "◀";
 console.log("USER AT MENU:", user);
+const openYearClosing = () => {
 
+  setShowUtilities(false);
+
+  // Example navigation
+  navigate("./utils/YearClosing");
+};
+
+const backupDatabase = () => {
+
+  setShowUtilities(false);
+
+  // Temporary placeholder
+  alert("Backup feature coming soon.");
+};
 
   return (
     <header className="top-navbar">
@@ -142,23 +163,65 @@ console.log("USER AT MENU:", user);
       <h1 className="app-title">{}</h1>
 
       <div className="navbar-actions">
-        <button className="icon-btn" title="Notifications">
-          <FaBell />
-        </button>
-        
-        <button className="icon-btn" title="Settings">
-          <FaCog />
-        </button>
- 
-     <UserMenu
-  user={user}
-  onLogout={onLogout}
-  onChangePassword={onChangePassword}
-  onCreateUser={onCreateUser}
-  forceChangePassword={forceChangePassword}
-/>
 
-      </div>
+  <button className="icon-btn" title="Notifications">
+    <FaBell />
+  </button>
+
+  <button className="icon-btn" title="Settings">
+    <FaCog />
+  </button>
+
+  <div className="user-menu-container">
+
+    <button
+      className="icon-btn"
+      title="Utilities"
+      onClick={() =>
+        setShowUtilities(
+          !showUtilities
+        )
+      }
+    >
+      <FaTools />
+    </button>
+
+    {
+      showUtilities && (
+
+        <div className="user-menu-dropdown">
+
+  <button
+    className="user-menu-item"
+    onClick={openYearClosing}
+  >
+    <FaCalendarCheck className="menu-icon" />
+    <span>Financial Year Closing</span>
+  </button>
+
+  <button
+    className="user-menu-item"
+    onClick={backupDatabase}
+  >
+    <FaDatabase className="menu-icon" />
+    <span>Backup Database</span>
+  </button>
+
+</div>
+      )
+    }
+
+  </div>
+
+  <UserMenu
+    user={user}
+    onLogout={onLogout}
+    onChangePassword={onChangePassword}
+    onCreateUser={onCreateUser}
+    forceChangePassword={forceChangePassword}
+  />
+
+</div>
     </header>
   );
 }
@@ -1211,6 +1274,9 @@ useEffect(() => {
  
 <Route path="/" element={<Navigate to="/Item/Dashboard" replace />} />
  <Route path="/Item/Dashboard" element={<Dashboard user={user} />} />
+ 
+ <Route path="/utils/YearClosing"  element={<YearClosing />}
+/>
 
 
 

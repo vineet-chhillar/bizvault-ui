@@ -1,7 +1,22 @@
 import React, { useState, useEffect } from "react";
 
 export default function ProfitLossReport() {
-  const [from, setFrom] = useState("2025-04-01");
+  const today = new Date();
+  
+  const fyStartYear =
+    today.getMonth() >= 3
+      ? today.getFullYear()
+      : today.getFullYear() - 1;
+  
+  const fyStartDate = new Date(fyStartYear, 3, 1);
+  
+  const [from, setFrom] = useState(
+    `${fyStartDate.getFullYear()}-${String(
+      fyStartDate.getMonth() + 1
+    ).padStart(2, "0")}-${String(
+      fyStartDate.getDate()
+    ).padStart(2, "0")}`
+  );
   const [to, setTo] = useState(new Date().toISOString().slice(0, 10));
   const [report, setReport] = useState(null);
   const [loaded, setLoaded] = useState(false);
@@ -15,6 +30,11 @@ const exportPdf = () => {
       payload: { From: from, To: to },
     });
   };
+  const [modal, setModal] = useState({
+  show: false,
+  message: "",
+  onClose: null
+});
   const exportExcel = () => {
     if (!loaded) {
       alert("Load report first");
@@ -59,9 +79,27 @@ function hideToast() {
     const handler = (e) => {
       const msg = e.data;
       if (msg.action === "getProfitLossResult") {
-        setReport(msg.report);
-        setLoaded(true);
-      }
+
+    // 🔴 Handle backend error
+    if (!msg.success) {
+
+        setModal({
+            show: true,
+            message:
+                msg.Message || "Failed to load Profit & Loss report.",
+            onClose: null
+        });
+
+        setReport(null);
+        setLoaded(false);
+
+        return;
+    }
+
+    // ✅ Success
+    setReport(msg.report);
+    setLoaded(true);
+}
       if (msg.action === "generateProfitLossPdfResult") {
         if (msg.success) {
           window.chrome.webview.postMessage({
@@ -92,6 +130,7 @@ function hideToast() {
   };
 
   return (
+    <>
     <div className="form-container">
       <h2 className="form-title">Profit & Loss Statement</h2>
 
@@ -198,5 +237,30 @@ function hideToast() {
         </>
       )}
     </div>
+    {modal.show && (
+  <div className="modal-overlay">
+    <div className="modal-box">
+      <p>{modal.message}</p>
+
+      <div className="modal-actions">
+        <button
+          className="modal-btn ok"
+          onClick={() => {
+            modal.onClose?.();
+
+            setModal({
+              show: false,
+              message: "",
+              onClose: null
+            });
+          }}
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+    </>
   );
 }

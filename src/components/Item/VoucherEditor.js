@@ -8,7 +8,8 @@ const blankLine = () => ({
   AccountName: "",
   Debit: "",
   Credit: "",
-  Side: ""   // "Debit" | "Credit"
+ Side: "",
+EntryType: ""
 });
 
 export default function VoucherEditor() {
@@ -40,6 +41,7 @@ const [reversalDate, setReversalDate] = useState(today);
 const [voucherIdList, setVoucherIdList] = useState([]);
 const [debitAccounts, setDebitAccounts] = useState([]);
 const [creditAccounts, setCreditAccounts] = useState([]);
+
 
   // -----------------------------
   // Load accounts
@@ -234,24 +236,56 @@ if (msg.action === "GetVoucherIdsByDateResponse") {
   // Line update
   // -----------------------------
   const updateLine = (i, field, value) => {
+
   setLines(prev => {
+
     const copy = [...prev];
-    copy[i][field] = value;
+    const row = { ...copy[i] };
 
-    if (field === "Side") {
-      copy[i].Side = value;
-      return copy;
+    // -----------------------------
+    // Lock row type
+    // -----------------------------
+    if (
+      field === "Debit" &&
+      !row.EntryType
+    ) {
+      row.EntryType = "DebitRow";
+      row.Side = "Debit";
     }
 
-    if (field === "Debit" && value) {
-      copy[i].Credit = "";
-      copy[i].Side = "Debit";
+    if (
+      field === "Credit" &&
+      !row.EntryType
+    ) {
+      row.EntryType = "CreditRow";
+      row.Side = "Credit";
     }
 
-    if (field === "Credit" && value) {
-      copy[i].Debit = "";
-      copy[i].Side = "Credit";
+    // 🚫 Prevent switching
+    if (
+      row.EntryType === "DebitRow" &&
+      field === "Credit"
+    ) {
+      return prev;
     }
+
+    if (
+      row.EntryType === "CreditRow" &&
+      field === "Debit"
+    ) {
+      return prev;
+    }
+
+    row[field] = value;
+
+    // Clear opposite side
+    if (field === "Debit")
+      row.Credit = "";
+
+    if (field === "Credit")
+      row.Debit = "";
+
+    copy[i] = row;
 
     return copy;
   });
@@ -260,6 +294,13 @@ if (msg.action === "GetVoucherIdsByDateResponse") {
 
 
   const addRow = () => setLines([...lines, blankLine()]);
+  const removeRow = (index) => {if (lines.length <= 2)
+     { return;
+    }
+  setLines(prev =>
+    prev.filter((_, i) => i !== index)
+  );
+};
 
   // -----------------------------
   // Totals
@@ -448,28 +489,54 @@ return;
       <table className="voucher-grid">
         <thead>
           <tr>
-            <th>Account</th>
-            <th>Debit</th>
-            <th>Credit</th>
-          </tr>
+  <th>Account</th>
+  <th>Debit</th>
+  <th>Credit</th>
+  <th></th>
+</tr>
         </thead>
         <tbody>
   {lines.map((l, i) => {
 
     // ✅ DEFINE accounts HERE
-    const accounts =
-      l.Side === "Debit"
-        ? debitAccounts
-        : l.Side === "Credit"
-          ? creditAccounts
-          : [];
+   let accounts = [];
+
+// -----------------------------
+// Journal Voucher
+// -----------------------------
+if (voucherType === "JV") {
+
+  if (l.EntryType === "DebitRow")
+    accounts = debitAccounts;
+
+  else if (l.EntryType === "CreditRow")
+    accounts = creditAccounts;
+
+  else
+    accounts = [
+      ...debitAccounts,
+      ...creditAccounts
+    ];
+}
+
+// -----------------------------
+// Other vouchers
+// -----------------------------
+else {
+
+  if (l.EntryType === "DebitRow")
+    accounts = debitAccounts;
+
+  else if (l.EntryType === "CreditRow")
+    accounts = creditAccounts;
+}
 
     return (
       <tr key={i}>
         <td>
           <div className="cell-box">
             <select
-              disabled={!l.Side}
+              
               value={l.AccountId ?? ""}
               onChange={e =>
                 updateLine(i, "AccountId", Number(e.target.value))
@@ -491,7 +558,7 @@ return;
   type="number"
   disabled={isReversalMode}
   value={l.Debit}
-  onFocus={() => updateLine(i, "Side", "Debit")}
+  
   onChange={e => updateLine(i, "Debit", e.target.value)}
 />
 
@@ -504,12 +571,24 @@ return;
   type="number"
   disabled={isReversalMode}
   value={l.Credit}
-  onFocus={() => updateLine(i, "Side", "Credit")}
+  
   onChange={e => updateLine(i, "Credit", e.target.value)}
 />
 
           </div>
         </td>
+        <td>
+  {!isReversalMode && (
+    <button
+      type="button"
+      className="invaction-btn.invaction-delete"
+      onClick={() => removeRow(i)}
+      disabled={lines.length <= 2}
+    >
+      ✕
+    </button>
+  )}
+</td>
       </tr>
     );
   })}

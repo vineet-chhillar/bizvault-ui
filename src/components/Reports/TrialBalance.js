@@ -8,14 +8,24 @@ const fyStartYear =
     ? today.getFullYear()
     : today.getFullYear() - 1;
 
+const fyStartDate = new Date(fyStartYear, 3, 1);
+
 const [from, setFrom] = useState(
-  new Date(fyStartYear, 3, 1).toISOString().slice(0, 10)
+  `${fyStartDate.getFullYear()}-${String(
+    fyStartDate.getMonth() + 1
+  ).padStart(2, "0")}-${String(
+    fyStartDate.getDate()
+  ).padStart(2, "0")}`
 );
 
   const [to, setTo] = useState(
     new Date().toISOString().slice(0, 10)
   );
-
+ const [modal, setModal] = useState({
+  show: false,
+  message: "",
+  onClose: null
+});
   const [rows, setRows] = useState([]);
   const [loaded, setLoaded] = useState(false);
 const toastRef = React.useRef(null);
@@ -74,9 +84,27 @@ const exportPdf = () => {
       const msg = e.data;
 
       if (msg.action === "getTrialBalanceResult") {
-        setRows(msg.rows || []);
-        setLoaded(true);
-      }
+
+    // 🔴 Handle backend error
+    if (!msg.success) {
+
+        setModal({
+            show: true,
+            message:
+                msg.Message || "Failed to load trial balance.",
+            onClose: null
+        });
+
+        setRows([]);
+        setLoaded(false);
+
+        return;
+    }
+
+    // ✅ Success
+    setRows(msg.rows || []);
+    setLoaded(true);
+}
       if (msg.action === "generateTrialBalancePdfResult") {
         if (msg.success) {
           window.chrome.webview.postMessage({
@@ -120,6 +148,7 @@ const exportPdf = () => {
     .reduce((s, r) => s + r.ClosingBalance, 0);
 
   return (
+    <>
     <div className="form-container">
       <h2 className="form-title">Trial Balance</h2>
 
@@ -227,5 +256,30 @@ const exportPdf = () => {
         )}
       </div>
     </div>
+    {modal.show && (
+  <div className="modal-overlay">
+    <div className="modal-box">
+      <p>{modal.message}</p>
+
+      <div className="modal-actions">
+        <button
+          className="modal-btn ok"
+          onClick={() => {
+            modal.onClose?.();
+
+            setModal({
+              show: false,
+              message: "",
+              onClose: null
+            });
+          }}
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+    </>
   );
 }

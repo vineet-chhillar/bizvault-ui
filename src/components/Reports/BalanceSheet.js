@@ -2,14 +2,29 @@ import React, { useState, useEffect } from "react";
 
 export default function BalanceSheet() {
   // Financial year start (1 April)
-  const [from, setFrom] = useState(() => {
-    const today = new Date();
-    const fyStart =
-      today.getMonth() >= 3
-        ? new Date(today.getFullYear(), 3, 1)
-        : new Date(today.getFullYear() - 1, 3, 1);
-    return fyStart.toISOString().slice(0, 10);
-  });
+   const today = new Date();
+
+  const fyStartYear =
+  today.getMonth() >= 3
+    ? today.getFullYear()
+    : today.getFullYear() - 1;
+
+const fyStartDate = new Date(fyStartYear, 3, 1);
+
+const [from, setFrom] = useState(
+  `${fyStartDate.getFullYear()}-${String(
+    fyStartDate.getMonth() + 1
+  ).padStart(2, "0")}-${String(
+    fyStartDate.getDate()
+  ).padStart(2, "0")}`
+);
+  const [modal, setModal] = useState({
+  show: false,
+  message: "",
+  onClose: null
+});
+   
+  
 const toastRef = React.useRef(null);
 function showToast(message) {
   if (toastRef.current) return;
@@ -82,9 +97,27 @@ showToast("Opening Excel…");
       
       const msg = e.data;
       if (msg.action === "getBalanceSheetResult") {
-        setReport(msg.report);
-         setLoaded(true);
-      }
+
+    // 🔴 Handle backend error
+    if (!msg.success) {
+
+        setModal({
+            show: true,
+            message:
+                msg.Message || "Failed to load balance sheet.",
+            onClose: null
+        });
+
+        setReport(null);
+        setLoaded(false);
+
+        return;
+    }
+
+    // ✅ Success
+    setReport(msg.report);
+    setLoaded(true);
+}
        if (msg.action === "generateBalanceSheetPdfResult") {
         if (msg.success) {
           window.chrome.webview.postMessage({
@@ -114,6 +147,7 @@ if (msg.action === "exportBalanceSheetExcelResponse" && msg.success) {
   };
 
   return (
+    <>
     <div className="form-container">
       <h2 className="form-title">Balance Sheet</h2>
 
@@ -259,5 +293,30 @@ if (msg.action === "exportBalanceSheetExcelResponse" && msg.success) {
         </>
       )}
     </div>
+   {modal.show && (
+  <div className="modal-overlay">
+    <div className="modal-box">
+      <p>{modal.message}</p>
+
+      <div className="modal-actions">
+        <button
+          className="modal-btn ok"
+          onClick={() => {
+            modal.onClose?.();
+
+            setModal({
+              show: false,
+              message: "",
+              onClose: null
+            });
+          }}
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+    </>
   );
 }
