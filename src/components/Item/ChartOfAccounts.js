@@ -470,6 +470,7 @@ const save = () => {
           {/* Delete */}
           <button
             className="invaction-btn invaction-delete"
+                       
             disabled={r.IsSystemAccount === 1}
             onClick={() =>
               setModal({

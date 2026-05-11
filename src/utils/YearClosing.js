@@ -41,32 +41,62 @@ const YearClosing = () => {
       // ---------------------------------------
       // Preview response
       // ---------------------------------------
-      if (msg.action === "getYearClosingPreviewResult") {
+     if (msg.action === "getYearClosingPreviewResult") {
 
-        setLoading(false);
+  setLoading(false);
 
-        if (!msg.success) {
+  if (!msg.success) {
 
-          let text = msg.Message || "";
+    let text = msg.message || "";
 
-          if (
-            msg.ValidationMessages &&
-            msg.ValidationMessages.length > 0
-          ) {
-            text =
-              msg.ValidationMessages.join("\n");
-          }
+    if (
+      msg.validationMessages &&
+      msg.validationMessages.length > 0
+    ) {
+      text =
+        msg.validationMessages.join("\n");
+    }
 
-          setModal({
-            show: true,
-            message: text
-          });
+    setModal({
+      show: true,
+      message: text
+    });
 
-          return;
-        }
+    return;
+  }
 
-        setPreview(msg.preview);
-      }
+  setPreview(msg.preview);
+}
+if (msg.action === "performYearClosingResult") {
+
+  setLoading(false);
+
+  if (!msg.success) {
+
+    let text = "";
+
+    if (msg.errors) {
+
+      text = Object.values(msg.errors)
+        .join("\n");
+    }
+
+    setModal({
+      show: true,
+      message: text || "Year closing failed."
+    });
+
+    return;
+  }
+
+  setModal({
+    show: true,
+    message:
+      "Financial year closed successfully."
+  });
+
+  setPreview(null);
+}
     };
 
     window.chrome?.webview?.addEventListener(
@@ -109,13 +139,46 @@ const loadPreview = () => {
   // ---------------------------------------------------
   const executeClosing = () => {
 
-    setModal({
-      show: true,
-      message:
-        "Financial Year Closing execution will be implemented next."
-    });
-  };
+  if (!window.chrome?.webview)
+    return;
 
+  setLoading(true);
+
+  window.chrome.webview.postMessage({
+    Action: "performYearClosing",
+    Payload: {
+      From: from,
+      To: to
+    }
+  });
+};
+const groupedVoucherLines = [];
+
+if (preview?.VoucherLines) {
+
+  const map = {};
+
+  preview.VoucherLines.forEach((line) => {
+
+    const key = line.AccountName;
+
+    if (!map[key]) {
+
+      map[key] = {
+        AccountName: line.AccountName,
+        Debit: 0,
+        Credit: 0
+      };
+    }
+
+    map[key].Debit += line.Debit || 0;
+    map[key].Credit += line.Credit || 0;
+  });
+
+  Object.values(map).forEach((x) =>
+    groupedVoucherLines.push(x)
+  );
+}
   return (
 
     <div className="form-container">
@@ -231,8 +294,14 @@ const loadPreview = () => {
 
                   <tr>
                     <td>
-                      <b>Net Profit</b>
-                    </td>
+  <b>
+    {
+      preview.NetProfit > 0
+        ? "Net Profit"
+        : "Net Loss"
+    }
+  </b>
+</td>
 
                     <td
                       style={{
@@ -277,14 +346,22 @@ const loadPreview = () => {
 
                 <tbody>
 
-                  {preview.VoucherLines?.map(
+                  {groupedVoucherLines.map(
                     (l, i) => (
 
                       <tr key={i}>
 
-                        <td>
-                          {l.AccountName}
-                        </td>
+                       <td
+  style={{
+    fontWeight:
+      l.AccountName === "Profit & Loss A/c" ||
+      l.AccountName === "Retained Earnings"
+        ? "bold"
+        : "normal"
+  }}
+>
+  {l.AccountName}
+</td>
 
                         <td
                           style={{
@@ -319,7 +396,74 @@ const loadPreview = () => {
               </table>
 
             </div>
+{preview.NumberingPreview && (
 
+  <div className="table-container">
+
+    <h3 className="table-title">
+      Voucher Number Reset Preview
+    </h3>
+
+    <table className="data-table">
+
+      <thead>
+        <tr>
+          <th>Voucher Type</th>
+          <th>Current No</th>
+          <th>Next FY No</th>
+        </tr>
+      </thead>
+
+      <tbody>
+
+        <tr>
+          <td>Sales Invoice</td>
+          <td>{preview.NumberingPreview.CurrentInvoiceNo}</td>
+          <td>{preview.NumberingPreview.NextInvoiceNo}</td>
+        </tr>
+
+        <tr>
+          <td>Income Voucher</td>
+          <td>{preview.NumberingPreview.CurrentIncomeVoucherNo}</td>
+          <td>{preview.NumberingPreview.NextIncomeVoucherNo}</td>
+        </tr>
+
+        <tr>
+          <td>Expense Voucher</td>
+          <td>{preview.NumberingPreview.CurrentExpenseVoucherNo}</td>
+          <td>{preview.NumberingPreview.NextExpenseVoucherNo}</td>
+        </tr>
+
+        <tr>
+          <td>Journal Voucher</td>
+          <td>{preview.NumberingPreview.CurrentJournalVoucherNo}</td>
+          <td>{preview.NumberingPreview.NextJournalVoucherNo}</td>
+        </tr>
+
+        <tr>
+          <td>Payment Voucher</td>
+          <td>{preview.NumberingPreview.CurrentPaymentVoucherNo}</td>
+          <td>{preview.NumberingPreview.NextPaymentVoucherNo}</td>
+        </tr>
+
+        <tr>
+          <td>Receipt Voucher</td>
+          <td>{preview.NumberingPreview.CurrentReceiptVoucherNo}</td>
+          <td>{preview.NumberingPreview.NextReceiptVoucherNo}</td>
+        </tr>
+
+        <tr>
+          <td>Contra Voucher</td>
+          <td>{preview.NumberingPreview.CurrentContraVoucherNo}</td>
+          <td>{preview.NumberingPreview.NextContraVoucherNo}</td>
+        </tr>
+
+      </tbody>
+
+    </table>
+
+  </div>
+)}
             {/* ===================================== */}
             {/* Instructions */}
             {/* ===================================== */}
@@ -371,11 +515,16 @@ const loadPreview = () => {
             <div className="inventory-btns">
 
               <button
-                className="btn-submit small"
-                onClick={executeClosing}
-              >
-                Close Financial Year
-              </button>
+  className="btn-submit small"
+  onClick={executeClosing}
+  disabled={loading}
+>
+  {
+    loading
+      ? "Processing..."
+      : "Close Financial Year"
+  }
+</button>
 
             </div>
 
