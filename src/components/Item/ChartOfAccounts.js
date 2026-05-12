@@ -18,6 +18,7 @@ export default function ChartOfAccounts() {
   UpdatedBy: null
   
 });
+const [allAccounts, setAllAccounts] = useState([]);
 const [searchText, setSearchText] = useState("");
 const filteredRows = rows.filter(r =>
   (r.AccountName || "")
@@ -90,7 +91,25 @@ const onParentChange = (id) => {
     IsGroup: false // child must be ledger by default
   });
 };
+const getFullPath = (accountId) => {
+  let path = [];
 
+  let current = allAccounts.find(
+    a => a.AccountId === accountId
+  );
+
+  while (current) {
+    path.unshift(current.AccountName);
+
+    if (current.ParentAccountId === 0) break;
+
+    current = allAccounts.find(
+      a => a.AccountId === current.ParentAccountId
+    );
+  }
+
+  return path.join(" > ");
+};
   // Load initial data
   useEffect(() => {
     window.chrome.webview.postMessage({ action: "fetchCoA" });
@@ -100,6 +119,7 @@ const onParentChange = (id) => {
 
       if (msg.action === "fetchCoAResult") {
         setRows(msg.rows);
+         setAllAccounts(msg.rows);
       }
 
       if (
@@ -186,10 +206,16 @@ const save = () => {
 
 
 
- const edit = (r) => {
+const edit = (r) => {
   if (r.IsSystemAccount === 1) {
-    alert("System account: only opening balance can be changed");
+    setModal({
+      show: true,
+      message:
+        "System account: only opening balance can be changed.",
+      type: "info"
+    });
   }
+
   setForm(r);
   setIsEditing(true);
 };
@@ -262,19 +288,7 @@ const save = () => {
               </select>
             </div>
 
-            <div className="form-group">
-  <label>Opening Balance Type</label>
-  <select
-    value={form.OpeningBalanceType}
-    onChange={e =>
-      setForm({ ...form, OpeningBalanceType: e.target.value })
-    }
-    disabled={form.IsGroup || (isEditing && form.IsSystemAccount === 1)}
-  >
-    <option value="DR">Debit (DR)</option>
-    <option value="CR">Credit (CR)</option>
-  </select>
-</div>
+            
 
 
 
@@ -291,13 +305,13 @@ const save = () => {
 >
   <option value={0}>None</option>
 
-  {rows
-    .filter(a => a.IsGroup && a.AccountId !== form.AccountId)
-    .map(a => (
-      <option key={a.AccountId} value={a.AccountId}>
-        {a.AccountName}
-      </option>
-    ))}
+{rows
+  .filter(a => a.AccountId !== form.AccountId)
+  .map(a => (
+    <option key={a.AccountId} value={a.AccountId}>
+      {a.AccountName}
+    </option>
+  ))}
 </select>
 
 </div>
@@ -305,7 +319,7 @@ const save = () => {
 <div className="form-group">
   <label>Account Nature</label>
   <select
-    value={form.IsGroup ? 0 : 1}
+    value={form.IsGroup ? 1 : 0}
     onChange={e =>
       setForm({ ...form, IsGroup: e.target.value === "1" })
     }
@@ -319,7 +333,19 @@ const save = () => {
 
 
 
-
+<div className="form-group">
+  <label>Opening Balance Type</label>
+  <select
+    value={form.OpeningBalanceType}
+    onChange={e =>
+      setForm({ ...form, OpeningBalanceType: e.target.value })
+    }
+    disabled={form.IsGroup || (isEditing && form.IsSystemAccount === 1)}
+  >
+    <option value="DR">Debit (DR)</option>
+    <option value="CR">Credit (CR)</option>
+  </select>
+</div>
 
             <div className="form-group">
               <label>Opening Balance</label>
@@ -427,6 +453,9 @@ const save = () => {
       <th>Name</th>
       <th>Type</th>
       <th>Side</th>
+      <th>IsGroup Account</th>
+      <th>Is System Account</th>
+      <th>Parent Account</th>
       <th>Opening Type</th>
       <th>Opening</th>
       <th style={{ width: "120px" }}>Actions</th>
@@ -439,9 +468,18 @@ const save = () => {
         {/* ✅ Serial Number */}
         <td>{index + 1}</td>
 
-        <td>{r.AccountName}</td>
+        <td>{getFullPath(r.AccountId)}</td>
         <td>{r.AccountType}</td>
         <td>{r.NormalSide}</td>
+        <td>{r.IsGroup ? "Yes" : "No"}</td>
+        <td>{r.IsSystemAccount === true ? "Yes" : "No"}</td>
+         <td>
+  {
+    allAccounts.find(
+      a => a.AccountId === r.ParentAccountId
+    )?.AccountName || "-"
+  }
+</td>
         <td>{r.OpeningBalanceType}</td>
         <td>{r.OpeningBalance}</td>
 
