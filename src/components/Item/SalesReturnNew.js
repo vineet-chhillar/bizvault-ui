@@ -59,6 +59,9 @@ const [validationErrors, setValidationErrors] = useState([]);
   const [invoiceDate, setInvoiceDate] = useState(
     new Date().toISOString().slice(0, 10)
   );
+  const [returnDate, setReturnDate] = useState(
+  new Date().toISOString().slice(0, 10)
+);
   const [invoiceNo, setInvoiceNo] = useState("");
   const [invoiceNum, setInvoiceNum] = useState();
 
@@ -320,6 +323,7 @@ return;
       InvoiceNo: invoiceNo,
       InvoiceNum: invoiceNum,
       InvoiceDate: invoiceDate,
+      ReturnDate: returnDate,
         RefundMode: refundMode, // ✅ ADD
       TotalAmount: totals.total,
       TotalTax: totals.tax,
@@ -359,6 +363,7 @@ setValidationErrors([]);
       InvoiceNo: invoiceNo,
       InvoiceNum: invoiceNum,
       InvoiceDate: invoiceDate,
+      ReturnDate: returnDate,
       RefundMode: refundMode, // ✅ ADD
       TotalAmount: totals.total,
       TotalTax: totals.tax,
@@ -643,7 +648,16 @@ useEffect(() => {
             onChange={e => setInvoiceDate(e.target.value)}
           />
         </div>
+<div className="form-group">
+  <label>Return Date</label>
 
+  <input
+    type="date"
+    value={returnDate}
+    onChange={e => setReturnDate(e.target.value)}
+    style={{ width: "150px" }}
+  />
+</div>
         <div className="form-group">
           <label className="invoice-no-label">Invoice No</label>
           <input
@@ -779,7 +793,10 @@ useEffect(() => {
 
               <td>
                 <div className="cell-box">
-                  <input readOnly value={l.Rate} />
+                  <input
+                    value={l.Rate}
+                    onChange={e => updateLine(i, "Rate", e.target.value)}
+                  />
                 </div>
               </td>
 

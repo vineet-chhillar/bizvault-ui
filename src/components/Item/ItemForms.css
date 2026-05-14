@@ -283,12 +283,13 @@ h1.form-title, h2.form-title, h3.form-title {
 /* reduce space between form and table */
 .table-container {
   max-height: 650px;
-  overflow-y: auto;
+  overflow-y: visible;
   margin-top: 0px;
   padding-top: 0px;
   background: white;
   border-radius: 12px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  overflow-y: scroll;
 }
 
 /* remove h3’s top margin entirely */

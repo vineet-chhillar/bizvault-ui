@@ -221,7 +221,7 @@ const toastRef = React.useRef(null);
                 <th>S.No</th>
                 <th>Date</th>
                 <th>Narration</th>
-                <th>Voucher</th>
+                <th>Voucher No</th>
                 <th style={{ textAlign: "right" }}>Debit</th>
                 <th style={{ textAlign: "right" }}>Credit</th>
                 <th style={{ textAlign: "right" }}>Balance</th>
@@ -243,8 +243,10 @@ const toastRef = React.useRef(null);
                   <td>{fmtDate(r.Date)}</td>
                   <td>{r.Narration}</td>
                   <td>
-                    {r.VoucherType} #{r.VoucherId}
-                  </td>
+  {["JV", "PV", "RV", "CV"].includes(r.VoucherType)
+    ? r.VoucherNo
+    : `${r.VoucherType}/${r.VoucherId}`}
+</td>
                   <td style={{ textAlign: "right" }}>
                     {r.Debit.toFixed(2)}
                   </td>

@@ -9,7 +9,7 @@ const blankLine = () => ({
   HsnCode: "",
   BatchNo: "",
   BatchNum:0,
-  Qty: 1,
+  Qty: 0,
   Rate: "",
   DiscountPercent: 0,
   NetRate: 0,
@@ -45,7 +45,7 @@ export default function EditPurchaseInvoice({ user }) {
   const [invoiceList, setInvoiceList] = useState([]);
 const [detailsModal, setDetailsModal] = useState({ open: false, index: null });
 const [refundMode, setRefundMode] = useState("Cash"); // ADJUST | CASH | BANK
-const [paidVia, setPaidVia] = useState("");             // CASH | BANK | ""
+const [paidVia, setPaidVia] = useState("Cash");             // CASH | BANK | ""
 const [outstanding, setOutstanding] = useState(0);   // BalanceAmount
 const [paidAmount, setPaidAmount] = useState(0);     // PaidAmount
   const [company, setCompany] = useState(null);
@@ -54,6 +54,9 @@ const [paidAmount, setPaidAmount] = useState(0);     // PaidAmount
   const [supplierInfo, setSupplierInfo] = useState(null);
 
   const [purchaseDate, setPurchaseDate] = useState(
+  new Date().toISOString().slice(0, 10)
+);
+const [returnDate, setReturnDate] = useState(
   new Date().toISOString().slice(0, 10)
 );
   const [invoiceNo, setInvoiceNo] = useState("");
@@ -313,6 +316,7 @@ return;
       InvoiceNo: invoiceNo,
       InvoiceNum: invoiceNum,
       InvoiceDate: purchaseDate,
+      ReturnDate: returnDate,
       TotalAmount: totals.total,
       TotalTax: totals.tax,
       RoundOff: totals.roundOff,
@@ -346,6 +350,7 @@ return;
       InvoiceNo: invoiceNo,
       InvoiceNum: invoiceNum,
       InvoiceDate: purchaseDate,
+      ReturnDate: returnDate,
       TotalAmount: totals.total,
       TotalTax: totals.tax,
       RoundOff: totals.roundOff,
@@ -418,7 +423,7 @@ setOutstanding(Number(data.BalanceAmount) || 0);
   HsnCode: item.HsnCode,
   BatchNo: item.BatchNo,
   BatchNum: item.BatchNum,
-  Qty: item.Qty,
+  Qty: 0,
   Rate: item.Rate,
   DiscountPercent: item.DiscountPercent,
   NetRate: item.NetRate,
@@ -607,7 +612,16 @@ AvailableQty: item.AvailableQty || 0,
           <label>Purchase Date</label>
           <input type="date" readOnly value={purchaseDate} style={{ background: "#f1ecff", width:"150px" }} onChange={e => setPurchaseDate(e.target.value)} />
         </div>
+<div className="form-group">
+  <label>Return Date</label>
 
+  <input
+    type="date"
+    value={returnDate}
+    onChange={e => setReturnDate(e.target.value)}
+    style={{ width: "150px" }}
+  />
+</div>
         <div className="form-group">
           <label className="invoice-no-label">Invoice No</label>
           <input type="text" value={invoiceNo} readOnly style={{ background: "#f1ecff", width:"150px" }} />
@@ -705,7 +719,7 @@ AvailableQty: item.AvailableQty || 0,
 
       <td>
         <div className="cell-box">
-        <input value={l.Rate} readOnly  onChange={e => updateLine(i, "Rate", e.target.value)} />
+        <input value={l.Rate} onChange={e => updateLine(i, "Rate", e.target.value)} />
         </div>
       </td>
 
@@ -885,8 +899,7 @@ AvailableQty: item.AvailableQty || 0,
           <div className="modal-box">
             <h3>Confirm Return</h3>
             <p>
-              Updating this invoice will mark the original invoice as rejected
-              and create a new updated one.
+              Are You sure you want to return this purchase
             </p>
 
             <button
@@ -900,7 +913,7 @@ AvailableQty: item.AvailableQty || 0,
               className="btn-submit"
               onClick={confirmUpdate}
             >
-              Yes, Update Return
+              Yes, Return
             </button>
           </div>
         </div>

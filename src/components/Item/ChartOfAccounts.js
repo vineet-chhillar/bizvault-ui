@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getCreatedBy } from "../../utils/authHelper";
-
+import "./ItemForms.css";
 export default function ChartOfAccounts() {
   const [rows, setRows] = useState([]);
   const [form, setForm] = useState({

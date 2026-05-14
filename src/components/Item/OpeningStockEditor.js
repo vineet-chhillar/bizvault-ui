@@ -262,14 +262,7 @@ if (msg.action === "GetOpeningStockResponse") {
   window.chrome.webview.addEventListener("message", handler);
   return () => window.chrome.webview.removeEventListener("message", handler);
 }, []);
-useEffect(() => {
-  const close = () => {
-    setActiveRow(null);
-    //setItemSuggestions([]);
-  };
-  document.addEventListener("click", close);
-  return () => document.removeEventListener("click", close);
-}, []);
+
 
 useEffect(() => {
   if (!window.chrome?.webview) return;
@@ -344,21 +337,21 @@ useEffect(() => {
 
   <div className="cell-box">
     <input
-      value={l.ItemName}
-      disabled={isLocked}
-      placeholder="Search item"
+  value={l.ItemName}
+  disabled={isLocked}
+  placeholder="Search item"
 
-      onChange={e => {
-        updateLine(i, "ItemName", e.target.value);
-        setActiveRow(i);
-      }}
+  onChange={e => {
+    updateLine(i, "ItemName", e.target.value);
 
-      onFocus={() => setActiveRow(i)}
+    // reset selected item while typing
+    updateLine(i, "ItemId", 0);
 
-      onBlur={() =>
-        setTimeout(() => setActiveRow(null), 150)
-      }
-    />
+    setActiveRow(i);
+  }}
+
+  onFocus={() => setActiveRow(i)}
+/>
   </div>
 
   {activeRow === i && (
@@ -395,7 +388,7 @@ useEffect(() => {
             key={`${it.Id}_${i}`}
             className="suggestion-row"
 
-            onMouseDown={() => {
+            onClick={() => {
 
               setLines(prev => {
 

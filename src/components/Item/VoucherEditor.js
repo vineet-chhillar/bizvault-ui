@@ -68,6 +68,8 @@ useEffect(() => {
       Payload: { VoucherType: voucherType }
     });
   }, [voucherType]);
+
+
 useEffect(() => {
   window.chrome.webview.postMessage({
     Action: "GetAccountsForVoucherSide",
@@ -185,18 +187,21 @@ if (msg.action === "GetVoucherIdsByDateResponse") {
   // SUCCESS
   // =========================
 
-  setModal({
-    show: true,
+ resetForm();
 
-    message:
-      "Voucher saved successfully",
+window.chrome.webview.postMessage({
+  Action: "GetNextVoucherNo",
+  Payload: {
+    VoucherType: voucherType
+  }
+});
 
-    type: "success",
-
-    onClose: () => {
-      resetForm();
-    }
-  });
+setModal({
+  show: true,
+  message: "Voucher saved successfully",
+  type: "success"
+});
+  
 }
 
     if (msg.action === "ReverseVoucherResponse") {
@@ -223,7 +228,7 @@ if (msg.action === "GetVoucherIdsByDateResponse") {
 
   window.chrome.webview.addEventListener("message", handler);
   return () => window.chrome.webview.removeEventListener("message", handler);
-}, []);
+}, [voucherType]);
 
 
   const resetForm = () => {
@@ -320,7 +325,6 @@ if (msg.action === "GetVoucherIdsByDateResponse") {
   });
   return;
 }
-
     window.chrome.webview.postMessage({
       Action: "SaveVoucher",
       Payload: {

@@ -175,7 +175,7 @@ const groupedByVoucher = rows.reduce((acc, row) => {
       <div className="form-inner">
         <div className="form-row-horizontal">
           <div className="form-group">
-            <label>Voucher Type</label>
+            <label>Voucher Type/No</label>
             <select
   value={voucherType}
   onChange={(e) => setVoucherType(e.target.value)}
@@ -276,7 +276,11 @@ const groupedByVoucher = rows.reduce((acc, row) => {
               <td rowSpan={lines.length}>{currentSerial}</td>
 
               <td rowSpan={lines.length}>{r.Date}</td>
-              <td rowSpan={lines.length}>{r.VoucherType}/{r.VoucherId}</td>
+              <td rowSpan={lines.length}>
+  {["JV", "PV", "RV", "CV"].includes(r.VoucherType)
+    ? r.VoucherNo
+    : `${r.VoucherType}/${r.VoucherId}`}
+</td>
               <td rowSpan={lines.length}>{r.Description}</td>
             </>
           )}
