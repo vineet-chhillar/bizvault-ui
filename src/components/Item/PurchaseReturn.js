@@ -101,8 +101,8 @@ if (refundMode !== "ADJUST" && !paidVia) {
 
     if (!it.ItemId) errors.push(`Line ${idx + 1}: Item is required.`);
 
-    if (Number(it.Qty) <= 0)
-      errors.push(`Line ${idx + 1}: Qty must be > 0`);
+    //if (Number(it.Qty) <= 0)
+      //errors.push(`Line ${idx + 1}: Qty must be > 0`);
 
     // 🚨 NEW VALIDATION 🚨
     if (Number(it.Qty) > Number(it.AvailableQty)) {
@@ -423,7 +423,7 @@ setOutstanding(Number(data.BalanceAmount) || 0);
   HsnCode: item.HsnCode,
   BatchNo: item.BatchNo,
   BatchNum: item.BatchNum,
-  Qty: 0,
+  Qty: item.AvailableQty,
   Rate: item.Rate,
   DiscountPercent: item.DiscountPercent,
   NetRate: item.NetRate,
@@ -525,7 +525,7 @@ AvailableQty: item.AvailableQty || 0,
 
       setRefundMode("Cash");
 
-      setPaidVia("");
+      setPaidVia("Cash");
 
       setOutstanding(0);
 

@@ -279,7 +279,24 @@ useEffect(() => {
   window.chrome.webview.addEventListener("message", handler);
   return () => window.chrome.webview.removeEventListener("message", handler);
 }, []);
+useEffect(() => {
+  const handleClickOutside = (e) => {
 
+    // if click is NOT inside suggestions/input area
+    if (
+      !e.target.closest(".suggestions-box") &&
+      !e.target.closest(".cell-box")
+    ) {
+      setActiveRow(null);
+    }
+  };
+
+  document.addEventListener("mousedown", handleClickOutside);
+
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
+}, []);
   return (
     <>
     <div className="form-container">

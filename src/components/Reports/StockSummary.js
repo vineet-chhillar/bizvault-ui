@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-
+import "./Reports.css";
 export default function StockSummary() {
   const [asOf, setAsOf] = useState(() =>
     new Date().toISOString().slice(0, 10)

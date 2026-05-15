@@ -164,7 +164,8 @@ h1.form-title, h2.form-title, h3.form-title {
   vertical-align: middle !important;
   border: 1px solid #ddd;
   font-size: 0.9rem !important;
-  height: auto !important;          /* ensures rows shrink */
+  height: auto !important;   
+  
 }
 
 .data-table th {

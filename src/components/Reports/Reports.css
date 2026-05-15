@@ -4,6 +4,7 @@
   background: white;
   border-radius: 12px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  overflow-y: visible;
 }
 .report-page {
   padding: 16px;
@@ -450,7 +451,7 @@ tfoot th {
 
 .stocksummarydata-table th:nth-child(3), /* Category */
 .stocksummarydata-table td:nth-child(3) {
-  width: 5%;
+  width: 7%;
   text-align: center; /* center align Unit, GST %, and buttons */
 }
 

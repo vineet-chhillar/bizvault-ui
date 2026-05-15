@@ -141,9 +141,7 @@ const [customerList, setCustomerList] = useState([]);
 const [showSuggestions, setShowSuggestions] = useState(false);
 const [itemList, setItemList] = useState([]);       // will hold ItemForInvoice[]
 const [itemSearchIndex, setItemSearchIndex] = useState(null); // which row is showing suggestions
-const [selectedItemBalance, setSelectedItemBalance] = useState(null);
-const [selectedBatchBalance, setSelectedBatchBalance] = useState(null);
-const [selectedBatchRate, setSelectedBatchRate] = useState(null);
+
 const [paymentMode, setPaymentMode] = useState("Cash");
 const [paidVia, setPaidVia] = useState("Cash");
 const [itemSearchText, setItemSearchText] = useState({});
@@ -585,9 +583,9 @@ const Items = lines.map(l => ({
 LineTotal: Number(l.LineTotal) || 0,
 Notes: l.Notes || "",
 
-    AvailableStock: Number(selectedItemBalance) || 0,
-    BalanceBatchWise: Number(selectedBatchBalance) || 0,
-    BalanceBatchRate: Number(selectedBatchRate) || 0,
+   AvailableStock: Number(l.Balance) || 0,
+BalanceBatchWise: Number(l.BalanceBatchWise) || 0,
+BalanceBatchRate: Number(l.RateBatchWise) || 0,
 
 }));
 
@@ -622,9 +620,7 @@ ItemName:Items.ItemName,
   if (window.chrome?.webview) {
     window.chrome.webview.postMessage(payload);
   }
-  setSelectedItemBalance(null);
-  setSelectedBatchBalance(null);
-  setSelectedBatchRate(null);
+  
 };
 
 useEffect(() => {
@@ -799,7 +795,7 @@ if (msg.action === "GetCompanyProfileResponse") {
 if (msg.action === "GetItemBalanceResponse") {
   const idx = msg.lineIndex;
   const bal = msg.balance;
-setSelectedItemBalance(msg.balance);
+
 
   setLines(prev => {
     const copy = [...prev];
@@ -811,7 +807,7 @@ setSelectedItemBalance(msg.balance);
 if (msg.action === "GetItemBalanceBatchWiseResponse") {
   const idx = msg.lineIndex;
   const balbatchwise = msg.balance;
-setSelectedBatchBalance(msg.balance);
+
 console.log("📥 Batch-wise balance for line", idx, "is", balbatchwise);
   setLines(prev => {
     const copy = [...prev];
@@ -823,7 +819,7 @@ console.log("📥 Batch-wise balance for line", idx, "is", balbatchwise);
 if (msg.action === "getPurchaseNetRateResult") {
   const idx = msg.lineIndex;
   const ratebatchwise = msg.netRate;
-setSelectedBatchRate(msg.netRate);
+
 console.log("📥 Batch-wise Net Purchase Rate for line", idx, "is", ratebatchwise);
   setLines(prev => {
     const copy = [...prev];
@@ -1128,24 +1124,7 @@ type="button"
   />
 </div>
 
-  <div className="item-stock-display">
-    {selectedItemBalance !== null && (
-      <div className="stock-line">
-        Total Available Stock: <b>{selectedItemBalance}</b>
-      </div>
-    )}
-
-    {selectedBatchBalance !== null && (
-      <div className="stock-line">
-        Batch Stock: <b>{selectedBatchBalance}</b>
-      </div>
-    )}
-    {selectedBatchRate !== null && (
-      <div className="stock-line">
-        Batch Net Rate: <b>{selectedBatchRate}</b>
-      </div>
-    )}
-  </div>
+ 
 <div className="form-group">
   <label className="invoice-no-label">Paid Amount</label>
 <input
@@ -1510,10 +1489,31 @@ className={paymentMode !== "Credit" ? "input-disabled" : ""}
                   </td>
 
             </tr> 
+
+
             <tr className="sub-row">
   <td colSpan="9">
 
     <div className="sub-row-content">
+
+<div className="item-stock-display">
+
+      <div className="stock-line">
+        Total Available Stock:
+        <b>{l.Balance ?? 0}</b>
+      </div>
+
+      <div className="stock-line">
+        Batch Stock:
+        <b>{l.BalanceBatchWise ?? 0}</b>
+      </div>
+
+      <div className="stock-line">
+        Batch Net Rate:
+        <b>{l.RateBatchWise ?? 0}</b>
+      </div>
+
+    </div>
 
       <div className="tax-item">
         <span className="label">GST</span>

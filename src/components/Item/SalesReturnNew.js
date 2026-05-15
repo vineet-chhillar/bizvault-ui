@@ -475,7 +475,7 @@ useEffect(() => {
   setLines(
     (data.Items || []).map(item => ({
       ...item,
-      Qty: 0,
+      Qty: item.AvailableQty || 0,
       AvailableQty: item.AvailableQty || 0,
       Notes: ""
     }))

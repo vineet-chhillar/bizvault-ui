@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-
+import "./Reports.css";
 export default function StockValuationFIFO() {
   const [from, setFrom] = useState(() => {
     const d = new Date();
