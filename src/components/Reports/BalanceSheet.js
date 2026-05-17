@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 
 export default function BalanceSheet() {
   // Financial year start (1 April)
+  
    const today = new Date();
 
   const fyStartYear =
@@ -67,9 +68,15 @@ function hideToast() {
   const [loaded, setLoaded] = useState(false);
 const exportPdf = () => {
     if (!loaded) {
-      alert("Load report first");
-      return;
-    }
+
+  setModal({
+    show: true,
+    message: "Load report first.",
+    onClose: null
+  });
+
+  return;
+}
     window.chrome.webview.postMessage({
       action: "exportBalanceSheetPdf",
       payload: { From: from, To: to },
@@ -77,9 +84,15 @@ const exportPdf = () => {
   };
   const exportExcel = () => {
   if (!loaded) {
-    alert("Load report first");
-    return;
-  }
+
+  setModal({
+    show: true,
+    message: "Load report first.",
+    onClose: null
+  });
+
+  return;
+}
 showToast("Opening Excel…");
   window.chrome.webview.postMessage({
     action: "exportBalanceSheetExcel",
@@ -125,7 +138,11 @@ showToast("Opening Excel…");
             data: { path: msg.path },
           });
         } else {
-          alert("PDF generation failed");
+          setModal({
+            show: true,
+            message: "PDF generation failed.",
+            onClose: null
+          });
         }
       }
 if (msg.action === "exportBalanceSheetExcelResponse" && msg.success) {

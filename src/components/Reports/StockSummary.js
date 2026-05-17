@@ -7,6 +7,11 @@ export default function StockSummary() {
   const [rows, setRows] = useState([]);
   const [loaded, setLoaded] = useState(false);
 const toastRef = React.useRef(null);
+const [modal, setModal] = useState({
+  show: false,
+  message: "",
+  onClose: null
+});
  function showToast(message) {
    if (toastRef.current) return;
  
@@ -51,7 +56,11 @@ const toastRef = React.useRef(null);
             data: { path: msg.path },
           });
         } else {
-          alert("PDF generation failed");
+          setModal({
+            show: true,
+            message: "PDF generation failed.",
+            onClose: null
+          });
         }
       }
       if (msg.action === "exportStockSummaryExcelResponse" && msg.success) {
@@ -74,7 +83,11 @@ const toastRef = React.useRef(null);
 
   const exportPdf = () => {
     if (!loaded) {
-      alert("Load stock summary first");
+      setModal({
+        show: true,
+        message: "Load stock summary first.",
+        onClose: null
+      });
       return;
     }
 
@@ -85,8 +98,14 @@ const toastRef = React.useRef(null);
   };
 const exportExcel = () => {
     if (!loaded) {
-      alert("Load stock summary first");
+      setModal({
+        show: true,
+        message: "Load stock summary first.",
+        onClose: null
+      });
       return;
+    }
+      
     }
     showToast("Exporting Excel...");
     window.chrome.webview.postMessage({
@@ -94,12 +113,13 @@ const exportExcel = () => {
   payload: { AsOf: asOf }
 });
 
-  };
+  
   return (
+    <>
     <div className="form-container">
       <h2 className="form-title">Stock Summary</h2>
 
-      {/* FILTER BAR */}
+      
       <div className="form-inner">
         <div className="form-row-horizontal">
           <div className="form-group">
@@ -206,5 +226,31 @@ const exportExcel = () => {
         </table>
       </div>
     </div>
+    {modal.show && (
+  <div className="modal-overlay">
+    <div className="modal-box">
+      <p>{modal.message}</p>
+
+      <div className="modal-actions">
+        <button
+          className="modal-btn ok"
+          onClick={() => {
+            modal.onClose?.();
+
+            setModal({
+              show: false,
+              message: "",
+              onClose: null
+            });
+          }}
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+    </>
   );
 }
+

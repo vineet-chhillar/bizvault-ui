@@ -17,12 +17,21 @@ export default function ProfitLossReport() {
       fyStartDate.getDate()
     ).padStart(2, "0")}`
   );
+  const [modal, setModal] = useState({
+  show: false,
+  message: "",
+  onClose: null
+});
   const [to, setTo] = useState(new Date().toISOString().slice(0, 10));
   const [report, setReport] = useState(null);
   const [loaded, setLoaded] = useState(false);
 const exportPdf = () => {
     if (!loaded) {
-      alert("Load report first");
+      setModal({
+        show: true,
+        message: "Load report first.",
+        onClose: null
+      });
       return;
     }
     window.chrome.webview.postMessage({
@@ -30,14 +39,14 @@ const exportPdf = () => {
       payload: { From: from, To: to },
     });
   };
-  const [modal, setModal] = useState({
-  show: false,
-  message: "",
-  onClose: null
-});
+  
   const exportExcel = () => {
     if (!loaded) {
-      alert("Load report first");
+      setModal({
+        show: true,
+        message: "Load report first.",
+        onClose: null
+      });
       return;
     }
     showToast("Exporting Excel...");
@@ -107,7 +116,11 @@ function hideToast() {
             data: { path: msg.path },
           });
         } else {
-          alert("PDF generation failed");
+          setModal({
+            show: true,
+            message: "PDF generation failed.",
+            onClose: null
+          });
         }
       }
       

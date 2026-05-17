@@ -7,6 +7,11 @@ export default function BankBookReport() {
   const [to, setTo] = useState(
     new Date().toISOString().slice(0, 10)
   );
+  const [modal, setModal] = useState({
+  show: false,
+  message: "",
+  onClose: null
+});
     const [loaded, setLoaded] = useState(false);
   const [report, setReport] = useState({
    OpeningBalance: 0,
@@ -45,7 +50,11 @@ export default function BankBookReport() {
  const rows = report?.Rows || [];
  const exportPdf = () => {
     if (!loaded) {
-      alert("Load report first");
+      setModal({
+    show: true,
+    message: "Load report first.",
+    onClose: null
+  });
       return;
     }
     window.chrome.webview.postMessage({
@@ -56,7 +65,11 @@ export default function BankBookReport() {
 
   const exportExcel = () => {
     if (!loaded) {
-      alert("Load report first");
+     setModal({
+    show: true,
+    message: "Load report first.",
+    onClose: null
+  });
       return;
     }
     showToast("Exporting Excel...");
@@ -97,7 +110,11 @@ if (msg.action === "generateBankBookPdfResult") {
             data: { path: msg.path },
           });
         } else {
-          alert("PDF generation failed");
+          setModal({
+            show: true,
+            message: "PDF generation failed.",
+            onClose: null
+          });
         }
       }
       if (msg.action === "exportBankBookExcelResponse" && msg.success) {
@@ -128,17 +145,32 @@ const totalCredit = rows.reduce(
   0
 );
 const groupedByVoucher = rows.reduce((acc, row) => {
-  const key = `${row.VoucherType}|${row.VoucherId}`;
+  const voucherType =
+    row.VoucherType || "UNKNOWN";
+
+  const groupValue =
+    ["JV", "PV", "RV", "CV"].includes(voucherType)
+      ? row.VoucherNo
+      : (row.VoucherId ?? row.JournalId);
+
+  const key =
+    `${voucherType}|${groupValue}`;
 
   if (!acc[key]) {
     acc[key] = {
-      voucherType: row.VoucherType,
-      voucherId: row.VoucherId,
+      voucherType,
+
+      voucherNo: row.VoucherNo,
+
+      voucherId:
+        row.VoucherId ?? row.JournalId,
+
       rows: []
     };
   }
 
   acc[key].rows.push(row);
+
   return acc;
 }, {});
 
@@ -147,6 +179,7 @@ let runningBalance = report.OpeningBalance;
 let pageSerialNo = 1;
 
   return (
+    <>
     <div className="form-container">
       <h2 className="form-title">Bank Book</h2>
 
@@ -209,8 +242,10 @@ let pageSerialNo = 1;
       <div className="table-container" style={{ marginTop: 20 }}>
          {report && (
   <p style={{ fontWeight: 600 }}>
-    Opening Balance : {report.OpeningBalance.toFixed(2)}
-  </p>
+  Opening Balance :{" "}
+  {Math.abs(report.OpeningBalance).toFixed(2)}{" "}
+  {report.OpeningBalance >= 0 ? "Dr" : "Cr"}
+</p>
 )}
         <table className="cashbookdata-table">
           <thead>
@@ -256,11 +291,11 @@ let pageSerialNo = 1;
       <React.Fragment key={`${voucherType}-${voucherId}`}>
         {lines.map((r, li) => {
           // ✅ Update balance ONLY on Bank line
-          if (r.AccountName === "Bank") {
-            runningBalance +=
-              Number(r.Debit || 0) -
-              Number(r.Credit || 0);
-          }
+         if (r.IsBankAccount) {
+  runningBalance +=
+    Number(r.Debit || 0) -
+    Number(r.Credit || 0);
+}
 
           return (
             <tr key={`${voucherType}-${voucherId}-${li}`}>
@@ -284,11 +319,18 @@ let pageSerialNo = 1;
               </td>
 
               {/* ✅ Balance shown ONLY on Bank line */}
-              <td style={{ textAlign: "right", fontWeight: 600 }}>
-                {r.AccountName === "Bank"
-                  ? runningBalance.toFixed(2)
-                  : ""}
-              </td>
+              <td
+  style={{
+    textAlign: "right",
+    fontWeight: 600
+  }}
+>
+  {r.IsBankAccount
+    ? `${Math.abs(runningBalance).toFixed(2)} ${
+        runningBalance >= 0 ? "Dr" : "Cr"
+      }`
+    : ""}
+</td>
             </tr>
           );
         })}
@@ -333,10 +375,37 @@ let pageSerialNo = 1;
         </table>
         {report && (
   <p style={{ fontWeight: 600 }}>
-    Closing Balance : {report.ClosingBalance.toFixed(2)}
-  </p>
+  Closing Balance :{" "}
+  {Math.abs(report.ClosingBalance).toFixed(2)}{" "}
+  {report.ClosingBalance >= 0 ? "Dr" : "Cr"}
+</p>
 )}
       </div>
     </div>
+    {modal.show && (
+  <div className="modal-overlay">
+    <div className="modal-box">
+      <p>{modal.message}</p>
+
+      <div className="modal-actions">
+        <button
+          className="modal-btn ok"
+          onClick={() => {
+            modal.onClose?.();
+
+            setModal({
+              show: false,
+              message: "",
+              onClose: null
+            });
+          }}
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+</>
   );
 }

@@ -11,6 +11,11 @@ export default function VoucherReport() {
   const [rows, setRows] = useState([]);
 const [voucherTypes, setVoucherTypes] = useState([]);
 const [loaded, setLoaded] = useState(false);
+const [modal, setModal] = useState({
+  show: false,
+  message: "",
+  onClose: null
+});
 let pageSerialNo = 1;
 const toastRef = React.useRef(null);
 function showToast(message) {
@@ -44,7 +49,11 @@ function hideToast() {
 
   const exportPdf = () => {
     if (!loaded) {
-      alert("Load report first");
+      setModal({
+        show: true,
+        message: "Load report first.",
+        onClose: null
+      });
       return;
     }
     window.chrome.webview.postMessage({
@@ -59,7 +68,11 @@ function hideToast() {
 
   const exportExcel = () => {
     if (!loaded) {
-      alert("Load report first");
+      setModal({
+        show: true,
+        message: "Load report first.",
+        onClose: null
+      });
       return;
     }
         showToast("Exporting Excel...");
@@ -114,7 +127,11 @@ useEffect(() => {
             data: { path: msg.path },
           });
         } else {
-          alert("PDF generation failed");
+          setModal({
+            show: true,
+            message: "PDF generation failed.",
+            onClose: null
+          });
         }
       }
       if (msg.action === "exportVoucherReportExcelResponse" && msg.success) {
@@ -168,6 +185,7 @@ const groupedByVoucher = rows.reduce((acc, row) => {
 
 
   return (
+    <>
     <div className="form-container">
       <h2 className="form-title">Voucher Report</h2>
 
@@ -333,5 +351,30 @@ const groupedByVoucher = rows.reduce((acc, row) => {
         </table>
       </div>
     </div>
+    {modal.show && (
+  <div className="modal-overlay">
+    <div className="modal-box">
+      <p>{modal.message}</p>
+
+      <div className="modal-actions">
+        <button
+          className="modal-btn ok"
+          onClick={() => {
+            modal.onClose?.();
+
+            setModal({
+              show: false,
+              message: "",
+              onClose: null
+            });
+          }}
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+    </>
   );
 }

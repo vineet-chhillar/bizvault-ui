@@ -7,12 +7,17 @@ export default function LedgerReport() {
   const [from, setFrom] = useState(() => new Date().toISOString().slice(0, 10));
   const [to, setTo] = useState(() => new Date().toISOString().slice(0, 10));
   const [report, setReport] = useState(null);
-
+const [voucherRows, setVoucherRows] = useState([]);
+const [showVoucherModal, setShowVoucherModal] = useState(false);
   const [searchParams] = useSearchParams();
   const accountIdFromUrl = Number(searchParams.get("accountId"));
   const source = searchParams.get("source");
 const [loaded, setLoaded] = useState(false);
-
+const [modal, setModal] = useState({
+  show: false,
+  message: "",
+  onClose: null
+});
 const toastRef = React.useRef(null);
  function showToast(message) {
    if (toastRef.current) return;
@@ -73,6 +78,12 @@ const toastRef = React.useRef(null);
         setReport(msg.report);
         setLoaded(true);
       }
+      if (msg.action === "getVoucherDetailsResult") {
+
+  setVoucherRows(msg.rows || []);
+
+  setShowVoucherModal(true);
+}
       if (msg.action === "exportLedgerExcelResponse" && msg.success) {
   hideToast();
 }
@@ -85,7 +96,11 @@ const toastRef = React.useRef(null);
             data: { path: msg.path },
           });
         } else {
-          alert("PDF generation failed");
+          setModal({
+            show: true,
+            message: "PDF generation failed.",
+            onClose: null
+          });
         }
       }
     };
@@ -100,7 +115,11 @@ const toastRef = React.useRef(null);
   // -----------------------------
   const load = () => {
     if (!accountId) {
-      alert("Select account");
+      setModal({
+        show: true,
+        message: "Select account.",
+        onClose: null
+      });
       return;
     }
 
@@ -119,7 +138,11 @@ const toastRef = React.useRef(null);
   // -----------------------------
   const exportPdf = () => {
     if (!loaded) {
-      alert("Load report first");
+      setModal({
+        show: true,
+        message: "Load report first.",
+        onClose: null
+      });
       return;
     }
     window.chrome.webview.postMessage({
@@ -129,7 +152,11 @@ const toastRef = React.useRef(null);
   };
     const exportExcel = () => {
     if (!loaded) {
-      alert("Load report first");
+      setModal({
+        show: true,
+        message: "Load report first.",
+        onClose: null
+      });
       return;
     }
     showToast("Exporting Excel...");
@@ -148,12 +175,21 @@ const toastRef = React.useRef(null);
   // -----------------------------
   const fmtDate = (d) =>
     new Date(d).toLocaleDateString("en-GB");
+const totalDebit = (report?.Rows || []).reduce(
+  (sum, r) => sum + Number(r.Debit || 0),
+  0
+);
 
+const totalCredit = (report?.Rows || []).reduce(
+  (sum, r) => sum + Number(r.Credit || 0),
+  0
+);
   return (
+    <>
     <div className="form-container">
       <h2 className="form-title">Account Statement</h2>
 
-      {/* FILTERS */}
+      
       <div className="form-inner">
         <div className="form-row-horizontal">
           <div className="form-group">
@@ -203,7 +239,7 @@ const toastRef = React.useRef(null);
         </div>
       </div>
 
-      {/* REPORT */}
+      
       {report && (
         <div className="table-container" style={{ marginTop: 20 }}>
           <h3 className="table-title">
@@ -242,10 +278,30 @@ const toastRef = React.useRef(null);
                   <td>{i + 1}</td>
                   <td>{fmtDate(r.Date)}</td>
                   <td>{r.Narration}</td>
-                  <td>
-  {["JV", "PV", "RV", "CV"].includes(r.VoucherType)
-    ? r.VoucherNo
-    : `${r.VoucherType}/${r.VoucherId}`}
+               <td>
+  <span
+    style={{
+      color: "#32105e",
+      cursor: "pointer",
+      textDecoration: "underline"
+    }}
+    onClick={() => {
+      window.chrome.webview.postMessage({
+        action: "getVoucherDetails",
+
+        payload: {
+          From: r.Date,
+VoucherType: r.VoucherType,
+  VoucherNo: r.VoucherNo,
+  VoucherId: r.VoucherId
+        }
+      });
+    }}
+  >
+    {["JV", "PV", "RV", "CV"].includes(r.VoucherType)
+      ? r.VoucherNo
+      : `${r.VoucherType}/${r.VoucherId}`}
+  </span>
 </td>
                   <td style={{ textAlign: "right" }}>
                     {r.Debit.toFixed(2)}
@@ -261,16 +317,113 @@ const toastRef = React.useRef(null);
             </tbody>
 
             <tfoot>
-              <tr>
-                <th colSpan={4}>Closing Balance</th>
-                <th colSpan={3} style={{ textAlign: "right" }}>
-                  {report.ClosingBalance.toFixed(2)} {report.ClosingSide}
-                </th>
-              </tr>
-            </tfoot>
+  <tr>
+    <th colSpan={4}>Totals</th>
+
+    <th style={{ textAlign: "right" }}>
+      {totalDebit.toFixed(2)}
+    </th>
+
+    <th style={{ textAlign: "right" }}>
+      {totalCredit.toFixed(2)}
+    </th>
+
+    <th></th>
+  </tr>
+
+  <tr>
+    <th colSpan={6}>Closing Balance</th>
+
+    <th style={{ textAlign: "right" }}>
+      {report.ClosingBalance.toFixed(2)}{" "}
+      {report.ClosingSide}
+    </th>
+  </tr>
+</tfoot>
           </table>
         </div>
       )}
     </div>
+    {showVoucherModal && (
+  <div className="modal-overlay">
+    <div
+      className="modal-box"
+      style={{
+        width: "900px",
+        maxWidth: "95%"
+      }}
+    >
+      <h3>Voucher Details</h3>
+
+      <table className="data-table">
+        <thead>
+          <tr>
+            <th>Account</th>
+            <th style={{ textAlign: "right" }}>Debit</th>
+            <th style={{ textAlign: "right" }}>Credit</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {voucherRows.map((v) => (
+            <tr key={v.LineId}>
+              <td>{v.AccountName}</td>
+
+              <td style={{ textAlign: "right" }}>
+                {Number(v.Debit || 0).toFixed(2)}
+              </td>
+
+              <td style={{ textAlign: "right" }}>
+                {Number(v.Credit || 0).toFixed(2)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div
+        style={{
+          marginTop: 15,
+          textAlign: "right"
+        }}
+      >
+        <button
+          className="btn-submit small"
+          onClick={() => {
+            setShowVoucherModal(false);
+            setVoucherRows([]);
+          }}
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+{modal.show && (
+  <div className="modal-overlay">
+    <div className="modal-box">
+      <p>{modal.message}</p>
+
+      <div className="modal-actions">
+        <button
+          className="modal-btn ok"
+          onClick={() => {
+            modal.onClose?.();
+
+            setModal({
+              show: false,
+              message: "",
+              onClose: null
+            });
+          }}
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+    </>
   );
 }

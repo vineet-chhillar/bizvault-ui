@@ -47,7 +47,11 @@ const rows = report?.Rows || [];
 
 const exportPdf = () => {
     if (!loaded) {
-      alert("Load report first");
+      setModal({
+    show: true,
+    message: "Load report first.",
+    onClose: null
+  });
       return;
     }
     window.chrome.webview.postMessage({
@@ -57,7 +61,11 @@ const exportPdf = () => {
   };
   const exportExcel = () => {
     if (!loaded) {
-      alert("Load report first");
+      setModal({
+    show: true,
+    message: "Load report first.",
+    onClose: null
+  });
       return;
     }
     showToast("Exporting Excel...");
@@ -67,26 +75,7 @@ const exportPdf = () => {
 });
 
   };
-{/*useEffect(() => {
-  window.chrome.webview.postMessage({
-    action: "getVoucherTypes",
-  });
 
-  const handler = (e) => {
-    const msg = e.data;
-
-    
-
-    if (msg.action === "getCashBookResult") {
-  setRows(msg.rows || []);
-}
-
-  };
-
-  window.chrome.webview.addEventListener("message", handler);
-  return () =>
-    window.chrome.webview.removeEventListener("message", handler);
-}, []);*/}
 
   useEffect(() => {
     const handler = (e) => {
@@ -102,7 +91,11 @@ if (msg.action === "generateCashBookPdfResult") {
             data: { path: msg.path },
           });
         } else {
-          alert("PDF generation failed");
+          setModal({
+            show: true,
+            message: "PDF generation failed.",
+            onClose: null
+          });
         }
       }
       if (msg.action === "exportCashBookExcelResponse" && msg.success) {
@@ -122,7 +115,11 @@ if (msg.action === "generateCashBookPdfResult") {
     payload: { From: from, To: to },
   });
 };
-
+const [modal, setModal] = useState({
+  show: false,
+  message: "",
+  onClose: null
+});
 
   const totalDebit = rows.reduce(
   (s, r) => s + Number(r.Debit || 0),
@@ -133,26 +130,39 @@ const totalCredit = rows.reduce(
   0
 );
 const groupedByVoucher = rows.reduce((acc, row) => {
-  const voucherType = row.VoucherType || "UNKNOWN";
-  const voucherId = row.VoucherId ?? row.JournalId;
+  const voucherType =
+    row.VoucherType || "UNKNOWN";
 
-  const key = `${voucherType}|${voucherId}`;
+  const groupValue =
+    ["JV", "PV", "RV", "CV"].includes(voucherType)
+      ? row.VoucherNo
+      : (row.VoucherId ?? row.JournalId);
+
+  const key =
+    `${voucherType}|${groupValue}`;
 
   if (!acc[key]) {
     acc[key] = {
       voucherType,
-      voucherId,
+
+      voucherNo: row.VoucherNo,
+
+      voucherId:
+        row.VoucherId ?? row.JournalId,
+
       rows: []
     };
   }
 
   acc[key].rows.push(row);
+
   return acc;
 }, {});
 
 let runningBalance = report.OpeningBalance;
 let pageSerialNo = 1;
   return (
+    <>
     <div className="form-container">
       <h2 className="form-title">Cash Book</h2>
 
@@ -198,9 +208,11 @@ let pageSerialNo = 1;
       
       <div className="table-container" style={{ marginTop: 20 }}>
         {report && (
-  <p style={{ fontWeight: 600 }}>
-    Opening Balance : {report.OpeningBalance.toFixed(2)}
-  </p>
+ <p style={{ fontWeight: 600 }}>
+  Opening Balance :{" "}
+  {Math.abs(report.OpeningBalance).toFixed(2)}{" "}
+  {report.OpeningBalance <= 0 ? "Dr" : "Cr"}
+</p>
 )}
        <table className="cashbookdata-table">
           <thead>
@@ -243,9 +255,11 @@ let pageSerialNo = 1;
   return (
     <React.Fragment key={`${voucherType}-${voucherId}`}>
     {lines.map((r, li) => {
-  if (r.AccountName === "Cash") {
-    runningBalance += Number(r.Debit || 0) - Number(r.Credit || 0);
-  }
+  if (r.IsCashAccount) {
+  runningBalance +=
+    Number(r.Debit || 0) -
+    Number(r.Credit || 0);
+}
 
   const cells = [];
 
@@ -266,9 +280,19 @@ let pageSerialNo = 1;
     <td key="cr" style={{ textAlign: "right" }}>
       {Number(r.Credit || 0).toFixed(2)}
     </td>,
-    <td key="bal" style={{ textAlign: "right", fontWeight: 600 }}>
-      {r.AccountName === "Cash" ? runningBalance.toFixed(2) : ""}
-    </td>
+    <td
+  key="bal"
+  style={{
+    textAlign: "right",
+    fontWeight: 600
+  }}
+>
+  {r.IsCashAccount
+    ? `${Math.abs(runningBalance).toFixed(2)} ${
+        runningBalance >= 0 ? "Dr" : "Cr"
+      }`
+    : ""}
+</td>
   );
 
   return (
@@ -314,11 +338,38 @@ let pageSerialNo = 1;
 
         </table>
         {report && (
-  <p style={{ fontWeight: 600 }}>
-    Closing Balance : {report.ClosingBalance.toFixed(2)}
-  </p>
+ <p style={{ fontWeight: 600 }}>
+  Closing Balance :{" "}
+  {Math.abs(report.ClosingBalance).toFixed(2)}{" "}
+  {report.ClosingBalance <= 0 ? "Dr" : "Cr"}
+</p>
 )}
       </div>
     </div>
+    {modal.show && (
+  <div className="modal-overlay">
+    <div className="modal-box">
+      <p>{modal.message}</p>
+
+      <div className="modal-actions">
+        <button
+          className="modal-btn ok"
+          onClick={() => {
+            modal.onClose?.();
+
+            setModal({
+              show: false,
+              message: "",
+              onClose: null
+            });
+          }}
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+    </>
   );
 }

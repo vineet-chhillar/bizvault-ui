@@ -7,6 +7,11 @@ export default function DayBookReport() {
   const [to, setTo] = useState(() =>
     new Date().toISOString().slice(0, 10)
   );
+  const [modal, setModal] = useState({
+  show: false,
+  message: "",
+  onClose: null
+});
   const [rows, setRows] = useState([]);
   const [loaded, setLoaded] = useState(false);
 let pageSerialNo = 1;
@@ -20,7 +25,11 @@ let pageSerialNo = 1;
           setRows(msg.Data || []);
           setLoaded(true);
         } else {
-          alert("Failed to load Day Book");
+          setModal({
+            show: true,
+            message: "Failed to load Day Book.",
+            onClose: null
+          });
         }
       }
 
@@ -31,7 +40,11 @@ let pageSerialNo = 1;
             data: { path: msg.path },
           });
         } else {
-          alert("PDF generation failed");
+          setModal({
+            show: true,
+            message: "PDF generation failed.",
+            onClose: null
+          });
         }
       }
       if (msg.action === "exportDayBookExcelResponse" && msg.success) {
@@ -88,7 +101,11 @@ function hideToast() {
   // ------------------------
   const exportPdf = () => {
     if (!loaded) {
-      alert("Load report first");
+      setModal({
+        show: true,
+        message: "Load report first.",
+        onClose: null
+      });
       return;
     }
     window.chrome.webview.postMessage({
@@ -98,7 +115,11 @@ function hideToast() {
   };
 const exportExcel = () => {
     if (!loaded) {
-      alert("Load report first");
+      setModal({
+        show: true,
+        message: "Load report first.",
+        onClose: null
+      });
       return;
     }
        showToast("Exporting Excel...");
@@ -141,6 +162,7 @@ const groupedByVoucher = rows.reduce((acc, row) => {
 
 
   return (
+    <>
     <div className="form-container">
       <h2 className="form-title">Day Book</h2>
 
@@ -306,5 +328,30 @@ const groupedByVoucher = rows.reduce((acc, row) => {
         </div>
       )}
     </div>
+    {modal.show && (
+  <div className="modal-overlay">
+    <div className="modal-box">
+      <p>{modal.message}</p>
+
+      <div className="modal-actions">
+        <button
+          className="modal-btn ok"
+          onClick={() => {
+            modal.onClose?.();
+
+            setModal({
+              show: false,
+              message: "",
+              onClose: null
+            });
+          }}
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+    </>
   );
 }

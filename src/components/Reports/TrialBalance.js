@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from "react";
-
+import "./Reports.css";
 export default function TrialBalance() {
+const [modal, setModal] = useState({
+  show: false,
+  message: "",
+  onClose: null
+});
   const today = new Date();
 
 const fyStartYear =
@@ -21,12 +26,9 @@ const [from, setFrom] = useState(
   const [to, setTo] = useState(
     new Date().toISOString().slice(0, 10)
   );
- const [modal, setModal] = useState({
-  show: false,
-  message: "",
-  onClose: null
-});
+ 
   const [rows, setRows] = useState([]);
+  const [report, setReport] = useState(null);
   const [loaded, setLoaded] = useState(false);
 const toastRef = React.useRef(null);
 function showToast(message) {
@@ -59,7 +61,11 @@ function hideToast() {
 }
 const exportPdf = () => {
     if (!loaded) {
-      alert("Load report first");
+      setModal({
+        show: true,
+        message: "Load report first.",
+        onClose: null
+      });
       return;
     }
     window.chrome.webview.postMessage({
@@ -69,7 +75,11 @@ const exportPdf = () => {
   };
   const exportExcel = () => {
     if (!loaded) {
-      alert("Load report first");
+      setModal({
+        show: true,
+        message: "Load report first.",
+        onClose: null
+      });
       return;
     }
     showToast("Opening Excel…");
@@ -82,10 +92,12 @@ const exportPdf = () => {
   useEffect(() => {
     const handler = (e) => {
       const msg = e.data;
-
+  console.log(msg);
+console.log(msg.rows);
+console.log(Array.isArray(msg.rows));
       if (msg.action === "getTrialBalanceResult") {
 
-    // 🔴 Handle backend error
+    
     if (!msg.success) {
 
         setModal({
@@ -102,8 +114,10 @@ const exportPdf = () => {
     }
 
     // ✅ Success
+  
     setRows(msg.rows || []);
-    setLoaded(true);
+setReport(msg);
+setLoaded(true);
 }
       if (msg.action === "generateTrialBalancePdfResult") {
         if (msg.success) {
@@ -112,7 +126,11 @@ const exportPdf = () => {
             data: { path: msg.path },
           });
         } else {
-          alert("PDF generation failed");
+          setModal({
+            show: true,
+            message: "PDF generation failed.",
+            onClose: null
+          });
         }
       }
       if (msg.action === "exportTrialBalanceExcelResponse" && msg.success) {
@@ -136,23 +154,16 @@ const exportPdf = () => {
     });
   };
 
-  const totalDebit = rows.reduce((sum, r) => sum + r.TotalDebit, 0);
-  const totalCredit = rows.reduce((sum, r) => sum + r.TotalCredit, 0);
+ 
+const totalDebit = Number(report?.totalDebit || 0);
 
-  const totalClosingDr = rows
-    .filter((r) => r.ClosingSide === "Dr")
-    .reduce((s, r) => s + r.ClosingBalance, 0);
-
-  const totalClosingCr = rows
-    .filter((r) => r.ClosingSide === "Cr")
-    .reduce((s, r) => s + r.ClosingBalance, 0);
-
+const totalCredit = Number(report?.totalCredit || 0);
   return (
     <>
     <div className="form-container">
       <h2 className="form-title">Trial Balance</h2>
 
-      {/* FILTERS */}
+      
       <div className="form-inner">
         <div className="form-row-horizontal">
           <div className="form-group">
@@ -195,7 +206,7 @@ const exportPdf = () => {
         </div>
       </div>
 
-      {/* TABLE */}
+      
       <div className="table-container" style={{ marginTop: 20 }}>
         {!loaded && (
           <p style={{ textAlign: "center" }}>Load report to view data</p>
@@ -213,45 +224,76 @@ const exportPdf = () => {
             </thead>
 
             <tbody>
-              {rows.length === 0 && (
-                <tr>
-                  <td colSpan={4} style={{ textAlign: "center" }}>
-                    No records
-                  </td>
-                </tr>
-              )}
+  {rows.length === 0 && (
+    <tr>
+      <td colSpan={4} style={{ textAlign: "center" }}>
+        No records
+      </td>
+    </tr>
+  )}
 
-              {rows.map((r) => (
-                <tr key={r.AccountId}>
-                  <td>{r.AccountName}</td>
-                  <td style={{ textAlign: "right" }}>
-                    {r.TotalDebit.toFixed(2)}
-                  </td>
-                  <td style={{ textAlign: "right" }}>
-                    {r.TotalCredit.toFixed(2)}
-                  </td>
-                  <td style={{ textAlign: "center" }}>
-                    {r.ClosingBalance.toFixed(2)} {r.ClosingSide}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
+ {Array.isArray(rows) &&
+  rows.map((r) => (
+    <tr
+      key={r.AccountId}
+      style={{
+        fontWeight: r.IsGroupAccount ? "bold" : "normal",
+        background: r.IsGroupAccount ? "#f5f5f5" : "white"
+      }}
+    >
+     <td>
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      paddingLeft: `${(r.Level || 0) * 30}px`
+    }}
+  >
+    {(r.Level || 0) > 0 && (
+      <span
+        style={{
+          color: "#999",
+          marginRight: 6,
+          whiteSpace: "pre"
+        }}
+      >
+        {"│ ".repeat((r.Level || 0) - 1) + "└─"}
+      </span>
+    )}
 
-            <tfoot>
-              <tr>
-                <th>Total</th>
-                <th style={{ textAlign: "right" }}>
-                  {totalDebit.toFixed(2)}
-                </th>
-                <th style={{ textAlign: "right" }}>
-                  {totalCredit.toFixed(2)}
-                </th>
-                <th style={{ textAlign: "center" }}>
-                  Dr {totalClosingDr.toFixed(2)} / Cr{" "}
-                  {totalClosingCr.toFixed(2)}
-                </th>
-              </tr>
-            </tfoot>
+    <span>{r.AccountName}</span>
+  </div>
+</td>
+
+      <td style={{ textAlign: "right" }}>
+        {r.TotalDebit.toFixed(2)}
+      </td>
+
+      <td style={{ textAlign: "right" }}>
+        {r.TotalCredit.toFixed(2)}
+      </td>
+
+      <td style={{ textAlign: "center" }}>
+        {r.ClosingBalance.toFixed(2)} {r.ClosingSide}
+      </td>
+    </tr>
+  ))}
+</tbody>
+           <tfoot>
+  <tr>
+    <th>Total</th>
+
+    <th style={{ textAlign: "right" }}>
+      {totalDebit.toFixed(2)}
+    </th>
+
+    <th style={{ textAlign: "right" }}>
+      {totalCredit.toFixed(2)}
+    </th>
+
+    <th></th>
+  </tr>
+</tfoot>
           </table>
         )}
       </div>

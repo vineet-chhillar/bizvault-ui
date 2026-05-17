@@ -5,6 +5,11 @@ export default function OutstandingReport() {
   const [rows, setRows] = useState([]);
   const [balanceType, setBalanceType] = useState("ALL");
   const navigate = useNavigate();
+  const [modal, setModal] = useState({
+  show: false,
+  message: "",
+  onClose: null
+});
 const toastRef = React.useRef(null);
  function showToast(message) {
    if (toastRef.current) return;
@@ -49,7 +54,11 @@ const toastRef = React.useRef(null);
             data: { path: msg.path },
           });
         } else {
-          alert("PDF generation failed");
+          setModal({
+            show: true,
+            message: "PDF generation failed.",
+            onClose: null
+          });
         }
       }
       if (msg.action === "exportOutstandingReportExcelResponse" && msg.success) {
@@ -73,7 +82,11 @@ const toastRef = React.useRef(null);
   // 🔹 EXPORT PDF
   const exportPdf = () => {
     if (rows.length === 0) {
-      alert("Load report first");
+      setModal({
+        show: true,
+        message: "Load report first.",
+        onClose: null
+      });
       return;
     }
 
@@ -85,7 +98,11 @@ const toastRef = React.useRef(null);
 
   const exportExcel = () => {
     if (rows.length === 0) {
-      alert("Load report first");
+      setModal({
+        show: true,
+        message: "Load report first.",
+        onClose: null
+      });
       return;
     }
     showToast("Exporting Excel...");
@@ -115,6 +132,7 @@ const toastRef = React.useRef(null);
   );
 
   return (
+    <>
     <div className="form-container">
       <h2 className="form-title">Outstanding Report</h2>
 
@@ -231,5 +249,30 @@ const toastRef = React.useRef(null);
         </table>
       </div>
     </div>
+    {modal.show && (
+  <div className="modal-overlay">
+    <div className="modal-box">
+      <p>{modal.message}</p>
+
+      <div className="modal-actions">
+        <button
+          className="modal-btn ok"
+          onClick={() => {
+            modal.onClose?.();
+
+            setModal({
+              show: false,
+              message: "",
+              onClose: null
+            });
+          }}
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+    </>
   );
 }
