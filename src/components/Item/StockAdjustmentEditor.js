@@ -321,7 +321,7 @@ if (!reason) {
         </div>
 
         {/* GRID */}
-        <div className="table-container">
+        <div className="table-containeropeningstock">
           <table className="data-table">
             <thead>
               <tr>

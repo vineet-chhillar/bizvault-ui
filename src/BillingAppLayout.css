@@ -155,6 +155,8 @@ body, html, #root {
   position: sticky;
   top: 0;
   z-index: 20;
+  background-color: #331a61;
+  border-radius: 4px;
 }
 
 .app-title {
@@ -173,14 +175,14 @@ body, html, #root {
 .icon-btn {
   background: none;
   border: none;
-  color: #4e1d7c;
+  color: white;
   font-size: 20px;
   cursor: pointer;
   transition: color 0.2s ease, transform 0.2s ease;
 }
 
 .icon-btn:hover {
-  color: #6c28b0;
+  color: #cde2eb;
   transform: scale(1.1);
 }
 

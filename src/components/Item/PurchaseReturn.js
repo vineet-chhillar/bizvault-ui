@@ -355,6 +355,8 @@ return;
       TotalTax: totals.tax,
       RoundOff: totals.roundOff,
       SubTotal: totals.subTotal,
+      BalanceAmount: outstanding,
+      PaidAmount: paidAmount,
       Notes: notes,
       CreatedBy: getCreatedBy(),
         RefundMode: refundMode,   // ✅ ADD
@@ -415,7 +417,15 @@ return;
 setPaidAmount(Number(data.PaidAmount) || 0);
 
 setOutstanding(Number(data.BalanceAmount) || 0);
-
+if (data.PaymentMode === "Bank") {
+  setRefundMode("Bank");
+}
+else if (data.PaymentMode === "Cash") {
+  setRefundMode("Cash");
+}
+else {
+  setRefundMode("ADJUST");
+}
         setLines((data.Items || []).map(item => ({
   PurchaseItemId: item.PurchaseItemId,          
   ItemId: item.ItemId,

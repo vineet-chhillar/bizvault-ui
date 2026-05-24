@@ -1,4 +1,3 @@
-
 import "./ItemForms.css";
 import { getCreatedBy } from "../../utils/authHelper";
 import React, { useEffect, useState } from "react";
@@ -328,7 +327,7 @@ useEffect(() => {
         </div>
 
         {/* ---------- ITEM GRID ---------- */}
-         <div className="table-container" style={{ marginTop: 20 }}>
+         <div className="table-containeropeningstock" style={{ marginTop: 20 }}>
           <h3 className="table-title">Opening Stock Items</h3>
             <div className="table-wrapper">
 

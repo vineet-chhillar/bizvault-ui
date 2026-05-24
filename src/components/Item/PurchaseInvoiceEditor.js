@@ -1144,6 +1144,7 @@ return;
             <div className="cell-box">
               <input
   id={`ItemName_${i}`}
+  autoComplete="off"
   value={l.ItemName}
   onChange={(e) => {
     updateLine(i, "ItemName", e.target.value);

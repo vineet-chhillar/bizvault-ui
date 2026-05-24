@@ -232,7 +232,7 @@ const edit = (r) => {
     <>
     <div className="form-container">
       {/* Title */}
-      <h2 className="form-title">Accounts</h2>
+  <h2 className="form-title">Accounts</h2>
 
       {/* FORM SECTION — Uses your Dhansutra layout */}
       <div className="form-inner">

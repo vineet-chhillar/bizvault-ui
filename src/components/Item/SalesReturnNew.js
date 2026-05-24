@@ -40,7 +40,7 @@ export default function EditSalesReturn({ user }) {
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerState, setCustomerState] = useState("");
-const [refundMode, setRefundMode] = useState("Auto");
+const [refundMode, setRefundMode] = useState("Cash");
 
 const [outstanding, setOutstanding] = useState(0);   // BalanceAmount
 const [paidAmount, setPaidAmount] = useState(0);     // PaidAmount
@@ -334,7 +334,7 @@ return;
       BalanceAmount:outstanding,
       PaidAmount:paidAmount,
       OriginalPaymentMode: paymentMode,
-      PaidVia: paidVia,
+      PaidVia: refundMode === "ADJUST" ? "" : refundMode,
 
       Items: lines
     };
@@ -374,7 +374,7 @@ setValidationErrors([]);
       BalanceAmount:outstanding,
       PaidAmount:paidAmount,
       OriginalPaymentMode: paymentMode,
-      PaidVia: paidVia,
+      PaidVia: refundMode === "ADJUST" ? "" : refundMode,
 
       Items: lines
     };
@@ -394,12 +394,13 @@ setValidationErrors([]);
   setAdjustAmount(adj);
   setRefundAmount(refund);
 }, [totals.total, outstanding]);
-useEffect(() => {
+
+{/*useEffect(() => {
   // If refund mode is ADJUST but refund is required → block it
   if (refundMode === "ADJUST" && refundAmount > 0) {
     setRefundMode("Cash"); // safe default
   }
-}, [refundMode, refundAmount]);
+}, [refundMode, refundAmount]);*/}
 
   // ---------- MESSAGE LISTENER ----------
   useEffect(() => {
@@ -464,6 +465,15 @@ useEffect(() => {
   setPaidVia(data.PaidVia || "");
   setInvoiceId(data.InvoiceId);
   setPaymentMode(data.PaymentMode || "Cash");
+  if (data.PaymentMode === "Bank") {
+  setRefundMode("Bank");
+}
+else if (data.PaymentMode === "Cash") {
+  setRefundMode("Cash");
+}
+else {
+  setRefundMode("ADJUST");
+}
   setInvoiceDate(data.InvoiceDate);
   setInvoiceNo(data.InvoiceNo);
   setInvoiceNum(data.InvoiceNum);
@@ -686,7 +696,7 @@ useEffect(() => {
   value={refundMode}
   onChange={e => setRefundMode(e.target.value)}
 >
-  <option value="Auto">Same as Invoice</option>
+  {/*<option value="Auto">Same as Invoice</option>*/}
 
   <option value="ADJUST" disabled={refundAmount > 0}>
     Adjust Against Dues

@@ -25,28 +25,14 @@ html, body {
   position: relative;         /* ✅ creates a new containing block */
 }
 
-h1.form-title, h2.form-title, h3.form-title {
-  margin-block-start: 0;
-  margin-block-end: 0;
-  
-  
-}
+
 .item-nav-wrapper {
   margin-bottom: 0 !important;
   padding-bottom: 0 !important;
   margin-bottom: 8px; /* ✅ small, clean gap between navbar and form */
 }
 
-.form-title {
-  text-align: center;
-  margin-top: 0px;         /* removes browser’s default top margin */
-  margin-bottom: 15px;   /* reduced bottom spacing */
-  color: #4e1d7c;
-  font-size: 1.8rem;
-  font-weight: bold;
 
-  
-}
 .form-inner {
   
   width: 100%;
@@ -291,6 +277,14 @@ h1.form-title, h2.form-title, h3.form-title {
   border-radius: 12px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
   overflow-y: scroll;
+}
+.table-containeropeningstock {
+  margin-top: 0px;
+  padding-top: 0px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  overflow-y: visible;
 }
 
 /* remove h3’s top margin entirely */
@@ -1701,4 +1695,25 @@ button:disabled {
 .data-table .invaction-icon {
   width: 20px !important;
   height: 20px !important;
+}
+.form-title{
+  
+  color:#491b7e;
+
+  font-size:24px;
+
+  font-weight:700;
+
+  letter-spacing:0.4px;
+
+  position:relative;
+
+  z-index:1;
+
+  text-align:center;
+}
+h1.form-title, h2.form-title, h3.form-title {
+  margin-block-start: 0;
+  margin-block-end: 10px;  
+  
 }
