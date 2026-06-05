@@ -102,12 +102,20 @@ useEffect(() => {
 
       {/* 🔹 SUMMARY CARDS */}
       <div className="dashboard-grid">
-        <SummaryCard title="Cash Balance" value={`₹ ${dashboard?.CashBalance.toFixed(2)}`} />
-<SummaryCard title="Bank Balance" value={`₹ ${dashboard?.BankBalance.toFixed(2)}`} />
-<SummaryCard title="Receivables" value={`₹ ${dashboard?.TotalReceivable.toFixed(2)}`} />
-<SummaryCard title="Payables" value={`₹ ${dashboard?.TotalPayable.toFixed(2)}`} />
-<SummaryCard title="Today Sales" value={`₹ ${dashboard?.TodaySales.toFixed(2)}`} />
-<SummaryCard title="Today Purchase" value={`₹ ${dashboard?.TodayPurchase.toFixed(2)}`} />
+        <SummaryCard title="Cash Balance" value={`₹ ${((dashboard?.CashBalance ?? 0).toFixed(2))}`} />
+<SummaryCard title="Bank Balance" value={`₹ ${((dashboard?.BankBalance ?? 0).toFixed(2))}`} />
+<SummaryCard
+  title="Total Funds"
+  value={`₹ ${(
+    (dashboard?.CashBalance ?? 0) +
+    (dashboard?.BankBalance ?? 0)
+  ).toFixed(2)}`}
+/>
+<SummaryCard title="Receivables" value={`₹ ${((dashboard?.TotalReceivable ?? 0).toFixed(2))}`} />
+<SummaryCard title="Payables" value={`₹ ${((dashboard?.TotalPayable ?? 0).toFixed(2) )}`} />
+
+<SummaryCard title="Today Sales" value={`₹ ${((dashboard?.TodaySales ?? 0).toFixed(2))}`} />
+<SummaryCard title="Today Purchase" value={`₹ ${((dashboard?.TodayPurchase ?? 0).toFixed(2))}`} />
 
       </div>
 
@@ -237,7 +245,7 @@ useEffect(() => {
               color: r.Balance > 0 ? "#27ae60" : "#c0392b"
             }}
           >
-            ₹{Math.abs(r.Balance).toFixed(2)}
+            ₹{Math.abs(r.Balance ?? 0).toFixed(2)}
           </td>
         </tr>
       ))}
@@ -357,7 +365,27 @@ useEffect(() => {
 
 </div>
 
+<div className="gst-floating-card">
+  <div className="gst-floating-title">
+    GST Status
+  </div>
 
+  <div className="gst-floating-amount">
+    {(dashboard?.GSTReceivable ?? 0) > 0
+      ? `Receivable ₹ ${(dashboard?.GSTReceivable ?? 0).toFixed(2)}`
+      : `Payable ₹ ${(dashboard?.GSTPayable ?? 0).toFixed(2)}`}
+  </div>
+
+  <div className="gst-floating-details">
+    <div>
+      Input: ₹ {(dashboard?.InputGST ?? 0).toFixed(2)}
+    </div>
+
+    <div>
+      Output: ₹ {(dashboard?.OutputGST ?? 0).toFixed(2)}
+    </div>
+  </div>
+</div>
     </div>
 
 

@@ -986,7 +986,7 @@ useEffect(() => {
   <span className="icon"><FaMoneyBillWave /></span>
 
   <span className="label">
-    Payments
+    Payments For Credit Purchases
     {shortcutMap["/Item/MakePurchasePayment"] && (
       <span className="shortcut">
         {shortcutMap["/Item/MakePurchasePayment"]}
@@ -1007,7 +1007,7 @@ useEffect(() => {
   <span className="icon"><FaMoneyBillWave /></span>
 
   <span className="label">
-    Receipts
+    Receipts For Credit Sales
     {shortcutMap["/Item/MakeSalesPayment"] && (
       <span className="shortcut">
         {shortcutMap["/Item/MakeSalesPayment"]}

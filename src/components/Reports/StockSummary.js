@@ -32,8 +32,7 @@ const [modal, setModal] = useState({
  
    document.body.appendChild(toast);
    toastRef.current = toast;
- }
- 
+ } 
  function hideToast() {
    if (toastRef.current) {
      toastRef.current.remove();
@@ -97,21 +96,22 @@ const [modal, setModal] = useState({
     });
   };
 const exportExcel = () => {
-    if (!loaded) {
-      setModal({
-        show: true,
-        message: "Load stock summary first.",
-        onClose: null
-      });
-      return;
-    }
-      
-    }
-    showToast("Exporting Excel...");
-    window.chrome.webview.postMessage({
-  action: "exportStockSummaryExcel",
-  payload: { AsOf: asOf }
-});
+  if (!loaded) {
+    setModal({
+      show: true,
+      message: "Load stock summary first.",
+      onClose: null
+    });
+    return;
+  }
+
+  showToast("Exporting Excel...");
+
+  window.chrome.webview.postMessage({
+    action: "exportStockSummaryExcel",
+    payload: { AsOf: asOf }
+  });
+};
 
   
   return (

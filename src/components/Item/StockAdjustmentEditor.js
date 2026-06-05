@@ -4,7 +4,7 @@ import { getCreatedBy } from "../../utils/authHelper";
 const blankLine = () => ({
   ItemId: 0,
   ItemName: "",
-  BatchNo: "",
+  BatchNo: "OPENINGSTOCK",
   CurrentQty: 0,
   AdjustQty: "",
   Rate: 0,
@@ -386,7 +386,7 @@ if (!reason) {
                   ...copy[i],
                   ItemId: it.Id,
                   ItemName: it.Name,
-                  BatchNo: "",       // optional for now
+                  BatchNo: "OPENINGSTOCK",       // optional for now
                   AdjustQty: "",
                   ValueImpact: 0
                 };
@@ -416,18 +416,25 @@ if (!reason) {
                   <td>{l.CurrentQty}</td>
                   <td>
   <div className="cell-box">
-    <input
-      type="number"
-      value={l.AdjustQty}
-      onChange={e => updateLine(i, "AdjustQty", e.target.value)}
-      className={
-        type === "DECREASE" &&
-        Number(l.AdjustQty) > Number(l.CurrentQty)
-          ? "error-input"
-          : ""
+  <input
+    type="number"
+    min="0"
+    value={l.AdjustQty}
+    onChange={e => {
+      const value = e.target.value;
+
+      if (value === "" || Number(value) >= 0) {
+        updateLine(i, "AdjustQty", value);
       }
-    />
-  </div>
+    }}
+    className={
+      type === "DECREASE" &&
+      Number(l.AdjustQty) > Number(l.CurrentQty)
+        ? "error-input"
+        : ""
+    }
+  />
+</div>
 
   {/* 🔴 INLINE VALIDATION MESSAGE */}
   {type === "DECREASE" &&
@@ -436,7 +443,20 @@ if (!reason) {
     )}
 </td>
 
-                  <td>{l.Rate}</td>
+                 <td>
+  {type === "INCREASE" ? (
+    <input
+      type="number"
+      step="0.01"
+      min="0"
+      value={l.Rate}
+      onChange={e => updateLine(i, "Rate", e.target.value)}
+      className="table-input"
+    />
+  ) : (
+    <span>{Number(l.Rate).toFixed(2)}</span>
+  )}
+</td>
                   <td>{l.ValueImpact.toFixed(2)}</td>
                   <td>
                     {lines.length > 1 && (

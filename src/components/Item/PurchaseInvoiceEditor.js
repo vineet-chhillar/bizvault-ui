@@ -1164,7 +1164,7 @@ return;
             {/* suggestions */}
             {/* suggestions */}
 {itemSearchIndex === i && (
-  <div className="suggestions-box" style={{ width: "320px" }}>
+  <div className="suggestions-box" style={{ width: "420px" }}>
     {itemList
       .filter(it => {
 

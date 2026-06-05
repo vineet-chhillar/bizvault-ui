@@ -27,7 +27,8 @@ const emptyCustomer = {
   CreatedBy: "",
   CreatedAt: "",
   UpdatedBy: "",
-  UpdatedAt: ""
+  UpdatedAt: "",
+  CreateLedger: true
 };
 
 function CustomerPage() {
@@ -56,6 +57,7 @@ const [modal, setModal] = useState({
   onConfirm: null,
   onClose: null
 });
+
   // LOAD CUSTOMERS
   const loadCustomers = (kw = "") => {
   if (!window.chrome?.webview) return;
@@ -328,7 +330,8 @@ const actuallySaveCustomer = () => {
   const user = getCreatedBy();
 
   const payload = {
-    ...customer
+    ...customer,
+     CreateLedger: customer.CreateLedger ?? true
   };
 
   if (customer.CustomerId === 0) {
@@ -430,7 +433,13 @@ const actuallySaveCustomer = () => {
         <td>{c.BillingCity}</td>
         <td>{c.BillingState}</td>
         <td>{c.OpeningBalance}</td>
-        <td>{c.Balance}</td>
+        <td>
+  {(c.Balance || 0) === 0
+    ? "0"
+    : `${Math.abs(c.Balance)} ${
+        c.Balance > 0 ? "Dr" : "Cr"
+      }`}
+</td>
 
         <td>
           <div className="invaction-group">
@@ -669,18 +678,64 @@ const actuallySaveCustomer = () => {
               <div className="form-group small">
                 <label>Opening Balance</label>
                 <input
-                  type="number"
-                  value={customer.OpeningBalance}
-                  onChange={(e) =>
-                    handleChange("OpeningBalance", parseFloat(e.target.value) || 0)}
-                />
+  type="number"
+  min="0"
+  value={customer.OpeningBalance}
+  onChange={(e) => {
+    const value = e.target.value;
+
+    if (value === "" || Number(value) >= 0) {
+      handleChange(
+        "OpeningBalance",
+        value === "" ? 0 : parseFloat(value) || 0
+      );
+    }
+  }}
+/>
               </div>
             )}
 
             <div className="form-group small">
-              <label>Balance</label>
-              <input type="number" value={customer.Balance || 0} readOnly />
-            </div>
+  <label>Balance</label>
+  <input
+    type="text"
+    value={
+      customer.CustomerId === 0
+        ? `${Math.abs(customer.OpeningBalance || 0)} Dr`
+        : (customer.Balance || 0) === 0
+            ? "0"
+            : `${Math.abs(customer.Balance || 0)} ${
+                (customer.Balance || 0) > 0 ? "Dr" : "Cr"
+              }`
+    }
+    readOnly
+  />
+</div>
+
+<div className="form-group wide">
+  <label>
+    <input
+  type="checkbox"
+  checked={customer.CreateLedger ?? true}
+  disabled={customer.AccountId > 0}
+  onChange={(e) =>
+    handleChange("CreateLedger", e.target.checked)
+  }
+/>
+    Create Customer Account/Ledger
+  </label>
+  {!(customer.CreateLedger ?? true) && (
+  <div className="info-text">
+    Customer can only be used for cash sales.
+  </div>
+)}
+{customer.AccountId > 0 && (
+  <div className="info-text">
+    Ledger already exists and cannot be removed.
+  </div>
+)}
+</div>
+
 
           </div>
 

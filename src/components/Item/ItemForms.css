@@ -762,7 +762,7 @@ html, body {
 }
 .account-table th:nth-child(8),
 .account-table td:nth-child(8) {
-  width: 5%;
+  width: 10%;
   text-align: center;
   white-space: nowrap;    /* ensures actions stay small */
   padding: 2px 4px;       /* compact padding */
@@ -774,13 +774,7 @@ html, body {
   white-space: nowrap;    /* ensures actions stay small */
   padding: 2px 4px;       /* compact padding */
 }
-.account-table th:nth-child(10),
-.account-table td:nth-child(10) {
-  width: 5%;
-  text-align: center;
-  white-space: nowrap;    /* ensures actions stay small */
-  padding: 2px 4px;       /* compact padding */
-}
+
 .add-inv-btn {
   background-color: #4e1d7c;
   color: white;

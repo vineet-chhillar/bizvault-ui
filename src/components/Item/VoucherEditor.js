@@ -558,28 +558,38 @@ else {
 
         <td>
           <div className="cell-box">
-            <input
-  type="number"
-  disabled={isReversalMode}
-  value={l.Debit}
-  
-  onChange={e => updateLine(i, "Debit", e.target.value)}
-/>
+  <input
+    type="number"
+    min="0"
+    disabled={isReversalMode}
+    value={l.Debit}
+    onChange={e => {
+      const value = e.target.value;
 
-          </div>
+      if (value === "" || Number(value) >= 0) {
+        updateLine(i, "Debit", value);
+      }
+    }}
+  />
+</div>
         </td>
 
         <td>
           <div className="cell-box">
-            <input
-  type="number"
-  disabled={isReversalMode}
-  value={l.Credit}
-  
-  onChange={e => updateLine(i, "Credit", e.target.value)}
-/>
+  <input
+    type="number"
+    min="0"
+    disabled={isReversalMode}
+    value={l.Credit}
+    onChange={e => {
+      const value = e.target.value;
 
-          </div>
+      if (value === "" || Number(value) >= 0) {
+        updateLine(i, "Credit", value);
+      }
+    }}
+  />
+</div>
         </td>
         <td>
   {!isReversalMode && (

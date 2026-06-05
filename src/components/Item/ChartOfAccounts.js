@@ -9,8 +9,6 @@ export default function ChartOfAccounts() {
   AccountType: "Asset",
   ParentAccountId: 0,
   NormalSide: "Debit",
-  OpeningBalanceType: "DR",
-  OpeningBalance: 0,
   IsGroup: false,
 
   // 🔹 AUDIT FIELDS
@@ -40,9 +38,7 @@ function validateForm() {
     err.AccountName = "Account Name is required";
   }
 
-  if (!form.IsGroup && form.OpeningBalance < 0) {
-    err.OpeningBalance = "Opening balance cannot be negative";
-  }
+  
 
   return err;
 }
@@ -75,12 +71,7 @@ useEffect(() => {
   }));
 }, [form.AccountType]);
 
-useEffect(() => {
-  setForm(f => ({
-    ...f,
-    OpeningBalanceType: f.NormalSide === "Debit" ? "DR" : "CR"
-  }));
-}, [form.NormalSide]);
+
 
 
   
@@ -161,8 +152,6 @@ const getFullPath = (accountId) => {
   AccountType: "Asset",
   ParentAccountId: 0,
   NormalSide: "Debit",
-  OpeningBalanceType: "DR",
-  OpeningBalance: 0,
   IsGroup: true   ,
    CreatedBy: null,
   UpdatedBy: null     // 👈 MUST ADD
@@ -211,7 +200,7 @@ const edit = (r) => {
     setModal({
       show: true,
       message:
-        "System account: only opening balance can be changed.",
+        "System account: structural properties cannot be modified.",
       type: "info"
     });
   }
@@ -333,42 +322,9 @@ const edit = (r) => {
 
 
 
-<div className="form-group">
-  <label>Opening Balance Type</label>
-  <select
-    value={form.OpeningBalanceType}
-    onChange={e =>
-      setForm({ ...form, OpeningBalanceType: e.target.value })
-    }
-    disabled={form.IsGroup || (isEditing && form.IsSystemAccount === 1)}
-  >
-    <option value="DR">Debit (DR)</option>
-    <option value="CR">Credit (CR)</option>
-  </select>
-</div>
 
-            <div className="form-group">
-              <label>Opening Balance</label>
-              <input
-  type="number"
-  value={form.OpeningBalance}
-  className={errors.OpeningBalance ? "input-error" : ""}
-  onChange={(e) => {
-    setForm({
-      ...form,
-      OpeningBalance: parseFloat(e.target.value || 0),
-    });
 
-    if (errors.OpeningBalance) {
-      setErrors(prev => ({ ...prev, OpeningBalance: null }));
-    }
-  }}
-/>
-
-{errors.OpeningBalance && (
-  <div className="error-text">{errors.OpeningBalance}</div>
-)}
-            </div>
+            
           </div>
 
  <div className="form-row">
@@ -420,7 +376,7 @@ const edit = (r) => {
                     AccountName: "",
                     AccountType: "Asset",
                     NormalSide: "Debit",
-                    OpeningBalance: 0,
+                    
                   });
                 }}
               >
@@ -456,8 +412,7 @@ const edit = (r) => {
       <th>IsGroup Account</th>
       <th>Is System Account</th>
       <th>Parent Account</th>
-      <th>Opening Type</th>
-      <th>Opening</th>
+      <th>Closing Balance</th>
       <th style={{ width: "120px" }}>Actions</th>
     </tr>
   </thead>
@@ -480,8 +435,11 @@ const edit = (r) => {
     )?.AccountName || "-"
   }
 </td>
-        <td>{r.OpeningBalanceType}</td>
-        <td>{r.OpeningBalance}</td>
+        <td>
+  {Math.abs(r.ClosingBalance ?? 0).toFixed(2)}
+  {" "}
+  {(r.ClosingBalance ?? 0) >= 0 ? "Dr" : "Cr"}
+</td>
 
         <td style={{ textAlign: "center" }}>
           {/* Edit */}

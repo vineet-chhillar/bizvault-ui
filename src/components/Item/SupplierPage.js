@@ -14,6 +14,8 @@ const emptySupplier = {
   Pincode: "",
   OpeningBalance: 0,
   Balance: 0,
+    CreateLedger: true,
+  AccountId: 0,
   CreatedBy: "",
   CreatedAt: "",
   UpdatedBy: "",
@@ -451,7 +453,11 @@ const deleteSupplierNow = (supplierId) => {
         <td>{s.State}</td>
         <td>{s.PinCode}</td>
         <td>{s.OpeningBalance}</td>
-        <td>{s.Balance}</td>
+       <td>
+  {`${Math.abs(s.Balance || 0)} ${
+    (s.Balance || 0) < 0 ? "Cr" : "Dr"
+  }`}
+</td>
 
         <td>
           {/* Edit */}
@@ -652,22 +658,59 @@ const deleteSupplierNow = (supplierId) => {
         <div className="form-group small">
           <label>Opening Balance</label>
           <input
-            type="number"
-            value={supplier.OpeningBalance}
-            onChange={(e) =>
-              handleChange(
-                "OpeningBalance",
-                e.target.value === "" ? 0 : parseFloat(e.target.value) || 0
-              )
-            }
-          />
+  type="number"
+  min="0"
+  disabled={!supplier.CreateLedger}
+  value={supplier.OpeningBalance}
+  onChange={(e) => {
+    const value = e.target.value;
+
+    if (value === "" || Number(value) >= 0) {
+      handleChange(
+        "OpeningBalance",
+        value === "" ? 0 : parseFloat(value) || 0
+      );
+    }
+  }}
+/>
         </div>
       )}
 
       <div className="form-group small">
-        <label>Balance</label>
-        <input type="number" value={supplier.Balance || 0} readOnly />
-      </div>
+  <label>Balance</label>
+  <input
+    type="text"
+    value={
+      supplier.SupplierId === 0
+        ? `${Math.abs(supplier.OpeningBalance || 0)} Cr`
+        : `${Math.abs(supplier.Balance || 0)} ${
+            (supplier.Balance || 0) < 0 ? "Cr" : "Dr"
+          }`
+    }
+    readOnly
+  />
+</div>
+
+      <div className="form-group small">
+  <label className="checkbox-label">
+    <input
+      type="checkbox"
+      checked={supplier.CreateLedger ?? true}
+      onChange={(e) => {
+  const checked = e.target.checked;
+
+  setSupplier(prev => ({
+    ...prev,
+    CreateLedger: checked,
+    OpeningBalance: checked
+      ? prev.OpeningBalance
+      : 0
+  }));
+}}
+    />
+    Create Ledger
+  </label>
+</div>
     </div>
 
     <div className="inventory-btns">

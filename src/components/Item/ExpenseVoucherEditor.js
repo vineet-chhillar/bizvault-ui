@@ -458,17 +458,25 @@ const resetPaymentForm = (expense) => {
                   </td>
                  
                   <td>
-                     <div className="cell-box">
-                    <input
-                      type="number"
-                      value={l.Amount}
-                      onChange={e => updateLine(i, "Amount", e.target.value)}
-                      className={
-                        l.AccountId && Number(l.Amount) <= 0 ? "error-input" : ""
-                      }
-                    />
-                    
-                    </div>
+                    <div className="cell-box">
+  <input
+    type="number"
+    min="0"
+    value={l.Amount}
+    onChange={e => {
+      const value = e.target.value;
+
+      if (value === "" || Number(value) >= 0) {
+        updateLine(i, "Amount", value);
+      }
+    }}
+    className={
+      l.AccountId && Number(l.Amount) <= 0
+        ? "error-input"
+        : ""
+    }
+  />
+</div>
                   </td>
 
                   

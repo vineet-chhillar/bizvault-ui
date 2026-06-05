@@ -1319,17 +1319,21 @@ className={paymentMode !== "Credit" ? "input-disabled" : ""}
                 {it.Name}
               </span>
 
+
               {it.BatchNo && (
                 <span className="item-batch">
                   Batch No : {it.BatchNo}
                 </span>
               )}
 
-              {it.SalesPrice && (
-                <span className="item-price">
-                  Sales Price : ₹{Number(it.SalesPrice).toFixed(2)}
-                </span>
-              )}
+              <span className="item-price">
+  Sales Price :{" "}
+  {it.SalesPrice != null &&
+   it.SalesPrice !== "" &&
+   Number(it.SalesPrice) > 0
+    ? `₹${Number(it.SalesPrice).toFixed(2)}`
+    : "Not Available"}
+</span>
 
             </div>
 
