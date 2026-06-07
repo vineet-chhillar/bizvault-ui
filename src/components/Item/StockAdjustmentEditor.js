@@ -4,8 +4,11 @@ import { getCreatedBy } from "../../utils/authHelper";
 const blankLine = () => ({
   ItemId: 0,
   ItemName: "",
-  BatchNo: "OPENINGSTOCK",
+  BatchNo: "STOCKADJUSTMENT",
   CurrentQty: 0,
+
+  AdjustmentType: "INCREASE",
+
   AdjustQty: "",
   Rate: 0,
   ValueImpact: 0
@@ -17,7 +20,7 @@ const [selectedAdjustmentId, setSelectedAdjustmentId] = useState(null);
   const [date, setDate] = useState(
     new Date().toISOString().split("T")[0]
   );
-  const [type, setType] = useState("INCREASE");
+  
   const [reason, setReason] = useState("");
   const [notes, setNotes] = useState("");
 
@@ -37,7 +40,6 @@ const [modal, setModal] = useState({
 });
 const resetForm = () => {
   setDate(new Date().toISOString().split("T")[0]);
-  setType("INCREASE");
   setReason("");
   setNotes("");
   setLines([blankLine()]);
@@ -190,12 +192,15 @@ setModal({
   }, []);
 
   const invalid = lines.some(
-    l =>
-      !l.ItemId ||
-      !l.AdjustQty ||
-      Number(l.AdjustQty) <= 0 ||
-      (type === "DECREASE" && Number(l.AdjustQty) > Number(l.CurrentQty))
-  );
+  l =>
+    !l.ItemId ||
+    !l.AdjustQty ||
+    Number(l.AdjustQty) <= 0 ||
+    (
+      l.AdjustmentType === "DECREASE" &&
+      Number(l.AdjustQty) > Number(l.CurrentQty)
+    )
+);
 
   // ------------------------------------------------
   // UPDATE LINE
@@ -261,13 +266,13 @@ if (!reason) {
     Action: "SaveStockAdjustment",
     Payload: {
       Date: date,
-      AdjustmentType: type,
       Reason: reason,
       Notes: notes,
       CreatedBy: getCreatedBy(),
       Items: validLines.map(l => ({
   ItemId: l.ItemId,
   BatchNo: l.BatchNo || null,
+  AdjustmentType: l.AdjustmentType,
   AdjustQty: Number(l.AdjustQty),
   Rate: Number(l.Rate)
 }))
@@ -291,13 +296,7 @@ if (!reason) {
             <input type="date" value={date} onChange={e => setDate(e.target.value)} />
           </div>
 
-          <div className="form-group">
-            <label>Adjustment Type</label>
-            <select value={type} onChange={e => setType(e.target.value)}>
-              <option value="INCREASE">Increase</option>
-              <option value="DECREASE">Decrease</option>
-            </select>
-          </div>
+          
 
           <div className="form-group">
             <label>Reason</label>
@@ -328,6 +327,7 @@ if (!reason) {
                 <th>Item</th>
                 <th>Batch</th>
                 <th>Current Qty</th>
+                <th>Type</th>
                 <th>Adjust Qty</th>
                 <th>Rate</th>
                 <th>Value Impact</th>
@@ -386,7 +386,8 @@ if (!reason) {
                   ...copy[i],
                   ItemId: it.Id,
                   ItemName: it.Name,
-                  BatchNo: "OPENINGSTOCK",       // optional for now
+                  BatchNo: "STOCKADJUSTMENT",       // optional for now
+                  AdjustmentType: "INCREASE",
                   AdjustQty: "",
                   ValueImpact: 0
                 };
@@ -415,6 +416,18 @@ if (!reason) {
                   <td>{l.BatchNo}</td>
                   <td>{l.CurrentQty}</td>
                   <td>
+  <select
+    className="stock-adjustment-select"
+    value={l.AdjustmentType}
+    onChange={e =>
+      updateLine(i, "AdjustmentType", e.target.value)
+    }
+  >
+    <option value="INCREASE">Increase</option>
+    <option value="DECREASE">Decrease</option>
+  </select>
+</td>
+                  <td>
   <div className="cell-box">
   <input
     type="number"
@@ -428,7 +441,7 @@ if (!reason) {
       }
     }}
     className={
-      type === "DECREASE" &&
+      l.AdjustmentType === "DECREASE" &&
       Number(l.AdjustQty) > Number(l.CurrentQty)
         ? "error-input"
         : ""
@@ -437,25 +450,22 @@ if (!reason) {
 </div>
 
   {/* 🔴 INLINE VALIDATION MESSAGE */}
-  {type === "DECREASE" &&
+  {l.AdjustmentType === "DECREASE" &&
     Number(l.AdjustQty) > Number(l.CurrentQty) && (
       <div className="error">Insufficient stock</div>
     )}
 </td>
 
+
                  <td>
-  {type === "INCREASE" ? (
-    <input
-      type="number"
-      step="0.01"
-      min="0"
-      value={l.Rate}
-      onChange={e => updateLine(i, "Rate", e.target.value)}
-      className="table-input"
-    />
-  ) : (
-    <span>{Number(l.Rate).toFixed(2)}</span>
-  )}
+  <input
+    type="number"
+    step="0.01"
+    min="0"
+    value={l.Rate}
+    onChange={e => updateLine(i, "Rate", e.target.value)}
+    className="table-input"
+  />
 </td>
                   <td>{l.ValueImpact.toFixed(2)}</td>
                   <td>
@@ -496,7 +506,7 @@ if (!reason) {
         <tr>
           <th>No</th>
           <th>Date</th>
-          <th>Type</th>
+          <th>Items</th>
           <th>Reason</th>
           <th>Action</th>
         </tr>
@@ -509,7 +519,7 @@ if (!reason) {
 
             <td>{a.AdjustmentNo}</td>
             <td>{a.AdjustmentDate}</td>
-            <td>{a.AdjustmentType}</td>
+            <td>{a.ItemSummary}</td>
             <td>{a.Reason}</td>
         
         <td>
@@ -570,7 +580,7 @@ if (!reason) {
     <h3>📄 Stock Adjustment – {viewAdjustment.AdjustmentNo}</h3>
 
     <div className="summary-row"><strong>Date:</strong> {viewAdjustment.Date}</div>
-    <div className="summary-row"><strong>Type:</strong> {viewAdjustment.Type}</div>
+    
     <div className="summary-row"><strong>Reason:</strong> {viewAdjustment.Reason}</div>
     <div className="summary-row"><strong>Notes:</strong> {viewAdjustment.Notes}</div>
 
@@ -579,6 +589,7 @@ if (!reason) {
         <tr>
           <th>Item</th>
           <th>Batch</th>
+          <th>Type</th>
           <th>Qty</th>
           <th>Rate</th>
           <th>Impact</th>
@@ -589,6 +600,7 @@ if (!reason) {
           <tr key={i}>
             <td>{it.ItemName}</td>
             <td>{it.BatchNo || "-"}</td>
+            <td>{it.AdjustmentType}</td>
             <td>{it.Qty}</td>
             <td>{it.Rate}</td>
             <td>{it.ValueImpact.toFixed(2)}</td>

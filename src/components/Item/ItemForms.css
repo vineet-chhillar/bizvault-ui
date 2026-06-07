@@ -1711,3 +1711,19 @@ h1.form-title, h2.form-title, h3.form-title {
   margin-block-end: 10px;  
   
 }
+.stock-adjustment-select {
+    width: 100%;
+    min-width: 120px;
+    height: 32px;
+    padding: 4px 8px;
+    border: 1px solid #d0d7de;
+    border-radius: 4px;
+    background: #fff;
+    font-size: 13px;
+    box-sizing: border-box;
+}
+
+.stock-adjustment-select:focus {
+    outline: none;
+    border-color: #0d6efd;
+}
