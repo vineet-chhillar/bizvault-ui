@@ -650,6 +650,8 @@ useEffect(() => {
       <div><b>Name:</b> {customerInfo.CustomerName}</div>
       <div><b>GSTIN:</b> {customerInfo.GSTIN || "-"}</div>
       <div><b>State:</b> {customerInfo.State}</div>
+      <div><b>Opening Balance:</b> {customerInfo.OpeningBalance}</div>
+      
     </div>
   )}
 </div>

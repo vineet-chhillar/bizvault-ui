@@ -506,6 +506,12 @@ setIsEditMode(true);
 setPaidVia(data.PaidVia || "");
 
         setSupplierId(data.SupplierId);
+        window.chrome.webview.postMessage({
+    Action: "GetSupplierById",
+    Payload: {
+        SupplierId: data.SupplierId
+    }
+});
         setPurchaseDate(data.InvoiceDate);
         setInvoiceNo(data.InvoiceNo);
         setInvoiceNum(data.InvoiceNum);
@@ -648,6 +654,8 @@ setPaidVia(data.PaidVia || "");
             <div><b>Name:</b> {supplierInfo.SupplierName}</div>
             <div><b>GSTIN:</b> {supplierInfo.GSTIN}</div>
             <div><b>State:</b> {supplierInfo.State}</div>
+            <div><b>Opening Balance:</b> {supplierInfo.OpeningBalance}</div>
+            
           </div>
         )}
       </div>

@@ -95,7 +95,24 @@ console.log("🔍 front Validation errors: ", itemErrors);
     setErrors(map);
      return;
   }
+const handleChange = (e) => {
+  const { name, value } = e.target;
 
+  if (name === "reorderlevel") {
+    const num = parseInt(value || "0", 10);
+
+    setItemData((prev) => ({
+      ...prev,
+      [name]: Math.max(0, num),
+    }));
+    return;
+  }
+
+  setItemData((prev) => ({
+    ...prev,
+    [name]: value,
+  }));
+};
   const now = new Date();
   const timePart =
     String(now.getHours()).padStart(2, "0") + ":" +
@@ -507,14 +524,15 @@ const filteredItems = items.filter((i) =>
 {/* REORDER LEVEL */}
 <div className="form-group">
   <label>Reorder Level</label>
-  <input 
-    type="number"
-    name="reorderlevel"
-    value={itemData.reorderlevel}
-    onChange={handleChange}
-    placeholder="Enter reorder level"
-    className={errors.reorderlevel ? "error-input" : ""}
-  />
+  <input
+  type="number"
+  name="reorderlevel"
+  value={itemData.reorderlevel}
+  onChange={handleChange}
+  placeholder="Enter reorder level"
+  min="0"
+  className={errors.reorderlevel ? "error-input" : ""}
+/>
   {errors.reorderlevel && <div className="error">{errors.reorderlevel}</div>}
 </div>
 

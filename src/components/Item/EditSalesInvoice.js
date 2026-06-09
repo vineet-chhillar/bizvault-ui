@@ -733,25 +733,61 @@ useEffect(() => {
 <div className="customer-section">
   <label>Customer</label>
 
-  <select
-    value={customerId || ""}
-    //disabled={isEditMode}   // 🔒 lock after load
-    onChange={e => handleCustomerChange(Number(e.target.value))}
+  {!isEditMode ? (
+    <select
+      value={customerId || ""}
+      onChange={e => handleCustomerChange(Number(e.target.value))}
+    >
+      <option value="">Select Customer</option>
 
-  >
-    <option value="">Select Customer</option>
-    {customerList.map(c => (
-      <option key={c.CustomerId} value={c.CustomerId}>
-        {c.CustomerName}
-      </option>
-    ))}
-  </select>
+      {customerList.map(c => (
+        <option
+          key={c.CustomerId}
+          value={c.CustomerId}
+        >
+          {c.CustomerName}
+        </option>
+      ))}
+    </select>
+  ) : (
+    <div
+      className="supplier-details-box"
+      style={{ marginBottom: "10px" }}
+    >
+      <div>
+        <b>Customer:</b>{" "}
+        {customerInfo?.CustomerName || ""}
+      </div>
+    </div>
+  )}
 
   {customerInfo && (
     <div className="supplier-details-box">
-      <div><b>Name:</b> {customerInfo.CustomerName}</div>
-      <div><b>GSTIN:</b> {customerInfo.GSTIN || "-"}</div>
-      <div><b>State:</b> {customerInfo.State}</div>
+      <div>
+        <b>Name:</b> {customerInfo.CustomerName}
+      </div>
+
+      <div>
+        <b>GSTIN:</b> {customerInfo.GSTIN || "-"}
+      </div>
+
+      <div>
+        <b>State:</b> {customerInfo.State}
+      </div>
+
+      <div>
+        <b>Opening Balance:</b>{" "}
+        {Number(
+          customerInfo.OpeningBalance || 0
+        ).toFixed(2)}
+      </div>
+
+      <div>
+        <b>Current Balance:</b>{" "}
+        {Number(
+          customerInfo.Balance || 0
+        ).toFixed(2)}
+      </div>
     </div>
   )}
 </div>

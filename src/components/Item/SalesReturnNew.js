@@ -30,7 +30,7 @@ const blankLine = () => ({
 export default function EditSalesReturn({ user }) {
   // ---------- STATE ----------
   const [invoiceId, setInvoiceId] = useState(null);
-
+const [customerInfo, setCustomerInfo] = useState(null);
   const [paymentMode, setPaymentMode] = useState("Cash");
   const [invoiceList, setInvoiceList] = useState([]);
 
@@ -416,7 +416,13 @@ setValidationErrors([]);
       if (msg.action === "GetCompanyProfileResponse") {
         setCompany(msg.profile);
       }
-
+if (msg.action === "GetCustomerByIdResult") {
+  
+    if (msg.success) {
+      
+        setCustomerInfo(msg.data);
+    }
+}
       // Sales invoice dropdown
       if (msg.action === "GetSalesInvoiceNumbersByDateResponse") {
         // Expecting [{ Id, InvoiceNo }] etc.
@@ -458,6 +464,12 @@ setValidationErrors([]);
 
   // ✅ NORMAL FLOW
   setCustomerId(data.CustomerId);
+  window.chrome.webview.postMessage({
+    Action: "GetCustomerById",
+    Payload: {
+        CustomerId: data.CustomerId
+    }
+});
   setCustomerName(data.CustomerName || "");
   setCustomerPhone(data.CustomerPhone || "");
   setCustomerState(data.CustomerState || "");
@@ -555,7 +567,7 @@ else {
       setCustomerPhone("");
 
       setCustomerState("");
-
+setCustomerInfo(null);
       setInvoiceDate(
         new Date()
           .toISOString()
@@ -631,19 +643,48 @@ else {
 
         {/* CUSTOMER SECTION (read-only, from invoice) */}
         <div className="customer-section">
-          <label>Customer</label>
-          <div className="customer-details-box">
-            <div>
-              <b>Name:</b> {customerName || "-"}
-            </div>
-            <div>
-              <b>Phone:</b> {customerPhone || "-"}
-            </div>
-            <div>
-              <b>State:</b> {customerState || "-"}
-            </div>
-          </div>
+  <label>Customer</label>
+
+  <div
+    className="customer-details-box"
+    style={{ marginBottom: "10px" }}
+  >
+    <div>
+      <b>Customer:</b>{" "}
+      {customerInfo?.CustomerName || customerName || "-"}
+    </div>
+  </div>
+
+  {customerInfo && (
+    <div className="customer-details-box">
+
+    
+
+      <div>
+        <b>GSTIN:</b> {customerInfo.GSTIN || "-"}
+      </div>
+
+      <div>
+        <b>State:</b> {customerInfo.BillingState || "-"}
+      </div>
+
+      <div>
+        <b>Mobile:</b> {customerInfo.Mobile || "-"}
+      </div>
+
+       <div>
+            <b>Opening Balance:</b>
+            {Number(customerInfo.OpeningBalance || 0).toFixed(2)}
         </div>
+
+        <div>
+            <b>Current Balance:</b>
+            {Number(customerInfo.Balance || 0).toFixed(2)}
+        </div>
+
+    </div>
+  )}
+</div>
       </div>
 
       {/* DATE + INVOICE NO */}

@@ -409,6 +409,12 @@ return;
         }
 
         setSupplierId(data.SupplierId);
+        window.chrome.webview.postMessage({
+    Action: "GetSupplierById",
+    Payload: {
+        SupplierId: data.SupplierId
+    }
+});
         setPurchaseDate(data.InvoiceDate);
         setInvoiceNo(data.InvoiceNo);
         setInvoiceNum(data.InvoiceNum);
@@ -586,35 +592,48 @@ AvailableQty: item.AvailableQty || 0,
 
       {/* SUPPLIER SECTION */}
       <div className="customer-section">
-        <label>Supplier</label>
-        <select 
-          value={supplierId}
-          disabled={true}
-          onChange={(e) => {
-            setSupplierId(e.target.value);
-            window.chrome.webview.postMessage({
-              Action: "GetSupplierById",
-              Payload: { SupplierId: e.target.value }
-            });
-          }}
-        >
-          <option value="">Select Supplier</option>
-          {supplierList.map(s => (
-            <option key={s.SupplierId} value={s.SupplierId}>
-              {s.SupplierName}
-            </option>
-          ))}
-          readOnly
-        </select>
+  <label>Supplier</label>
 
-        {supplierInfo && (
-          <div className="supplier-details-box">
-            <div><b>Name:</b> {supplierInfo.SupplierName}</div>
-            <div><b>GSTIN:</b> {supplierInfo.GSTIN}</div>
-            <div><b>State:</b> {supplierInfo.State}</div>
-          </div>
-        )}
+  <div
+    className="supplier-details-box"
+    style={{ marginBottom: "10px" }}
+  >
+    <div>
+      <b>Supplier:</b>{" "}
+      {supplierInfo?.SupplierName || ""}
+    </div>
+  </div>
+
+  {supplierInfo && (
+    <div className="supplier-details-box">
+      <div>
+        <b>Name:</b> {supplierInfo.SupplierName}
       </div>
+
+      <div>
+        <b>GSTIN:</b> {supplierInfo.GSTIN}
+      </div>
+
+      <div>
+        <b>State:</b> {supplierInfo.State}
+      </div>
+
+      <div>
+        <b>Opening Balance:</b>{" "}
+        {Number(
+          supplierInfo.OpeningBalance || 0
+        ).toFixed(2)}
+      </div>
+
+      <div>
+        <b>Current Balance:</b>{" "}
+        {Number(
+          supplierInfo.Balance || 0
+        ).toFixed(2)}
+      </div>
+    </div>
+  )}
+</div>
    </div>
       {/* DATE + INVOICE NO */}
       <div className="form-row">

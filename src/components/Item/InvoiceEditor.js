@@ -874,7 +874,11 @@ const resetInvoiceForm = () => {
   CustomerName: "",
   Mobile: "",
   BillingState: company?.State || "", // auto default again
-  BillingAddress: ""
+  BillingAddress: "",
+  GSTIN: "",
+  Email: "",
+  OpeningBalance: 0,
+  Balance: 0
   });
   setCustomerDraft({
   CustomerName: "",
@@ -988,7 +992,9 @@ type="button"
       BillingCity: "",
       GSTIN: "",
       Email: "",
-      Address: ""
+      Address: "",
+      OpeningBalance: 0,
+      Balance: 0
     });
   } else {
     // Existing customer selected
@@ -1002,7 +1008,9 @@ type="button"
         BillingCity: selected.BillingCity || "",
         GSTIN: selected.GSTIN || "",
         Email: selected.Email || "",
-        Address: selected.Address || ""
+        Address: selected.Address || "",
+        OpeningBalance: selected.OpeningBalance || 0,
+    Balance: selected.Balance || 0
       });
     }
   }
@@ -1023,6 +1031,8 @@ type="button"
       <div><b>Mobile:</b> {customer.Mobile}</div>
       <div><b>Address:</b> {customer.BillingAddress}</div>
       <div><b>State:</b> {customer.BillingState}</div>
+      <div><b>Opening Balance:</b> {customer.OpeningBalance}</div>
+<div><b>Current Balance:</b> {customer.Balance}</div>
     </div>
   )}
   {customer.CustomerId === 0 && (
