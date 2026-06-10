@@ -655,7 +655,7 @@ setPaidVia(data.PaidVia || "");
         >
           <option value="">Select Purchase Invoice</option>
           {invoiceList.map(i => (
-            <option key={i.Id} value={i.Id}>{i.PurchaseNo}</option>
+            <option key={i.Id} value={i.Id}>{i.InvoiceNo}</option>
           ))}
         </select>
 
@@ -701,10 +701,7 @@ setPaidVia(data.PaidVia || "");
       marginBottom: "10px"
     }}
   >
-    <div>
-      <b>Supplier:</b>{" "}
-      {supplierInfo?.SupplierName || ""}
-    </div>
+    
   </div>
 )}
 
@@ -723,18 +720,26 @@ setPaidVia(data.PaidVia || "");
     </div>
 
     <div>
-      <b>Opening Balance:</b>{" "}
-      {Number(
-        supplierInfo.OpeningBalance || 0
-      ).toFixed(2)}
-    </div>
+  <b>Opening Balance:</b>{" "}
+  {Math.abs(
+    Number(supplierInfo?.OpeningBalance || 0)
+  ).toFixed(2)}
+  {" "}
+  {Number(supplierInfo?.OpeningBalance || 0) >= 0
+    ? "Dr"
+    : "Cr"}
+</div>
 
-    <div>
-      <b>Current Balance:</b>{" "}
-      {Number(
-        supplierInfo.Balance || 0
-      ).toFixed(2)}
-    </div>
+<div>
+  <b>Current Balance:</b>{" "}
+  {Math.abs(
+    Number(supplierInfo?.Balance || 0)
+  ).toFixed(2)}
+  {" "}
+  {Number(supplierInfo?.Balance || 0) >= 0
+    ? "Dr"
+    : "Cr"}
+</div>
   </div>
 )}
       </div>

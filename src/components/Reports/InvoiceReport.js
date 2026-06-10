@@ -178,7 +178,7 @@ if (showViewer && viewerData) {
         setShowViewer(false);
         setViewerData(null);
       }}
-      onPrint={printInvoice}
+      
     />
   );
 }
@@ -304,13 +304,7 @@ if (showViewer && viewerData) {
     View
   </button>
 
-  <button
-    className="btn-submit small"
-    type="button"
-    onClick={printInvoice}
-  >
-    Print
-  </button>
+  
 
 </div>
 

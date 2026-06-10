@@ -1,0 +1,164 @@
+/* Common */
+
+.invoice-table-container {
+    width: 100%;
+    overflow-x: auto;
+    margin-bottom: 12px;
+}
+
+.invoice-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.invoice-table th,
+.invoice-table td {
+    border: 1px solid #ddd;
+    padding: 6px 8px;
+}
+
+/* ======================================
+   HEADER TABLE (Invoice No, Date etc)
+   ====================================== */
+
+.invoice-header-table {
+    width: 70%;
+    margin: 0 auto;
+}
+
+.invoice-header-table td {
+    width: 25%;
+}
+
+/* ======================================
+   PARTY TABLE
+   ====================================== */
+
+.invoice-party-table {
+    width: 80%;
+    margin: 0 auto;
+}
+
+.invoice-party-table td {
+    width: 25%;
+}
+
+/* ======================================
+   ITEMS TABLE
+   ====================================== */
+
+.invoice-items-table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+.invoice-items-table th:nth-child(1),
+.invoice-items-table td:nth-child(1) {
+    width: 25%;
+}
+
+.invoice-items-table th:nth-child(2),
+.invoice-items-table td:nth-child(2) {
+    width: 12%;
+}
+
+.invoice-items-table th:nth-child(3),
+.invoice-items-table td:nth-child(3) {
+    width: 10%;
+}
+
+.invoice-items-table th:nth-child(4),
+.invoice-items-table td:nth-child(4) {
+    width: 8%;
+}
+
+.invoice-items-table th:nth-child(5),
+.invoice-items-table td:nth-child(5) {
+    width: 12%;
+}
+
+.invoice-items-table th:nth-child(6),
+.invoice-items-table td:nth-child(6) {
+    width: 8%;
+}
+
+.invoice-items-table th:nth-child(7),
+.invoice-items-table td:nth-child(7) {
+    width: 15%;
+}
+
+/* ======================================
+   RETURN ITEMS TABLE
+   ====================================== */
+
+.invoice-return-table {
+    width: 90%;
+    margin: 0 auto;
+}
+
+/* ======================================
+   SUMMARY TABLES
+   ====================================== */
+
+.invoice-summary-table {
+    width: 400px;
+    margin: 0 auto;
+}
+
+.invoice-summary-table td:first-child {
+    width: 70%;
+    font-weight: 600;
+}
+
+.invoice-summary-table td:last-child {
+    width: 30%;
+    text-align: right;
+}
+.invoice-section {
+    width: 90%;
+    max-width: 1000px;
+    margin: 0 auto 15px auto;
+
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+
+    padding: 12px;
+    box-sizing: border-box;
+}
+.invoice-section-title {
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+
+    margin: 0 0 10px 0;
+    padding: 8px 12px;
+
+    background: #f1eef8;
+    color: #2f2f2f; /* Dark gray */
+
+    border: 1px solid #ddd6f0;
+    border-radius: 4px;
+
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+.invoice-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.invoice-main-title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #4b2e5a;
+    line-height: 1.2;
+}
+
+.invoice-title-icon {
+    font-size: 22px;
+    line-height: 1;
+}

@@ -868,7 +868,7 @@ return;
 >
   <option value="">Select Purchase Invoice</option>
   {invoiceNumbers.map(inv => (
-    <option key={inv.Id} value={inv.Id}>{inv.PurchaseNo}</option>
+    <option key={inv.Id} value={inv.Id}>{inv.InvoiceNo}</option>
   ))}
 </select>
  <div className="inventory-btns">

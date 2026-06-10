@@ -97,10 +97,8 @@ const [notes, setNotes] = useState("");
     roundOff: 0
   });
 
-  const balanceAmount =
-    paymentMode === "Credit"
-      ? Math.max(0, totals.total - paidAmount)
-      : 0;
+  {/*const balanceAmount = paymentMode === "Credit" ? Math.max(0, totals.total - paidAmount) : 0;*/}
+
 function getBuyerState(customer) {
   return (
     customer?.BillingState ||
@@ -631,27 +629,25 @@ useEffect(() => {
 <div className="customer-section">
   <label>Customer</label>
 
-  <select
-    value={customerId || ""}
-    //disabled={isEditMode}   // 🔒 lock after load
-    onChange={e => handleCustomerChange(Number(e.target.value))}
-
-  >
-    <option value="">Select Customer</option>
-    {customerList.map(c => (
-      <option key={c.CustomerId} value={c.CustomerId}>
-        {c.CustomerName}
-      </option>
-    ))}
-  </select>
-
+ 
   {customerInfo && (
     <div className="supplier-details-box">
       <div><b>Name:</b> {customerInfo.CustomerName}</div>
       <div><b>GSTIN:</b> {customerInfo.GSTIN || "-"}</div>
       <div><b>State:</b> {customerInfo.State}</div>
-      <div><b>Opening Balance:</b> {customerInfo.OpeningBalance}</div>
-      
+     <div>
+  <b>Opening Balance:</b>{" "}
+  {Math.abs(Number(customerInfo?.OpeningBalance || 0)).toFixed(2)}
+  {" "}
+  {Number(customerInfo?.OpeningBalance || 0) >= 0 ? "Dr" : "Cr"}
+</div>
+
+<div>
+  <b>Closing Balance:</b>{" "}
+  {Math.abs(Number(customerInfo?.Balance || 0)).toFixed(2)}
+  {" "}
+  {Number(customerInfo?.Balance || 0) >= 0 ? "Dr" : "Cr"}
+</div>
     </div>
   )}
 </div>
@@ -718,14 +714,21 @@ useEffect(() => {
 
         <div className="form-group">
           <label>Balance</label>
-          <input readOnly value={balanceAmount.toFixed(2)} />
+          <input
+  readOnly
+  value={
+    customerInfo?.Balance != null
+      ? Number(customerInfo.Balance).toFixed(2)
+      : "0.00"
+  }
+/>
         </div>
 
         <div className="form-group">
           {isEditMode &&
   originalPaymentMode === "Credit" &&
-  paymentMode === "Credit" &&
-  balanceAmount > 0 && (
+paymentMode === "Credit" &&
+Number(customerInfo?.Balance || 0) > 0 && (
     <button
       className="btn-submit"
       onClick={() => setShowPaymentModal(true)}
@@ -1004,7 +1007,7 @@ useEffect(() => {
             <input
               type="number"
               min="1"
-              max={balanceAmount}
+              max={customerInfo.Balance}
               value={paymentForm.Amount}
               onChange={e =>
                 setPaymentForm(p => ({
@@ -1014,7 +1017,7 @@ useEffect(() => {
               }
             />
             <small className="hint">
-              Balance: ₹{balanceAmount.toFixed(2)}
+              Balance: ₹{customerInfo.Balance?.toFixed?.(2) ?? customerInfo.Balance}
             </small>
           </div>
 
@@ -1057,7 +1060,7 @@ useEffect(() => {
   return;
 }
 
-if (paymentForm.Amount > balanceAmount) {
+if (paymentForm.Amount > customerInfo.Balance) {
   setModal({
     show: true,
     message: "Payment exceeds balance amount",

@@ -561,38 +561,8 @@ setPaidVia(data.PaidVia || "");
       }
 
 
-      // --------------- UPDATE RESPONSE ---------------
-      if (msg.action === "UpdatePurchaseInvoiceResponse") {
-        if (msg.success) {
-  setModal({
-    show: true,
-    message: "Invoice updated successfully",
-    type: "success",
-    onClose: () => {
-      setShowPaymentModal(false);
-
-      setPaymentForm({
-        PaymentDate: new Date().toISOString().slice(0, 10),
-        PaymentMode: "Cash",
-        Amount: 0,
-        Notes: ""
-      });
-
-      setInvoiceNo("");
-      setPurchaseDate("");
-      setLines([blankLine()]);
-      setNotes("");
-      setPaidAmount(0);
-    }
-  });
-} else {
-  setModal({
-    show: true,
-    message: msg.message || "Update failed",
-    type: "error"
-  });
-}
-      }
+      
+      
     };
 
     window.chrome.webview.addEventListener("message", handler);
@@ -607,18 +577,14 @@ setPaidVia(data.PaidVia || "");
       {/* INVOICE SELECTION */}
      <div className="top-section row-flex">
     <div className="print-section">
-        <input
-    type="date"
-    value={filterDate}
-    onChange={(e) => setFilterDate(e.target.value)}
-  />
+        <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)}  />
         <select
           value={invoiceId}
           onChange={(e) => setInvoiceId(e.target.value)}
         >
           <option value="">Select Purchase Invoice</option>
           {invoiceList.map(i => (
-            <option key={i.Id} value={i.Id}>{i.PurchaseNo}</option>
+            <option key={i.Id} value={i.Id}>{i.InvoiceNo}</option>
           ))}
         </select>
 
@@ -631,30 +597,27 @@ setPaidVia(data.PaidVia || "");
       {/* SUPPLIER SECTION */}
       <div className="customer-section">
         <label>Supplier</label>
-        <select
-          value={supplierId}
-          onChange={(e) => {
-            setSupplierId(e.target.value);
-            window.chrome.webview.postMessage({
-              Action: "GetSupplierById",
-              Payload: { SupplierId: e.target.value }
-            });
-          }}
-        >
-          <option value="">Select Supplier</option>
-          {supplierList.map(s => (
-            <option key={s.SupplierId} value={s.SupplierId}>
-              {s.SupplierName}
-            </option>
-          ))}
-        </select>
+
+
 
         {supplierInfo && (
           <div className="supplier-details-box">
             <div><b>Name:</b> {supplierInfo.SupplierName}</div>
             <div><b>GSTIN:</b> {supplierInfo.GSTIN}</div>
             <div><b>State:</b> {supplierInfo.State}</div>
-            <div><b>Opening Balance:</b> {supplierInfo.OpeningBalance}</div>
+            <div>
+  <b>Opening Balance:</b>{" "}
+  {Math.abs(Number(supplierInfo?.OpeningBalance || 0)).toFixed(2)}
+  {" "}
+  {Number(supplierInfo?.OpeningBalance || 0) >= 0 ? "Dr" : "Cr"}
+</div>
+
+<div>
+  <b>Closing Balance:</b>{" "}
+  {Math.abs(Number(supplierInfo?.Balance || 0)).toFixed(2)}
+  {" "}
+  {Number(supplierInfo?.Balance || 0) >= 0 ? "Dr" : "Cr"}
+</div>
             
           </div>
         )}
@@ -859,29 +822,7 @@ setPaidVia(data.PaidVia || "");
 
 
  <td style={{ width:"90px" }}>
-            
-            <button
-    className="invaction-btn invaction-add"
-   onClick={() => setDetailsModal({ open: true, index: i })}
-        >
-          {l.showDetails ? "Hide" : ""}
-             
-            
-        <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="invaction-icon"
-    >
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-    {/*Add Inventory*/}
-  </button>
+               
               <button
               className="invaction-btn invaction-modify"
              

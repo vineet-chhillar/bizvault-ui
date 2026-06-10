@@ -1,11 +1,75 @@
-import React from "react";
-
+import React, { useEffect, useState } from "react";
+import "./InvoiceReport.css";
 export default function InvoiceViewer({
   invoice,
   invoiceType = "SALE",
-  onClose,
-  onPrint
+  onClose
 }) {
+  useEffect(() => {
+  const handleMessage = (event) => {
+    const msg = event.data;
+
+    if (
+      msg.action === "PrintInvoiceResponse" ||
+      msg.action === "PrintPurchaseInvoiceResponse"
+    ) {
+      if (msg.success) {
+
+        const path = msg.pdfPath;
+        const mode = msg.mode || "PREVIEW";
+
+        if (mode === "PRINT") {
+
+          window.chrome.webview.postMessage({
+            Action: "OpenPdfExternal",
+            Payload: { Path: path }
+          });
+
+        } else {
+
+          const url =
+            "data:application/pdf;base64," +
+            msg.pdfBase64;
+
+          setPdfPath(url);
+          setDownloadPath(path);
+          setShowPdfModal(true);
+        }
+
+      } else {
+
+        setModal({
+          show: true,
+          message: msg.message || "Print failed",
+          type: "error"
+        });
+
+      }
+    }
+  };
+
+  window.chrome.webview.addEventListener(
+    "message",
+    handleMessage
+  );
+
+  return () => {
+    window.chrome.webview.removeEventListener(
+      "message",
+      handleMessage
+    );
+  };
+}, []);
+  const [showPdfModal, setShowPdfModal] = useState(false);
+const [pdfPath, setPdfPath] = useState("");
+const [downloadPath, setDownloadPath] = useState("");
+const [modal, setModal] = useState({
+  show: false,
+  message: "",
+  type: "info",
+  onConfirm: null,
+  onClose: null
+});
   if (!invoice) return null;
 
   const partyName =
@@ -36,6 +100,27 @@ const totalReturnedAmount = returns.reduce(
   (sum, r) => sum + Number(r.TotalAmount || 0),
   0
 );
+const handlePrint = () => {
+  if (invoiceType === "SALE") {
+    window.chrome.webview.postMessage({
+      Action: "PrintInvoice",
+      Payload: {
+        InvoiceId: invoice.Id,
+        Mode: "PREVIEW"
+      }
+    });
+  } else {
+    window.chrome.webview.postMessage({
+      Action: "PrintPurchaseInvoice",
+      Payload: {
+        PurchaseId: invoice.PurchaseId,
+        Mode: "PREVIEW"
+      }
+    });
+  }
+};
+
+
 
 const totalReturnedQty = returns.reduce(
   (sum, r) =>
@@ -52,43 +137,61 @@ const netInvoiceValue =
   Number(invoice.TotalAmount || 0) -
   totalReturnedAmount;
   return (
+    <>
     <div className="form-container">
 
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
-          marginBottom: "15px"
+          marginBottom: "5px",
+          alignItems: "center"
         }}
       >
-        <h2 className="form-title">
-          {invoiceType === "SALE"
-            ? "Sales Invoice"
-            : "Purchase Invoice"}
-        </h2>
+        <div className="invoice-title-wrapper">
+  <span className="invoice-title-icon">
+    {invoiceType === "SALE" ? "🧾" : "📦"}
+  </span>
 
-        <div>
-          <button
-            className="btn-submit small"
-            onClick={onPrint}
-          >
-            Print PDF
-          </button>
+  <h2 className="invoice-main-title">
+    {invoiceType === "SALE"
+      ? "Sales Invoice"
+      : "Purchase Invoice"}
+  </h2>
+</div>
 
-          <button
-            className="btn-submit small"
-            style={{ marginLeft: "8px" }}
-            onClick={onClose}
-          >
-            Close
-          </button>
-        </div>
+        <div
+  style={{
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: "10px"
+    
+  }}
+>
+ <button
+  className="btn-submit small"
+  onClick={handlePrint}
+>
+  Print PDF
+</button>
+
+  <button
+    className="btn-submit small"
+    onClick={onClose}
+  >
+    Close
+  </button>
+</div>
       </div>
 
       {/* Header */}
 
-      <div className="table-container">
-        <table className="data-table">
+     <div className="invoice-section">
+      <h3 className="invoice-section-title">
+    Invoice Details
+</h3>
+        <table className="invoice-table invoice-header-table">
           <tbody>
 
             <tr>
@@ -127,17 +230,14 @@ const netInvoiceValue =
 
       {/* Party Details */}
 
-      <div
-        className="table-container"
-        style={{ marginTop: "15px" }}
-      >
-        <h3 className="table-title">
+      <div className="invoice-section">
+        <h3 className="invoice-section-title">
           {invoiceType === "SALE"
             ? "Customer Details"
             : "Supplier Details"}
         </h3>
 
-        <table className="data-table">
+       <table className="invoice-table invoice-party-table">
           <tbody>
 
             <tr>
@@ -170,15 +270,12 @@ const netInvoiceValue =
 
       {/* Items */}
 
-      <div
-        className="table-container"
-        style={{ marginTop: "15px" }}
-      >
-        <h3 className="table-title">
+      <div className="invoice-section">
+       <h3 className="invoice-section-title">
           Items
         </h3>
 
-        <table className="data-table">
+        <table className="invoice-table invoice-items-table">
           <thead>
             <tr>
               <th>Item</th>
@@ -224,11 +321,8 @@ const netInvoiceValue =
       {/* Returns */}
 
       {returns.length > 0 && (
-        <div
-          className="table-container"
-          style={{ marginTop: "15px" }}
-        >
-          <h3 className="table-title">
+        <div className="invoice-section">
+          <h3 className="invoice-section-title">
             {invoiceType === "SALE"
               ? "Sales Return History"
               : "Purchase Return History"}
@@ -271,12 +365,7 @@ const netInvoiceValue =
                 ).toFixed(2)}
               </div>
 
-              <table
-                className="data-table"
-                style={{
-                  marginTop: "10px"
-                }}
-              >
+             <table className="invoice-table invoice-return-table">
                 <thead>
                   <tr>
                     <th>Item</th>
@@ -324,15 +413,12 @@ const netInvoiceValue =
         </div>
       )}
 {returns.length > 0 && (
-  <div
-    className="table-container"
-    style={{ marginTop: "15px" }}
-  >
-    <h3 className="table-title">
+  <div className="invoice-section">
+    <h3 className="invoice-section-title">
       Return Summary
     </h3>
 
-    <table className="data-table">
+    <table className="invoice-table invoice-summary-table">
       <tbody>
 
         <tr>
@@ -387,18 +473,12 @@ const netInvoiceValue =
 )}
       {/* Totals */}
 
-      <div
-        className="table-container"
-        style={{
-          marginTop: "15px",
-          marginBottom: "30px"
-        }}
-      >
-        <h3 className="table-title">
+      <div className="invoice-section">
+        <h3 className="invoice-section-title">
           Totals
         </h3>
 
-        <table className="data-table">
+        <table className="invoice-table invoice-summary-table">
           <tbody>
 
             <tr>
@@ -450,5 +530,56 @@ const netInvoiceValue =
       </div>
 
     </div>
+    {showPdfModal && (
+  <div className="pdf-modal-overlay">
+    <div className="pdf-modal-box">
+
+      <div className="pdf-modal-header">
+        <h3>
+  {invoiceType === "SALE"
+    ? "Sales Invoice PDF Preview"
+    : "Purchase Invoice PDF Preview"}
+</h3>
+
+        <p>
+          Saved to: <b>{downloadPath}</b>
+        </p>
+
+        <button
+          onClick={() =>
+            setShowPdfModal(false)
+          }
+        >
+          X
+        </button>
+      </div>
+
+      <iframe
+        src={pdfPath}
+        style={{
+          width: "100%",
+          height: "80vh",
+          border: "none"
+        }}
+      />
+
+      <button
+  className="pdf-print-btn"
+  onClick={() =>
+    window.chrome.webview.postMessage({
+      Action: "OpenPdfExternal",
+      Payload: {
+        Path: downloadPath
+      }
+    })
+  }
+>
+  Print
+</button>
+
+    </div>
+  </div>
+)}
+    </>
   );
 }

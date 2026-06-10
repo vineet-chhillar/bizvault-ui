@@ -754,10 +754,7 @@ useEffect(() => {
       className="supplier-details-box"
       style={{ marginBottom: "10px" }}
     >
-      <div>
-        <b>Customer:</b>{" "}
-        {customerInfo?.CustomerName || ""}
-      </div>
+      
     </div>
   )}
 
@@ -776,18 +773,26 @@ useEffect(() => {
       </div>
 
       <div>
-        <b>Opening Balance:</b>{" "}
-        {Number(
-          customerInfo.OpeningBalance || 0
-        ).toFixed(2)}
-      </div>
+  <b>Opening Balance:</b>{" "}
+  {Math.abs(
+    Number(customerInfo?.OpeningBalance || 0)
+  ).toFixed(2)}
+  {" "}
+  {Number(customerInfo?.OpeningBalance || 0) >= 0
+    ? "Dr"
+    : "Cr"}
+</div>
 
-      <div>
-        <b>Current Balance:</b>{" "}
-        {Number(
-          customerInfo.Balance || 0
-        ).toFixed(2)}
-      </div>
+<div>
+  <b>Current Balance:</b>{" "}
+  {Math.abs(
+    Number(customerInfo?.Balance || 0)
+  ).toFixed(2)}
+  {" "}
+  {Number(customerInfo?.Balance || 0) >= 0
+    ? "Dr"
+    : "Cr"}
+</div>
     </div>
   )}
 </div>

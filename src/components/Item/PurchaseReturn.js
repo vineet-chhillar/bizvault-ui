@@ -580,7 +580,7 @@ AvailableQty: item.AvailableQty || 0,
         >
           <option value="">Select Purchase Invoice</option>
           {invoiceList.map(i => (
-            <option key={i.Id} value={i.Id}>{i.PurchaseNo}</option>
+            <option key={i.Id} value={i.Id}>{i.InvoiceNo}</option>
           ))}
         </select>
 
@@ -598,10 +598,7 @@ AvailableQty: item.AvailableQty || 0,
     className="supplier-details-box"
     style={{ marginBottom: "10px" }}
   >
-    <div>
-      <b>Supplier:</b>{" "}
-      {supplierInfo?.SupplierName || ""}
-    </div>
+    
   </div>
 
   {supplierInfo && (
@@ -619,18 +616,26 @@ AvailableQty: item.AvailableQty || 0,
       </div>
 
       <div>
-        <b>Opening Balance:</b>{" "}
-        {Number(
-          supplierInfo.OpeningBalance || 0
-        ).toFixed(2)}
-      </div>
+  <b>Opening Balance:</b>{" "}
+  {Math.abs(
+    Number(supplierInfo?.OpeningBalance || 0)
+  ).toFixed(2)}
+  {" "}
+  {Number(supplierInfo?.OpeningBalance || 0) >= 0
+    ? "Dr"
+    : "Cr"}
+</div>
 
-      <div>
-        <b>Current Balance:</b>{" "}
-        {Number(
-          supplierInfo.Balance || 0
-        ).toFixed(2)}
-      </div>
+<div>
+  <b>Current Balance:</b>{" "}
+  {Math.abs(
+    Number(supplierInfo?.Balance || 0)
+  ).toFixed(2)}
+  {" "}
+  {Number(supplierInfo?.Balance || 0) >= 0
+    ? "Dr"
+    : "Cr"}
+</div>
     </div>
   )}
 </div>
