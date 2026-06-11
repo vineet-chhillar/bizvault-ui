@@ -8,8 +8,13 @@ const blankLine = () => ({
   AccountName: "",
   Debit: "",
   Credit: "",
- Side: "",
-EntryType: ""
+  Side: "",
+  EntryType: "",
+  ReferenceType: "",
+  ReferenceId: null,
+  ReferenceNo: "",
+  ReferenceBalance: 0,
+  OutstandingInvoices: []
 });
 
 export default function VoucherEditor() {
@@ -42,7 +47,43 @@ const [voucherIdList, setVoucherIdList] = useState([]);
 const [debitAccounts, setDebitAccounts] = useState([]);
 const [creditAccounts, setCreditAccounts] = useState([]);
 
+const loadOutstandingInvoices = (
+  rowIndex,
+  accountId
+) => {
+console.log(
+  "loadOutstandingInvoices",
+  voucherType,
+  rowIndex,
+  accountId
+);
+  if (!accountId)
+    return;
 
+  if (voucherType === "RV") {
+
+    window.chrome.webview.postMessage({
+  Action: "GetOutstandingSalesInvoices",
+  Payload: {
+    accountId,
+    rowIndex
+  }
+});
+
+    return;
+  }
+
+  if (voucherType === "PV") {
+
+   window.chrome.webview.postMessage({
+  Action: "GetOutstandingPurchaseInvoices",
+  Payload: {
+    accountId,
+    rowIndex
+  }
+});
+  }
+};
   // -----------------------------
   // Load accounts
   // -----------------------------
@@ -136,7 +177,7 @@ useEffect(() => {
   
 }
 if (msg.action === "GetAccountsForVoucherSideResponse") {
-  if (msg.side === "Debit") setDebitAccounts(msg.data || []);
+    if (msg.side === "Debit") setDebitAccounts(msg.data || []);
   if (msg.side === "Credit") setCreditAccounts(msg.data || []);
 }
 
@@ -224,6 +265,60 @@ setModal({
   });
 }
     }
+    if (
+  msg.action ===
+  "GetOutstandingSalesInvoicesResponse"
+) {
+ console.log(
+    "Sales invoices response",
+    msg
+  );
+  setLines(prev => {
+
+    const copy = [...prev];
+
+    if (
+      msg.rowIndex >= 0 &&
+      msg.rowIndex < copy.length
+    ) {
+
+      copy[msg.rowIndex] = {
+        ...copy[msg.rowIndex],
+        ReferenceType: "SALE",
+        OutstandingInvoices:
+          msg.data || []
+      };
+    }
+
+    return copy;
+  });
+}
+
+if (
+  msg.action ===
+  "GetOutstandingPurchaseInvoicesResponse"
+) {
+
+  setLines(prev => {
+
+    const copy = [...prev];
+
+    if (
+      msg.rowIndex >= 0 &&
+      msg.rowIndex < copy.length
+    ) {
+
+      copy[msg.rowIndex] = {
+        ...copy[msg.rowIndex],
+        ReferenceType: "PURCHASE",
+        OutstandingInvoices:
+          msg.data || []
+      };
+    }
+
+    return copy;
+  });
+}
   };
 
   window.chrome.webview.addEventListener("message", handler);
@@ -323,6 +418,25 @@ setModal({
     message: "Debit and Credit must be equal",
     type: "error"
   });
+  return;
+}
+const invoiceRowIndex =
+  lines.findIndex(l =>
+    (l.OutstandingInvoices || []).length > 0 &&
+    !l.ReferenceId
+  );
+
+if (invoiceRowIndex >= 0) {
+
+  setModal({
+    show: true,
+    message:
+      `Please select an invoice in row ${
+        invoiceRowIndex + 1
+      }.`,
+    type: "error"
+  });
+
   return;
 }
     window.chrome.webview.postMessage({
@@ -460,6 +574,7 @@ return;
   <div className="voucher-fields">
     <div className="voucher-field">
       <label>Voucher Type</label>
+      
       <select
         value={voucherType}
         disabled={isReversalMode}
@@ -494,6 +609,7 @@ return;
         <thead>
           <tr>
   <th>Account</th>
+  <th>Invoice</th>
   <th>Debit</th>
   <th>Credit</th>
   <th></th>
@@ -517,10 +633,12 @@ if (voucherType === "JV") {
     accounts = creditAccounts;
 
   else
-    accounts = [
-      ...debitAccounts,
-      ...creditAccounts
-    ];
+    accounts = Array.from(
+      new Map(
+        [...debitAccounts, ...creditAccounts]
+          .map(a => [a.AccountId, a])
+      ).values()
+    );
 }
 
 // -----------------------------
@@ -539,23 +657,164 @@ else {
       <tr key={i}>
         <td>
           <div className="cell-box">
+            {isReversalMode ? (
+
+      <input
+        type="text"
+        value={l.AccountName || ""}
+        readOnly
+        className="input-locked"
+      />
+
+    ) : (
+
             <select
               
               value={l.AccountId ?? ""}
-              onChange={e =>
-                updateLine(i, "AccountId", Number(e.target.value))
-              }
+              onChange={e => {
+
+  const accountId =
+    Number(e.target.value);
+
+  setLines(prev => {
+
+    const copy = [...prev];
+
+    copy[i] = {
+      ...copy[i],
+
+      AccountId: accountId,
+
+      ReferenceId: null,
+      ReferenceNo: "",
+      ReferenceBalance: 0,
+      OutstandingInvoices: []
+    };
+
+    return copy;
+  });
+
+ const selectedAccount =
+  accounts.find(
+    a => a.AccountId === accountId
+  );
+console.log(
+  "IsCustomer:",
+  selectedAccount?.IsCustomer
+);
+console.log(
+  "IsSupplier:",
+  selectedAccount?.IsSupplier
+);
+if (
+  voucherType === "RV" &&
+  selectedAccount?.IsCustomer
+) {
+ 
+  loadOutstandingInvoices(i,accountId);
+}
+
+if (
+  voucherType === "PV" &&
+  selectedAccount?.IsSupplier
+) {
+  loadOutstandingInvoices(
+    i,
+    accountId
+  );
+}
+}}
             >
+              
               <option value="">--Select--</option>
               {accounts.map(a => (
                 <option key={a.AccountId} value={a.AccountId}>
                   {a.AccountName}
                 </option>
               ))}
+              
             </select>
+    )}
           </div>
         </td>
+<td>
 
+  {isReversalMode ? (
+
+    <input
+      type="text"
+      value={l.ReferenceNo || ""}
+      readOnly
+      className="input-locked"
+    />
+
+  ) : (
+
+    (l.OutstandingInvoices || []).length > 0 ? (
+
+      <select
+        value={l.ReferenceId ?? ""}
+        onChange={e => {
+
+          const refId =
+            Number(e.target.value);
+
+          const selectedInvoice =
+            (l.OutstandingInvoices || [])
+              .find(inv =>
+                (inv.Id ?? inv.PurchaseId) === refId
+              );
+
+          setLines(prev => {
+
+            const copy = [...prev];
+
+            copy[i] = {
+              ...copy[i],
+
+              ReferenceId: refId,
+
+              ReferenceNo:
+                selectedInvoice?.InvoiceNo || "",
+
+              ReferenceBalance:
+                selectedInvoice?.BalanceAmount || 0
+            };
+
+            return copy;
+          });
+        }}
+      >
+        <option value="">
+          -- Select --
+        </option>
+
+        {(l.OutstandingInvoices || []).map(inv => (
+
+          <option
+            key={
+              inv.Id ??
+              inv.PurchaseId
+            }
+            value={
+              inv.Id ??
+              inv.PurchaseId
+            }
+          >
+            {inv.InvoiceNo}
+            {" "}
+            (₹{inv.BalanceAmount})
+          </option>
+
+        ))}
+
+      </select>
+
+    ) : null
+
+  )}
+
+</td>
         <td>
           <div className="cell-box">
   <input
