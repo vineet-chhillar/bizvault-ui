@@ -14,6 +14,8 @@ const blankLine = () => ({
   ReferenceId: null,
   ReferenceNo: "",
   ReferenceBalance: 0,
+   SourceDocumentType: null,
+  SourceDocumentId: null,
   OutstandingInvoices: []
 });
 
@@ -97,8 +99,11 @@ console.log(
 }, [voucherType]);*/}
 
 useEffect(() => {
+  if (isReversalMode)
+    return;
+
   setLines([blankLine(), blankLine()]);
-}, [voucherType]);
+}, [voucherType, isReversalMode]);
 
   // -----------------------------
   // Generate Voucher No
@@ -688,7 +693,10 @@ else {
       ReferenceId: null,
       ReferenceNo: "",
       ReferenceBalance: 0,
+      SourceDocumentType: null,
+  SourceDocumentId: null,
       OutstandingInvoices: []
+      
     };
 
     return copy;
@@ -778,7 +786,16 @@ if (
                 selectedInvoice?.InvoiceNo || "",
 
               ReferenceBalance:
-                selectedInvoice?.BalanceAmount || 0
+                selectedInvoice?.BalanceAmount || 0,
+                SourceDocumentId: refId,
+
+  SourceDocumentType:
+    voucherType === "RV"
+      ? 1
+      : voucherType === "PV"
+      ? 2
+      : null
+                
             };
 
             return copy;

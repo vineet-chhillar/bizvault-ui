@@ -1031,8 +1031,17 @@ type="button"
       <div><b>Mobile:</b> {customer.Mobile}</div>
       <div><b>Address:</b> {customer.BillingAddress}</div>
       <div><b>State:</b> {customer.BillingState}</div>
-      <div><b>Opening Balance:</b> {customer.OpeningBalance}</div>
-<div><b>Current Balance:</b> {customer.Balance}</div>
+      <div>
+  <b>Opening Balance:</b>{" "}
+  ₹{Math.abs(customer.OpeningBalance || 0).toLocaleString()}{" "}
+  {(customer.OpeningBalance || 0) > 0 ? "Dr" : "Cr"}
+</div>
+
+<div>
+  <b>Current Balance:</b>{" "}
+  ₹{Math.abs(customer.Balance || 0).toLocaleString()}{" "}
+  {(customer.Balance || 0) > 0 ? "Dr" : "Cr"}
+</div>
     </div>
   )}
   {customer.CustomerId === 0 && (

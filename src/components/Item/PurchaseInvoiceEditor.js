@@ -511,7 +511,8 @@ setValidationErrors({});
   Dimension: l.dimension,
   Notes: l.Notes || ""
 }));
-
+console.log("supplierId =", supplierId);
+console.log("supplierInfo =", supplierInfo);
 // ---------------- STORE PAYLOAD ----------------
   pendingSavePayloadRef.current = {
     SupplierId: supplierId ? Number(supplierId) : 0,
@@ -935,8 +936,17 @@ return;
       <div><b>Mobile:</b> {supplierInfo.Mobile}</div>
       <div><b>GSTIN:</b> {supplierInfo.GSTIN}</div>
       <div><b>State:</b> {supplierInfo.State}</div>
-      <div><b>Opening Bal:</b> ₹{supplierInfo.OpeningBalance}</div>
-      <div><b>Balance:</b> ₹{supplierInfo.Balance}</div>
+      <div>
+  <b>Opening Bal:</b>{" "}
+  ₹{Math.abs(supplierInfo.OpeningBalance).toLocaleString()}{" "}
+  {supplierInfo.OpeningBalance >= 0 ? "Dr" : "Cr"}
+</div>
+
+<div>
+  <b>Balance:</b>{" "}
+  ₹{Math.abs(supplierInfo.Balance).toLocaleString()}{" "}
+  {supplierInfo.Balance >= 0 ? "Dr" : "Cr"}
+</div>
   </div>
 )}
 {!supplierId && (
