@@ -163,7 +163,15 @@ useEffect(() => {
 
 
 
+useEffect(() => {
+  if (!isEditMode) return;
 
+  // Cash / Bank invoices should always stay fully paid
+  if (paymentMode !== "Credit") {
+    setPaidAmount(totals.total);
+    setBalanceAmount(0);
+  }
+}, [totals.total, paymentMode, isEditMode]);
 
   // ---------- FETCH SUPPLIERS + ITEMS ----------
   useEffect(() => {
@@ -453,7 +461,7 @@ PaidVia:paidVia,
         if (!msg.Editable) {
          setModal({
   show: true,
-  message: "This invoice cannot be edited because some items were used in sales.",
+  message: "This invoice cannot be edited because some items were used in sales/payments.",
   type: "error"
 });
 return;

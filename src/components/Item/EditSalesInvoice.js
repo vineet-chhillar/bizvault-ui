@@ -437,7 +437,7 @@ if (msg.action === "CanEditSalesInvoiceResponse") {
   if (!msg.Editable) {
     setModal({
   show: true,
-  message: "This sales invoice cannot be edited because a sales return exists.",
+  message: "This sales invoice cannot be edited because a sales return exists/Receipts exist.",
   type: "error"
 });
     setEditLocked(true);
@@ -823,9 +823,18 @@ useEffect(() => {
   <label>Payment Mode</label>
   <select
   value={paymentMode}
-  onChange={e => {
-     setPaymentMode(e.target.value);
-  }}
+ onChange={e => {
+  const mode = e.target.value;
+
+  setPaymentMode(mode);
+
+  if (mode === "Credit") {
+    setPaidAmount(0);
+  } else {
+    setPaidAmount(totals.total);
+    setPaidVia(mode);
+  }
+}}
 >
   <option value="Cash">Cash</option>
   <option value="Bank">Bank</option>

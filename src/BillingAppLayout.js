@@ -47,6 +47,7 @@ import BalanceSheet from "./components/Reports/BalanceSheet";
 import StockValuationFIFO from "./components/Reports/StockValuationFIFO";
 import StockSummary from "./components/Reports/StockSummary";
 import InvoiceReport from "./components/Reports/InvoiceReport";
+import ReturnGainLossReport from "./components/Reports/ReturnGainLossReport";
 import UserMenu from "./components/Item/UserMenu"; // adjust path if needed
 
 import { Navigate } from "react-router-dom";
@@ -978,7 +979,15 @@ useEffect(() => {
     >
       Invoice Report
     </NavLink>
-    
+    <NavLink
+      to="/Reports/ReturnGainLossReport"
+      onClick={() => isMobile && setMobileOpen(false)}
+      className={({ isActive }) =>
+        "nav-tab-link" + (isActive ? " active" : "")
+      }
+    >
+      Return Gain / Loss Report
+    </NavLink>
   </div>
 </div>
  )}
@@ -1207,6 +1216,12 @@ useEffect(() => {
      <Route path="/Reports/InvoiceReport" element={
     <ProtectedRoute allow={hasPermission(user, PERMISSIONS.REPORTS)}>
     <InvoiceReport user={user} />
+    </ProtectedRoute>
+    } />
+
+<Route path="/Reports/ReturnGainLossReport" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.REPORTS)}>
+    <ReturnGainLossReport user={user} />
     </ProtectedRoute>
     } />
 
