@@ -48,6 +48,7 @@ import StockValuationFIFO from "./components/Reports/StockValuationFIFO";
 import StockSummary from "./components/Reports/StockSummary";
 import InvoiceReport from "./components/Reports/InvoiceReport";
 import ReturnGainLossReport from "./components/Reports/ReturnGainLossReport";
+import BatchWiseStockReport from "./components/Reports/BatchWiseStockReport";
 import UserMenu from "./components/Item/UserMenu"; // adjust path if needed
 
 import { Navigate } from "react-router-dom";
@@ -957,7 +958,7 @@ useEffect(() => {
         "nav-tab-link" + (isActive ? " active" : "")
       }
     >
-      Stock Valuation FIFO
+      Stock Valuation
     </NavLink>
     
     <NavLink
@@ -987,6 +988,16 @@ useEffect(() => {
       }
     >
       Return Gain / Loss Report
+    </NavLink>
+
+    <NavLink
+      to="/Reports/BatchWiseStockReport"
+      onClick={() => isMobile && setMobileOpen(false)}
+      className={({ isActive }) =>
+        "nav-tab-link" + (isActive ? " active" : "")
+      }
+    >
+      Batch Wise Stock Report
     </NavLink>
   </div>
 </div>
@@ -1222,6 +1233,12 @@ useEffect(() => {
 <Route path="/Reports/ReturnGainLossReport" element={
     <ProtectedRoute allow={hasPermission(user, PERMISSIONS.REPORTS)}>
     <ReturnGainLossReport user={user} />
+    </ProtectedRoute>
+    } />
+
+    <Route path="/Reports/BatchWiseStockReport" element={
+    <ProtectedRoute allow={hasPermission(user, PERMISSIONS.REPORTS)}>
+    <BatchWiseStockReport user={user} />
     </ProtectedRoute>
     } />
 

@@ -136,7 +136,7 @@ const toastRef = React.useRef(null);
   return (
     <>
     <div className="form-container">
-      <h2 className="form-title">Stock Valuation (FIFO)</h2>
+      <h2 className="form-title">Stock Valuation</h2>
 
       {/* FILTER BAR */}
       <div className="form-inner">
@@ -196,7 +196,7 @@ const toastRef = React.useRef(null);
 
       {/* FIFO TABLE */}
       <div className="table-container" style={{ marginTop: "20px" }}>
-        <h3 className="table-title">FIFO Movement Summary</h3>
+        <h3 className="table-title">Stocks Movement Summary</h3>
 
         <table className="stocksummarydata-table">
           <thead>

@@ -491,3 +491,94 @@ tfoot th {
   width: 10%; /* small column */
   text-align: center; /* center align Unit, GST %, and buttons */
 }
+.stocksummarybatchdata-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  table-layout: fixed;
+  border: 1px solid #ddd; /* ✅ outer border */
+}
+
+.stocksummarybatchdata-table th,
+.stocksummarybatchdata-table td {
+  border: 1px solid #ddd; /* ✅ inner grid lines */
+  padding: 4px 8px;
+  line-height: 1.2;
+  font-size: 0.95rem;
+  vertical-align: middle;
+}
+
+.stocksummarybatchdata-table th {
+  background-color: #f4e9ff;
+  color: #4e1d7c;
+  font-weight: 600;
+  text-align: center;
+}
+
+.stocksummarybatchdata-table tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+/* Optional: make border lines a bit darker for better visibility */
+.stocksummarybatchdata-table th,
+.stocksummarybatchdata-table td {
+  border-color: #ccc;
+}
+.stocksummarybatchdata-table td {
+  border-color: #ccc;
+}
+.stocksummarybatchdata-table td {
+  border-color: #ccc;
+}
+.stocksummarybatchdata-table td {
+  border-color: #ccc;
+}
+
+
+/* --- Custom Column Widths (adjust to your liking) --- */
+.stocksummarybatchdata-table th:nth-child(1), /* Item Name */
+.stocksummarybatchdata-table td:nth-child(1) {
+  width: 3%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.stocksummarybatchdata-table th:nth-child(2), /* Item Code */
+.stocksummarybatchdata-table td:nth-child(2) {
+  width: 20%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.stocksummarybatchdata-table th:nth-child(3), /* Category */
+.stocksummarybatchdata-table td:nth-child(3) {
+  width: 20%;
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.stocksummarybatchdata-table th:nth-child(4), /* Date */
+.stocksummarybatchdata-table td:nth-child(4) {
+  width: 10%; /* more width for longer text */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+
+.stocksummarybatchdata-table th:nth-child(5), /* Description */
+.stocksummarybatchdata-table td:nth-child(5) {
+  width: 10%; /* small column */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+.stocksummarybatchdata-table th:nth-child(6), /* Description */
+.stocksummarybatchdata-table td:nth-child(6) {
+  width: 10%; /* small column */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+.stocksummarybatchdata-table th:nth-child(7), /* Description */
+.stocksummarybatchdata-table td:nth-child(7) {
+  width: 10%; /* small column */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}
+.stocksummarybatchdata-table th:nth-child(8), /* Description */
+.stocksummarybatchdata-table td:nth-child(8) {
+  width: 10%; /* small column */
+  text-align: center; /* center align Unit, GST %, and buttons */
+}

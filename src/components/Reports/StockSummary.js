@@ -164,7 +164,7 @@ const exportExcel = () => {
               <th style={{ width: "40px" }}>S.No</th>
               <th>Item</th>
               <th style={{ textAlign: "right" }}>Available Qty</th>
-              <th style={{ textAlign: "right" }}>FIFO Value</th>
+              <th style={{ textAlign: "right" }}>Closing Value</th>
               <th style={{ textAlign: "right" }}>Avg Cost</th>
               <th style={{ textAlign: "right" }}>Last Purchase</th>
               <th style={{ textAlign: "right" }}>Selling Price</th>
