@@ -640,6 +640,7 @@ setPaidVia(data.PaidVia || "");
     <label>Payment Mode</label>
    <select
   value={paymentMode}
+  disabled={true}
   onChange={e => {
     paymentModeChangedByUser.current = true;
     setPaymentMode(e.target.value);

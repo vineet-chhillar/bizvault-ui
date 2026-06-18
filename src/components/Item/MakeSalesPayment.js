@@ -678,6 +678,7 @@ useEffect(() => {
   <label>Payment Mode</label>
   <select
   value={paymentMode}
+  disabled={true}   // ✅ only editable in edit mode
   onChange={e => {
     paymentModeChangedByUser.current = true;
     setPaymentMode(e.target.value);
@@ -1004,17 +1005,23 @@ Number(customerInfo?.Balance || 0) > 0 && (
 
           <div className="form-group">
             <label>Amount</label>
+            {console.log(paymentForm.Amount)}
             <input
               type="number"
               min="1"
               max={customerInfo.Balance}
               value={paymentForm.Amount}
-              onChange={e =>
-                setPaymentForm(p => ({
-                  ...p,
-                  Amount: Number(e.target.value) || 0
-                }))
-              }
+              onChange={e => {
+  const v = Number(e.target.value) || 0;
+  const balance = Number(customerInfo.Balance) || 0;
+
+  const amount = Math.min(v, balance);
+
+  setPaymentForm(p => ({
+    ...p,
+    Amount: amount
+  }));
+}}
             />
             <small className="hint">
               Balance: ₹{customerInfo.Balance?.toFixed?.(2) ?? customerInfo.Balance}
@@ -1023,17 +1030,29 @@ Number(customerInfo?.Balance || 0) > 0 && (
 
           <div className="form-group full-width">
             <label>Notes</label>
+            
             <input
-              type="text"
-              value={paymentForm.Notes}
-              onChange={e =>
-                setPaymentForm(p => ({
-                  ...p,
-                  Notes: e.target.value
-                }))
-              }
-              placeholder="Optional remarks"
-            />
+  type="number"
+  min="1"
+  max={customerInfo.Balance}
+  value={paymentForm.Amount}
+ onChange={e => {
+  const v = Number(e.target.value) || 0;
+  const balance = Number(customerInfo.Balance) || 0;
+  const finalValue = Math.min(v, balance);
+
+  console.log({
+    typed: v,
+    balance,
+    finalValue
+  });
+
+  setPaymentForm(p => ({
+    ...p,
+    Amount: finalValue
+  }));
+}}
+/>
           </div>
 
         </div>

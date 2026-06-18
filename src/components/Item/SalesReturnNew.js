@@ -86,9 +86,9 @@ const [validationErrors, setValidationErrors] = useState([]);
     if (!data.InvoiceId) errors.push("Sales invoice is required.");
     if (!data.InvoiceDate) errors.push("Invoice date is required.");
     if (!data.InvoiceNo) errors.push("Invoice number missing.");
-if (refundMode === "ADJUST" && refundAmount > 0) {
+{/*if (refundMode === "ADJUST" && refundAmount > 0) {
   errors.push("Return exceeds outstanding. Cannot adjust fully.");
-}
+}*/}
     if (refundMode !== "ADJUST" && refundAmount > 0 && !paidVia) {
   errors.push("Refund mode requires Paid Via (Cash or Bank).");
 }
@@ -751,15 +751,15 @@ setCustomerInfo(null);
 >
   {/*<option value="Auto">Same as Invoice</option>*/}
 
-  <option value="ADJUST" disabled={refundAmount > 0}>
+  <option value="ADJUST" >
     Adjust Against Dues
   </option>
 
-  <option value="Cash" disabled={refundAmount <= 0}>
+  <option value="Cash" >
     Cash Refund
   </option>
 
-  <option value="Bank" disabled={refundAmount <= 0}>
+  <option value="Bank" >
     Bank Refund
   </option>
 </select>

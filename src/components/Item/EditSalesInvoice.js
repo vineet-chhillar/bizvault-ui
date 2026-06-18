@@ -260,10 +260,16 @@ useEffect(() => {
    if (field === "Qty") {
   const qty = Number(value) || 0;
 
-  const maxTotal = Number(line.TotalStock || 0);
-  const maxBatch = Number(line.BatchStock || 0);
+  const originalQty = Number(line.OriginalQty || 0);
 
-  const allowedQty = line.BatchNo ? maxBatch : maxTotal;
+const maxTotal =
+  Number(line.TotalStock || 0) + originalQty;
+
+const maxBatch =
+  Number(line.BatchStock || 0) + originalQty;
+
+const allowedQty =
+  line.BatchNo ? maxBatch : maxTotal;
 
  if (qty > allowedQty) {
   setValidationErrors(prev => ({
@@ -458,11 +464,7 @@ if (msg.action === "CanEditSalesInvoiceResponse") {
     Payload: { InvoiceId: id }
   });
 }
-
-
-
-
-     if (msg.action === "LoadSalesInvoiceResponse") {
+ if (msg.action === "LoadSalesInvoiceResponse") {
   const d = msg.data;
   if (!d) {
   setModal({
@@ -471,7 +473,7 @@ if (msg.action === "CanEditSalesInvoiceResponse") {
   type: "error"
 });
 return;
-  }
+ }
 
 
   setIsEditMode(true);
@@ -521,20 +523,24 @@ setOriginalPaidAmount(paid);
   BillingState: d.BillingState,
   CustomerState: d.CustomerState
 });
-
   setLines(
   (d.Items || []).map(it => {
     const line = {
-      ...blankLine(),
-      ...it,
-      Qty: Number(it.Qty) || Number(it.AvailableQty) || 0,
-AvailableQty: Number(it.AvailableQty) || 0,
+  ...blankLine(),
+  ...it,
 
-      Rate: Number(it.Rate) || 0,
-      DiscountPercent: Number(it.DiscountPercent) || 0,
-      GstPercent: Number(it.GstPercent) || 0
-      
-    };
+  // Qty user sees/edits
+  Qty: Number(it.AvailableQty) || 0,
+
+  // Original sold qty before returns
+  OriginalQty: Number(it.OriginalQty) || 0,
+
+  AvailableQty: Number(it.AvailableQty) || 0,
+
+  Rate: Number(it.Rate) || 0,
+  DiscountPercent: Number(it.DiscountPercent) || 0,
+  GstPercent: Number(it.GstPercent) || 0
+};
 
     return recomputeLineForState(line, sellerState, buyerState);
   })

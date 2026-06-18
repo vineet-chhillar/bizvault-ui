@@ -623,12 +623,11 @@ ItemName:Items.ItemName,
   
 };
 
-useEffect(() => {
+{/*useEffect(() => {
   if (paymentMode !== "Credit") {
     setCustomerDraft({ CustomerName: "", Mobile: "" });
-    //setCustomerErrors({});
-  }
-}, [paymentMode]);
+     }
+}, [paymentMode]);*/}
 
 
 useEffect(() => {

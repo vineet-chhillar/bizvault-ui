@@ -737,8 +737,12 @@ if (
               <option value="">--Select--</option>
               {accounts.map(a => (
                 <option key={a.AccountId} value={a.AccountId}>
-                  {a.AccountName}
-                </option>
+  {a.AccountName}
+  {" "}
+  ({Number(a.ClosingBalance || 0).toFixed(2)}
+  {" "}
+  {a.BalanceType})
+</option>
               ))}
               
             </select>

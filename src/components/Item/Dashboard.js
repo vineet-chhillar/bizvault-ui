@@ -114,8 +114,15 @@ useEffect(() => {
 <SummaryCard title="Receivables" value={`₹ ${((dashboard?.TotalReceivable ?? 0).toFixed(2))}`} />
 <SummaryCard title="Payables" value={`₹ ${((dashboard?.TotalPayable ?? 0).toFixed(2) )}`} />
 
-<SummaryCard title="Today Sales" value={`₹ ${((dashboard?.TodaySales ?? 0).toFixed(2))}`} />
-<SummaryCard title="Today Purchase" value={`₹ ${((dashboard?.TodayPurchase ?? 0).toFixed(2))}`} />
+<SummaryCard
+  title="Today Sales"
+  value={`₹ ${Math.abs(dashboard?.TodaySales ?? 0).toFixed(2)} ${(dashboard?.TodaySales ?? 0) >= 0 ? "Dr" : "Cr"}`}
+/>
+
+<SummaryCard
+  title="Today Purchase"
+  value={`₹ ${Math.abs(dashboard?.TodayPurchase ?? 0).toFixed(2)} ${(dashboard?.TodayPurchase ?? 0) >= 0 ? "Dr" : "Cr"}`}
+/>
 
       </div>
 
@@ -238,15 +245,15 @@ useEffect(() => {
         >
           <td>{r.AccountName}</td>
 
-          <td
-            style={{
-              textAlign: "right",
-              fontWeight: 600,
-              color: r.Balance > 0 ? "#27ae60" : "#c0392b"
-            }}
-          >
-            ₹{Math.abs(r.Balance ?? 0).toFixed(2)}
-          </td>
+         <td
+  style={{
+    textAlign: "right",
+    fontWeight: 600,
+    color: (r.BalanceValue ?? 0) > 0 ? "#27ae60" : "#c0392b"
+  }}
+>
+  {r.Balance ?? "0.00"}
+</td>
         </tr>
       ))}
     </tbody>

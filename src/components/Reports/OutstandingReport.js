@@ -226,7 +226,7 @@ const toastRef = React.useRef(null);
                     color: r.Balance < 0 ? "#c0392b" : "#27ae60",
                   }}
                 >
-                  {Math.abs(r.Balance).toFixed(2)}
+                 {Math.abs(r.Balance ?? 0).toFixed(2)} {(r.Balance ?? 0) >= 0 ? "Dr" : "Cr"}
                 </td>
               </tr>
             ))}
