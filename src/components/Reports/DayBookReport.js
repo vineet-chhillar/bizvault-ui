@@ -143,17 +143,25 @@ const exportExcel = () => {
     0
   );
 const groupedByVoucher = rows.reduce((acc, row) => {
-  const key = `${row.VoucherType || "UNKNOWN"}|${row.VoucherId}`;
+  const voucherKey =
+    row.VoucherId !== null &&
+    row.VoucherId !== undefined &&
+    row.VoucherId !== ""
+      ? row.VoucherId
+      : row.VoucherNo;
+
+  const key = `${row.VoucherType || "UNKNOWN"}|${voucherKey}`;
 
   if (!acc[key]) {
     acc[key] = {
       voucherType: row.VoucherType || "UNKNOWN",
-      voucherId: row.VoucherId,
+      voucherId: voucherKey,
       rows: []
     };
   }
 
   acc[key].rows.push(row);
+
   return acc;
 }, {});
 

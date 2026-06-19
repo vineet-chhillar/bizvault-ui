@@ -754,15 +754,7 @@ Number(customerInfo?.Balance || 0) > 0 && (
             <th style={{ width: "90px" }}>Net Rate</th>
             <th style={{ width: "100px" }}>Net Amt</th>
 
-            {/*<th style={{ width: "70px" }}>GST%</th>
-            <th style={{ width: "90px" }}>GST Amt</th>
-              <th style={{ width: "70px" }}>CGST%</th>
-            <th style={{ width: "90px" }}>CGST Amt</th>
-             <th style={{ width: "70px" }}>SGST%</th>
-            <th style={{ width: "90px" }}>SGST Amt</th>
-             <th style={{ width: "70px" }}>IGST%</th>
-            <th style={{ width: "90px" }}>IGST Amt</th>
-            <th style={{ width: "100px" }}>Total</th>*/}
+           
             <th></th>
           </tr>
         </thead>
@@ -815,53 +807,7 @@ Number(customerInfo?.Balance || 0) > 0 && (
               <td><div className="cell-box"><input value={l.NetRate} readOnly /> </div></td>
               <td><div className="cell-box">{l.LineSubTotal.toFixed(2)} </div></td>
           
-          {/*}    <td>
-        <div className="cell-box">
-        <input value={l.GstPercent} readOnly />
-        </div>
-        </td>
-      <td>
-        <div className="cell-box">
-        <input value={l.GstValue} readOnly />
-        </div>
-        </td>
-      <td>
-        <div className="cell-box">
-        <input value={l.CgstPercent} readOnly />
-        </div>
-        </td>
-      <td>
-        <div className="cell-box">
-        <input value={l.CgstValue} readOnly />
-        </div>
-        </td>
-      <td>
-        <div className="cell-box">
-        <input value={l.SgstPercent} readOnly />
-        </div>
-        </td>
-      <td>
-        <div className="cell-box">
-        <input value={l.SgstValue} readOnly />
-        </div>
-        </td>
-      <td>
-        <div className="cell-box">
-        <input value={l.IgstPercent} readOnly />
-        </div>
-        </td>
-      <td>
-        <div className="cell-box">
-        <input value={l.IgstValue} readOnly />
-        </div>
-        </td>
-      
-
-
-              <td><div className="cell-box">{l.LineTotal.toFixed(2)}</div></td>*/}
-
-
-              <td>
+             <td>
              </td>
               
             </tr>
