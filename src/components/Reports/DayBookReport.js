@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from "react";
 import "./Reports.css";
 export default function DayBookReport() {
-  const [from, setFrom] = useState(() =>
-    new Date().toISOString().slice(0, 10)
-  );
-  const [to, setTo] = useState(() =>
-    new Date().toISOString().slice(0, 10)
-  );
+  const today = new Date();
+today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+
+const [from, setFrom] = useState(
+  today.toISOString().slice(0, 10)
+);
+
+const [to, setTo] = useState(
+  today.toISOString().slice(0, 10)
+);
   const [modal, setModal] = useState({
   show: false,
   message: "",
