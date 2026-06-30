@@ -633,7 +633,10 @@ setPaidVia(data.PaidVia || "");
       setSupplierId("");
 
       setSupplierInfo(null);
-
+window.chrome.webview.postMessage({
+    Action: "GetPurchaseInvoiceNumbersByDate",
+    Payload: { Date: filterDate }
+});
       
     }
   });

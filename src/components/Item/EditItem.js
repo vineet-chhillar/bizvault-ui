@@ -62,16 +62,16 @@ const [modal, setModal] = useState({
       if (data.Type === "GetCategoryById" && data.Status === "Success") {
         const c = data.Data;
 
-        setFormData((prev) => ({
+       setFormData((prev) => ({
   ...prev,
+
   CategoryId: c.Id,
 
-  // ✅ Always update HSN (safe)
+  HsnId: c.DefaultHsnId,
   HsnCode: c.DefaultHsn,
 
-  // ⚠️ Update GST ONLY if not already set
-  GstId: prev.GstId || c.DefaultGstId,
-  GstPercent: prev.GstPercent || c.DefaultGstPercent,
+  GstId: c.DefaultGstId,
+  GstPercent: c.DefaultGstPercent,
 }));
       }
 
@@ -209,7 +209,7 @@ if (data.Type === "UpdateItemResult") {
         action: "updateItem",
         payload: {
           id: formData.Id,
-          hsncode: formData.HsnCode,
+          hsnid: formData.HsnId,
           name: formData.Name,
           itemcode: formData.ItemCode,
           categoryid: formData.CategoryId,

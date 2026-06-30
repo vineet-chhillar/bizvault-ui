@@ -102,17 +102,32 @@ useEffect(() => {
 
       {/* 🔹 SUMMARY CARDS */}
       <div className="dashboard-grid">
-        <SummaryCard title="Cash Balance" value={`₹ ${((dashboard?.CashBalance ?? 0).toFixed(2))}`} />
-<SummaryCard title="Bank Balance" value={`₹ ${((dashboard?.BankBalance ?? 0).toFixed(2))}`} />
+       <SummaryCard
+  title="Cash Balance"
+  value={`₹ ${Math.abs(dashboard?.CashBalance ?? 0).toFixed(2)} ${
+    (dashboard?.CashBalance ?? 0) >= 0 ? "Dr" : "Cr"
+  }`}
+/>
+<SummaryCard
+  title="Bank Balance"
+  value={`₹ ${Math.abs(dashboard?.BankBalance ?? 0).toFixed(2)} ${
+    (dashboard?.BankBalance ?? 0) >= 0 ? "Dr" : "Cr"
+  }`}
+/>
 <SummaryCard
   title="Total Funds"
-  value={`₹ ${(
+  value={`₹ ${Math.abs(
     (dashboard?.CashBalance ?? 0) +
     (dashboard?.BankBalance ?? 0)
-  ).toFixed(2)}`}
+  ).toFixed(2)} ${
+    ((dashboard?.CashBalance ?? 0) +
+      (dashboard?.BankBalance ?? 0)) >= 0
+      ? "Dr"
+      : "Cr"
+  }`}
 />
-<SummaryCard title="Receivables" value={`₹ ${((dashboard?.TotalReceivable ?? 0).toFixed(2))}`} />
-<SummaryCard title="Payables" value={`₹ ${((dashboard?.TotalPayable ?? 0).toFixed(2) )}`} />
+<SummaryCard title="Receivables" value={`₹ ${Math.abs(dashboard?.TotalReceivable ?? 0).toFixed(2)} ${(dashboard?.TotalReceivable ?? 0) >= 0 ? "Dr" : "Cr"}`} />
+<SummaryCard title="Payables" value={`₹ ${Math.abs(dashboard?.TotalPayable ?? 0).toFixed(2)} ${(dashboard?.TotalPayable ?? 0) >= 0 ? "Dr" : "Cr"}`} />
 
 <SummaryCard
   title="Today Sales"

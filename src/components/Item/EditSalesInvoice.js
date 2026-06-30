@@ -667,6 +667,10 @@ if (msg.action === "GetItemBalanceBatchWiseResponse") {
       setSelectedCustomer(null);
 
       setCustomerInfo(null);
+      window.chrome.webview.postMessage({
+    Action: "GetInvoiceNumbersByDate",
+    Payload: { date: filterDate }
+});
     }
   });
 }

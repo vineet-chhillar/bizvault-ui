@@ -718,6 +718,10 @@ return;
       setSelectedInvoiceId("");
 
       fetchInvoiceNumbers(purchaseDate);
+
+      window.chrome.webview.postMessage({
+        Action: "GetAllSuppliers"
+    });
     }
   });
 }

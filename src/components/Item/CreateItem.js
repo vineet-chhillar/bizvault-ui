@@ -12,7 +12,8 @@ export default function CreateItem() {
   const [itemData, setItemData] = useState({
     name: "",
     itemcode: "",
-    hsncode:"",
+    hsnid: "",
+hsncode: "",
     categoryid: "",
     categoryname:"",
     date: new Date().toISOString().split("T")[0],
@@ -124,7 +125,7 @@ const handleChange = (e) => {
   const payload = {
     Name: itemData.name?.trim(),
     ItemCode: itemData.itemcode?.trim(),
-    HsnCode: itemData.hsncode,
+   HsnId: itemData.hsnid,
     CategoryId: itemData.categoryid,
     CategoryName: itemData.categoryname,
     Date: finalDateTime,
@@ -191,7 +192,8 @@ useEffect(() => {
               setItemData({
                 name: "",
                 itemcode: "",
-                hsncode: "",
+              hsnid: "",
+hsncode: "",
                 categoryid: "",
                 date: new Date().toISOString().split("T")[0],
                 description: "",
@@ -220,13 +222,16 @@ useEffect(() => {
           setCategory(c);
 
           setItemData(prev => ({
-            ...prev,
-            categoryid: c.Id,
-            categoryname: c.CategoryName,
-            hsncode: c.DefaultHsn,
-            gstid: c.DefaultGstId,
-            gstpercent: c.DefaultGstPercent
-          }));
+    ...prev,
+    categoryid: c.Id,
+    categoryname: c.CategoryName,
+
+    hsnid: c.DefaultHsnId,
+    hsncode: c.DefaultHsn,
+
+    gstid: c.DefaultGstId,
+    gstpercent: c.DefaultGstPercent
+}));
         }
         break;
 
