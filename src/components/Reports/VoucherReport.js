@@ -103,9 +103,9 @@ useEffect(() => {
       setVoucherTypes(msg.rows || []);
     }
 
-    if (msg.action === "getVoucherReportResult") {
+    {/*if (msg.action === "getVoucherReportResult") {
       setRows(msg.rows || []);
-    }
+    }*/}
   };
 
   window.chrome.webview.addEventListener("message", handler);
@@ -146,6 +146,8 @@ useEffect(() => {
   }, []);
 
   const load = () => {
+    setRows([]);          // <-- clear previous report
+  setLoaded(false);
     window.chrome.webview.postMessage({
       action: "getVoucherReport",
       payload: {
@@ -166,14 +168,23 @@ const totalCredit = rows.reduce(
 );
 const groupedByVoucher = rows.reduce((acc, row) => {
   const voucherType = row.VoucherType?.trim() || "UNKNOWN";
-  const voucherId = row.VoucherId ?? row.JournalId;
 
-  const groupKey = `${voucherType}|${voucherId}`;
+  const hasVoucherNo =
+    row.VoucherNo !== null &&
+    row.VoucherNo !== undefined &&
+    row.VoucherNo.toString().trim() !== "";
+
+  const groupValue = hasVoucherNo
+    ? row.VoucherNo.toString().trim()
+    : (row.VoucherId ?? row.JournalId);
+
+  const groupKey = `${voucherType}|${groupValue}`;
 
   if (!acc[groupKey]) {
     acc[groupKey] = {
       voucherType,
-      voucherId,
+      voucherNo: hasVoucherNo ? row.VoucherNo : null,
+      voucherId: hasVoucherNo ? null : (row.VoucherId ?? row.JournalId),
       rows: []
     };
   }

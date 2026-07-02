@@ -1024,7 +1024,7 @@ type="button"
 </select>
 
 
-  {customer.CustomerId !== 0 && (
+  {!!customer.CustomerId && (
     <div className="supplier-details-box">
       <div><b>Name:</b> {customer.CustomerName}</div>
       <div><b>Mobile:</b> {customer.Mobile}</div>
@@ -1043,7 +1043,7 @@ type="button"
 </div>
     </div>
   )}
-  {customer.CustomerId === 0 && (
+  {!customer.CustomerId && (
   <div className="customer-inline-box">
 
     <input
@@ -1051,16 +1051,15 @@ type="button"
       placeholder="Customer Name *"
       value={customerDraft.CustomerName}
       onChange={e => {
-  setCustomerDraft(d => ({ ...d, CustomerName: e.target.value }));
+        setCustomerDraft(d => ({ ...d, CustomerName: e.target.value }));
 
-  setValidationErrors(prev => {
-    const updated = { ...prev };
-    delete updated["CustomerName"];
-    return updated;
-  });
-}}
+        setValidationErrors(prev => {
+          const updated = { ...prev };
+          delete updated["CustomerName"];
+          return updated;
+        });
+      }}
     />
-   
 
     <input
       type="text"
@@ -1070,24 +1069,23 @@ type="button"
         setCustomerDraft(d => ({ ...d, Mobile: e.target.value }))
       }
     />
-    
-<select
-  value={customer.BillingState}
-  onChange={(e) =>
-    setCustomer(prev => ({
-      ...prev,
-      BillingState: e.target.value
-    }))
-  }
->
-  <option value="">Select State *</option>
-  {INDIAN_STATES.map(state => (
-    <option key={state} value={state}>
-      {state}
-    </option>
-  ))}
-</select>
 
+    <select
+      value={customer.BillingState}
+      onChange={(e) =>
+        setCustomer(prev => ({
+          ...prev,
+          BillingState: e.target.value
+        }))
+      }
+    >
+      <option value="">Select State *</option>
+      {INDIAN_STATES.map(state => (
+        <option key={state} value={state}>
+          {state}
+        </option>
+      ))}
+    </select>
 
   </div>
 )}

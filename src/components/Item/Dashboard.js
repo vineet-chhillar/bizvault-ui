@@ -127,11 +127,12 @@ useEffect(() => {
   }`}
 />
 <SummaryCard title="Receivables" value={`₹ ${Math.abs(dashboard?.TotalReceivable ?? 0).toFixed(2)} ${(dashboard?.TotalReceivable ?? 0) >= 0 ? "Dr" : "Cr"}`} />
-<SummaryCard title="Payables" value={`₹ ${Math.abs(dashboard?.TotalPayable ?? 0).toFixed(2)} ${(dashboard?.TotalPayable ?? 0) >= 0 ? "Dr" : "Cr"}`} />
+<SummaryCard title="Payables" value={`₹ ${Math.abs(dashboard?.TotalPayable ?? 0).toFixed(2)} ${(dashboard?.TotalPayable ?? 0) >= 0 ? "Cr" : "Dr"}`} />
+
 
 <SummaryCard
   title="Today Sales"
-  value={`₹ ${Math.abs(dashboard?.TodaySales ?? 0).toFixed(2)} ${(dashboard?.TodaySales ?? 0) >= 0 ? "Dr" : "Cr"}`}
+  value={`₹ ${Math.abs(dashboard?.TodaySales ?? 0).toFixed(2)} ${(dashboard?.TodaySales ?? 0) >= 0 ? "Cr" : "Dr"}`}
 />
 
 <SummaryCard
