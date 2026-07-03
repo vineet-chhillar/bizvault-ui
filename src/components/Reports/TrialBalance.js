@@ -163,8 +163,7 @@ const totalCredit = Number(report?.totalCredit || 0);
     <div className="form-container">
       <h2 className="form-title">Trial Balance</h2>
 
-      
-      <div className="form-inner">
+       <div className="form-inner">
         <div className="form-row-horizontal">
           <div className="form-group">
             <label>From</label>
