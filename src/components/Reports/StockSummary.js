@@ -112,7 +112,17 @@ const exportExcel = () => {
     payload: { AsOf: asOf }
   });
 };
-
+const totals = rows.reduce(
+  (t, r) => {
+    t.qty += Number(r.Qty || 0);
+    t.value += Number(r.FifoValue || 0);
+    return t;
+  },
+  {
+    qty: 0,
+    value: 0
+  }
+);
   
   return (
     <>
@@ -164,7 +174,7 @@ const exportExcel = () => {
               <th style={{ width: "40px" }}>S.No</th>
               <th>Item</th>
               <th style={{ textAlign: "right" }}>Available Qty</th>
-              <th style={{ textAlign: "right" }}>Closing Value</th>
+              <th style={{ textAlign: "right" }}>Stock Value</th>
               <th style={{ textAlign: "right" }}>Avg Cost</th>
               <th style={{ textAlign: "right" }}>Last Purchase</th>
               <th style={{ textAlign: "right" }}>Selling Price</th>
@@ -222,6 +232,33 @@ const exportExcel = () => {
                 </td>
               </tr>
             ))}
+            {rows.length > 0 && (
+  <tr
+    style={{
+      fontWeight: "bold",
+      background: "#f3f3f3",
+      borderTop: "2px solid #666"
+    }}
+  >
+    <td></td>
+    <td>Total</td>
+
+    <td style={{ textAlign: "right" }}>
+      {totals.qty}
+    </td>
+
+    <td style={{ textAlign: "right" }}>
+      ₹{totals.value.toFixed(2)}
+    </td>
+
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+)}
           </tbody>
         </table>
       </div>

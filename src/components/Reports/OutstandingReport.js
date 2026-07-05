@@ -105,9 +105,9 @@ const toastRef = React.useRef(null);
       });
       return;
     }
-    showToast("Exporting Excel...");
+    {/*showToast("Exporting Excel...");*/}
     window.chrome.webview.postMessage({
-      action: "exportOutstandingReportPdf",
+      action: "exportOutstandingReportExcel",
       payload: { BalanceType: balanceType },
     });
   };

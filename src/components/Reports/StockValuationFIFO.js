@@ -133,10 +133,37 @@ const toastRef = React.useRef(null);
 });
 
   };
+  const grandTotals = rows.reduce(
+  (t, r) => {
+    t.openingQty += Number(r.OpeningQty || 0);
+    t.openingValue += Number(r.OpeningValue || 0);
+
+    t.inQty += Number(r.InQty || 0);
+    t.inValue += Number(r.InValue || 0);
+
+    t.outQty += Number(r.OutQty || 0);
+    t.cogs += Number(r.OutValue || 0);
+
+    t.closingQty += Number(r.ClosingQty || 0);
+    t.closingValue += Number(r.ClosingValue || 0);
+
+    return t;
+  },
+  {
+    openingQty: 0,
+    openingValue: 0,
+    inQty: 0,
+    inValue: 0,
+    outQty: 0,
+    cogs: 0,
+    closingQty: 0,
+    closingValue: 0
+  }
+);
   return (
     <>
     <div className="form-container">
-      <h2 className="form-title">Stock Valuation</h2>
+      <h2 className="form-title">Stock Valuation (Actual Stock Value)</h2>
 
       {/* FILTER BAR */}
       <div className="form-inner">
@@ -196,7 +223,7 @@ const toastRef = React.useRef(null);
 
       {/* FIFO TABLE */}
       <div className="table-container" style={{ marginTop: "20px" }}>
-        <h3 className="table-title">Stocks Movement Summary</h3>
+        <h3 className="table-title">Stock Movement Summary</h3>
 
         <table className="stocksummarydata-table">
           <thead>
@@ -249,6 +276,50 @@ const toastRef = React.useRef(null);
                 </td>
               </tr>
             ))}
+            {rows.length > 0 && (
+  <tr
+    style={{
+      fontWeight: "bold",
+      
+      borderTop: "2px solid #937bb3"
+    }}
+  >
+    <td></td>
+    <td>Total</td>
+
+    <td style={{ textAlign: "right" }}>
+      {grandTotals.openingQty}
+    </td>
+
+    <td style={{ textAlign: "right" }}>
+      {grandTotals.openingValue.toFixed(2)}
+    </td>
+
+    <td style={{ textAlign: "right" }}>
+      {grandTotals.inQty}
+    </td>
+
+    <td style={{ textAlign: "right" }}>
+      {grandTotals.inValue.toFixed(2)}
+    </td>
+
+    <td style={{ textAlign: "right" }}>
+      {grandTotals.outQty}
+    </td>
+
+    <td style={{ textAlign: "right" }}>
+      {grandTotals.cogs.toFixed(2)}
+    </td>
+
+    <td style={{ textAlign: "right" }}>
+      {grandTotals.closingQty}
+    </td>
+
+    <td style={{ textAlign: "right" }}>
+      {grandTotals.closingValue.toFixed(2)}
+    </td>
+  </tr>
+)}
           </tbody>
         </table>
       </div>

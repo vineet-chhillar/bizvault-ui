@@ -3,100 +3,88 @@ import "../components/Item/ItemForms.css";
 
 const YearClosing = () => {
 
-  const today = new Date();
-
-  const fyStartYear =
-    today.getMonth() >= 3
-      ? today.getFullYear()
-      : today.getFullYear() - 1;
-
-  const [from, setFrom] = useState(
-    `${fyStartYear}-04-01`
-  );
-
-  const [to, setTo] = useState(
-    `${fyStartYear + 1}-03-31`
-  );
-
-  const [preview, setPreview] = useState(null);
+  const [companyInfo, setCompanyInfo] = useState(null);
 
   const [loading, setLoading] = useState(false);
+
+  const [confirmed, setConfirmed] = useState(false);
 
   const [modal, setModal] = useState({
     show: false,
     message: ""
   });
 
-  // ---------------------------------------------------
-  // WebView listener
-  // ---------------------------------------------------
+  const [confirmDialog, setConfirmDialog] = useState(false);
+
+  // =====================================================
+  // WebView Message Listener
+  // =====================================================
+
   useEffect(() => {
 
     const handler = (event) => {
 
-  const msg =
-    typeof event.data === "string"
-      ? JSON.parse(event.data)
-      : event.data;
-      // ---------------------------------------
-      // Preview response
-      // ---------------------------------------
-     if (msg.action === "getYearClosingPreviewResult") {
+      const msg =
+        typeof event.data === "string"
+          ? JSON.parse(event.data)
+          : event.data;
 
-  setLoading(false);
+      // ------------------------------------------
+      // Financial Year Details
+      // ------------------------------------------
 
-  if (!msg.success) {
+      if (msg.action === "getFinancialYearInfoResult") {
 
-    let text = msg.message || "";
+        setLoading(false);
 
-    if (
-      msg.validationMessages &&
-      msg.validationMessages.length > 0
-    ) {
-      text =
-        msg.validationMessages.join("\n");
-    }
+        if (!msg.success) {
 
-    setModal({
-      show: true,
-      message: text
-    });
+          setModal({
+            show: true,
+            message:
+              msg.message ||
+              "Unable to load financial year information."
+          });
 
-    return;
-  }
+          return;
+        }
 
-  setPreview(msg.preview);
-}
-if (msg.action === "performYearClosingResult") {
+        setCompanyInfo(msg.data);
+      }
 
-  setLoading(false);
+      // ------------------------------------------
+      // Year Closing Result
+      // ------------------------------------------
 
-  if (!msg.success) {
+      if (msg.action === "performYearClosingResult") {
 
-    let text = "";
+        setLoading(false);
 
-    if (msg.errors) {
+        setConfirmDialog(false);
 
-      text = Object.values(msg.errors)
-        .join("\n");
-    }
+        if (!msg.success) {
 
-    setModal({
-      show: true,
-      message: text || "Year closing failed."
-    });
+          setModal({
+            show: true,
+            message:
+              msg.message ||
+              "Financial year closing failed."
+          });
 
-    return;
-  }
+          return;
+        }
 
-  setModal({
-    show: true,
-    message:
-      "Financial year closed successfully."
-  });
+        setModal({
+          show: true,
+          message:
+            "Financial year closed successfully."
+        });
 
-  setPreview(null);
-}
+        loadFinancialYearInfo();
+
+        setConfirmed(false);
+      }
+
     };
 
     window.chrome?.webview?.addEventListener(
@@ -104,82 +92,66 @@ if (msg.action === "performYearClosingResult") {
       handler
     );
 
+    loadFinancialYearInfo();
+
     return () => {
+
       window.chrome?.webview?.removeEventListener(
         "message",
         handler
       );
+
     };
 
   }, []);
 
-  // ---------------------------------------------------
-  // Load Preview
-  // ---------------------------------------------------
-const loadPreview = () => {
+  // =====================================================
+  // Load Company Financial Year Information
+  // =====================================================
 
-  if (!window.chrome?.webview)
-    return;
+  const loadFinancialYearInfo = () => {
 
-  setLoading(true);
+    if (!window.chrome?.webview)
+      return;
 
-  setPreview(null);
+    setLoading(true);
 
-  window.chrome.webview.postMessage({
-    Action: "getYearClosingPreview",
-    Payload: {
-      From: from,
-      To: to
-    }
-  });
-};
+    window.chrome.webview.postMessage({
+      Action: "GetFinancialYearInfo"
+    });
 
-  // ---------------------------------------------------
-  // Execute Closing
-  // ---------------------------------------------------
-  const executeClosing = () => {
+  };
 
-  if (!window.chrome?.webview)
-    return;
+  // =====================================================
+  // Close Button Click
+  // =====================================================
 
-  setLoading(true);
+  const handleCloseYear = () => {
 
-  window.chrome.webview.postMessage({
-    Action: "performYearClosing",
-    Payload: {
-      From: from,
-      To: to
-    }
-  });
-};
-const groupedVoucherLines = [];
+    if (!confirmed)
+      return;
 
-if (preview?.VoucherLines) {
+    setConfirmDialog(true);
 
-  const map = {};
+  };
 
-  preview.VoucherLines.forEach((line) => {
+  // =====================================================
+  // Execute Year Closing
+  // =====================================================
 
-    const key = line.AccountName;
+  const executeYearClosing = () => {
 
-    if (!map[key]) {
+    if (!window.chrome?.webview)
+      return;
 
-      map[key] = {
-        AccountName: line.AccountName,
-        Debit: 0,
-        Credit: 0
-      };
-    }
+    setLoading(true);
 
-    map[key].Debit += line.Debit || 0;
-    map[key].Credit += line.Credit || 0;
-  });
+    window.chrome.webview.postMessage({
+      Action: "PerformYearClosing"
+    });
 
-  Object.values(map).forEach((x) =>
-    groupedVoucherLines.push(x)
-  );
-}
-  return (
+  };
+    return (
 
     <div className="form-container">
 
@@ -189,385 +161,361 @@ if (preview?.VoucherLines) {
           Financial Year Closing
         </h2>
 
-        {/* ========================================= */}
-        {/* Date Selection */}
-        {/* ========================================= */}
+        {/* ================================================= */}
+        {/* Financial Year Information */}
+        {/* ================================================= */}
+
+        <div className="table-container">
+
+          <h3 className="table-title">
+            Financial Year Information
+          </h3>
+
+          <table className="data-table">
+
+            <tbody>
+
+              <tr>
+                <td><b>Current Financial Year</b></td>
+                <td>
+                  {companyInfo?.CurrentFinancialYearStart}
+                  {" "}
+                  to
+                  {" "}
+                  {companyInfo?.CurrentFinancialYearEnd}
+                </td>
+              </tr>
+
+              <tr>
+                <td><b>Next Financial Year</b></td>
+                <td>
+                  {companyInfo?.NextFinancialYearStart}
+                  {" "}
+                  to
+                  {" "}
+                  {companyInfo?.NextFinancialYearEnd}
+                </td>
+              </tr>
+
+              <tr>
+                <td><b>Last Year Closed On</b></td>
+                <td>
+                  {
+                    companyInfo?.LastYearClosedOn ||
+                    "Never"
+                  }
+                </td>
+              </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+        {/* ================================================= */}
+        {/* Voucher Numbers */}
+        {/* ================================================= */}
+
+        <div className="table-container">
+
+          <h3 className="table-title">
+            Current Voucher Numbers
+          </h3>
+
+          <table className="data-table">
+
+            <thead>
+
+              <tr>
+                <th>Voucher Type</th>
+                <th>Current Number</th>
+              </tr>
+
+            </thead>
+
+            <tbody>
+
+              <tr>
+                <td>Sales Invoice</td>
+                <td>{companyInfo?.CurrentInvoiceNo}</td>
+              </tr>
+
+              
+
+              <tr>
+                <td>Receipt Voucher</td>
+                <td>{companyInfo?.CurrentReceiptVoucherNo}</td>
+              </tr>
+
+              <tr>
+                <td>Payment Voucher</td>
+                <td>{companyInfo?.CurrentPaymentVoucherNo}</td>
+              </tr>
+
+              <tr>
+                <td>Journal Voucher</td>
+                <td>{companyInfo?.CurrentJournalVoucherNo}</td>
+              </tr>
+
+              <tr>
+                <td>Contra Voucher</td>
+                <td>{companyInfo?.CurrentContraVoucherNo}</td>
+              </tr>
+
+              <tr>
+                <td>Income Voucher</td>
+                <td>{companyInfo?.CurrentIncomeVoucherNo}</td>
+              </tr>
+
+              <tr>
+                <td>Expense Voucher</td>
+                <td>{companyInfo?.CurrentExpenseVoucherNo}</td>
+              </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+        {/* ================================================= */}
+        {/* Notes */}
+        {/* ================================================= */}
 
         <div className="inventory-form">
 
-          <div className="form-row">
+          <h3 className="table-title">
+            Notes
+          </h3>
 
-            <div className="form-group">
-              <label>From Date</label>
+          <ul
+            style={{
+              marginTop: "12px",
+              lineHeight: "1.9"
+            }}
+          >
 
-              <input
-                type="date"
-                value={from}
-                onChange={(e) =>
-                  setFrom(e.target.value)
-                }
-              />
-            </div>
+            <li>
+              This process will activate the next financial year.
+            </li>
 
-            <div className="form-group">
-              <label>To Date</label>
+            <li>
+              All voucher numbering will be reset to their configured starting numbers.
+            </li>
 
-              <input
-                type="date"
-                value={to}
-                onChange={(e) =>
-                  setTo(e.target.value)
-                }
-              />
-            </div>
+            <li>
+              Existing invoices, vouchers, stock, ledgers and reports will remain unchanged.
+            </li>
 
-          </div>
+            <li>
+              Previous financial year reports will continue to be available using date filters.
+            </li>
 
-          <div className="inventory-btns">
+            <li>
+              Transactions cannot be entered for the previous financial year after closing.
+            </li>
 
-            <button
-              className="btn-submit small"
-              onClick={loadPreview}
-              disabled={loading}
-            >
-              {loading
-                ? "Loading..."
-                : "Load Preview"}
-            </button>
+            <li>
+              It is strongly recommended to take a complete database backup before proceeding.
+            </li>
 
-          </div>
+            <li>
+              This operation cannot be automatically undone.
+            </li>
+
+          </ul>
 
         </div>
 
-        {/* ========================================= */}
-        {/* Preview */}
-        {/* ========================================= */}
+        {/* ================================================= */}
+        {/* Confirmation */}
+        {/* ================================================= */}
 
-        {preview && (
+        <div
+          className="inventory-form"
+          style={{ marginTop: "15px" }}
+        >
 
-          <>
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              cursor: "pointer",
+              fontWeight: "600"
+            }}
+          >
 
-            {/* ===================================== */}
-            {/* Summary */}
-            {/* ===================================== */}
+            <input
+              type="checkbox"
+              checked={confirmed}
+              onChange={(e) =>
+                setConfirmed(e.target.checked)
+              }
+            />
 
-            <div className="table-container">
+            I have read the above instructions and wish to continue.
 
-              <h3 className="table-title">
-                Profit & Loss Summary
-              </h3>
+          </label>
 
-              <table className="data-table">
+        </div>
 
-                <thead>
-                  <tr>
-                    <th>Particular</th>
-                    <th>Amount</th>
-                  </tr>
-                </thead>
+        {/* ================================================= */}
+        {/* Buttons */}
+        {/* ================================================= */}
 
-                <tbody>
+        <div className="inventory-btns">
 
-                  <tr>
-                    <td>Total Income</td>
+          <button
+            className="btn-submit small"
+            disabled={!confirmed || loading}
+            onClick={handleCloseYear}
+          >
+            {
+              loading
+                ? "Processing..."
+                : "Close Financial Year"
+            }
+          </button>
 
-                    <td
-                      style={{
-                        textAlign: "right"
-                      }}
-                    >
-                      ₹ {preview.TotalIncome?.toFixed(2)}
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td>Total Expense</td>
-
-                    <td
-                      style={{
-                        textAlign: "right"
-                      }}
-                    >
-                      ₹ {preview.TotalExpense?.toFixed(2)}
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td>
-  <b>
-    {
-      preview.NetProfit > 0
-        ? "Net Profit"
-        : "Net Loss"
-    }
-  </b>
-</td>
-
-                    <td
-                      style={{
-                        textAlign: "right",
-                        fontWeight: "bold"
-                      }}
-                    >
-                      ₹ {
-                        (
-                          preview.NetProfit ||
-                          preview.NetLoss
-                        )?.toFixed(2)
-                      }
-                    </td>
-                  </tr>
-
-                </tbody>
-
-              </table>
-
-            </div>
-
-            {/* ===================================== */}
-            {/* Closing Voucher */}
-            {/* ===================================== */}
-
-            <div className="table-container">
-
-              <h3 className="table-title">
-                Closing Voucher Preview
-              </h3>
-
-              <table className="data-table">
-
-                <thead>
-                  <tr>
-                    <th>Account</th>
-                    <th>Debit</th>
-                    <th>Credit</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-
-                  {groupedVoucherLines.map(
-                    (l, i) => (
-
-                      <tr key={i}>
-
-                       <td
-  style={{
-    fontWeight:
-      l.AccountName === "Profit & Loss A/c" ||
-      l.AccountName === "Retained Earnings"
-        ? "bold"
-        : "normal"
-  }}
->
-  {l.AccountName}
-</td>
-
-                        <td
-                          style={{
-                            textAlign: "right"
-                          }}
-                        >
-                          {
-                            l.Debit > 0
-                              ? l.Debit.toFixed(2)
-                              : ""
-                          }
-                        </td>
-
-                        <td
-                          style={{
-                            textAlign: "right"
-                          }}
-                        >
-                          {
-                            l.Credit > 0
-                              ? l.Credit.toFixed(2)
-                              : ""
-                          }
-                        </td>
-
-                      </tr>
-                    )
-                  )}
-
-                </tbody>
-
-              </table>
-
-            </div>
-{preview.NumberingPreview && (
-
-  <div className="table-container">
-
-    <h3 className="table-title">
-      Voucher Number Reset Preview
-    </h3>
-
-    <table className="data-table">
-
-      <thead>
-        <tr>
-          <th>Voucher Type</th>
-          <th>Current No</th>
-          <th>Next FY No</th>
-        </tr>
-      </thead>
-
-      <tbody>
-
-        <tr>
-          <td>Sales Invoice</td>
-          <td>{preview.NumberingPreview.CurrentInvoiceNo}</td>
-          <td>{preview.NumberingPreview.NextInvoiceNo}</td>
-        </tr>
-
-        <tr>
-          <td>Income Voucher</td>
-          <td>{preview.NumberingPreview.CurrentIncomeVoucherNo}</td>
-          <td>{preview.NumberingPreview.NextIncomeVoucherNo}</td>
-        </tr>
-
-        <tr>
-          <td>Expense Voucher</td>
-          <td>{preview.NumberingPreview.CurrentExpenseVoucherNo}</td>
-          <td>{preview.NumberingPreview.NextExpenseVoucherNo}</td>
-        </tr>
-
-        <tr>
-          <td>Journal Voucher</td>
-          <td>{preview.NumberingPreview.CurrentJournalVoucherNo}</td>
-          <td>{preview.NumberingPreview.NextJournalVoucherNo}</td>
-        </tr>
-
-        <tr>
-          <td>Payment Voucher</td>
-          <td>{preview.NumberingPreview.CurrentPaymentVoucherNo}</td>
-          <td>{preview.NumberingPreview.NextPaymentVoucherNo}</td>
-        </tr>
-
-        <tr>
-          <td>Receipt Voucher</td>
-          <td>{preview.NumberingPreview.CurrentReceiptVoucherNo}</td>
-          <td>{preview.NumberingPreview.NextReceiptVoucherNo}</td>
-        </tr>
-
-        <tr>
-          <td>Contra Voucher</td>
-          <td>{preview.NumberingPreview.CurrentContraVoucherNo}</td>
-          <td>{preview.NumberingPreview.NextContraVoucherNo}</td>
-        </tr>
-
-      </tbody>
-
-    </table>
-
-  </div>
-)}
-            {/* ===================================== */}
-            {/* Instructions */}
-            {/* ===================================== */}
-
-            <div className="inventory-form">
-
-              <h3 className="table-title">
-                Important Instructions
-              </h3>
-
-              <ul
-                style={{
-                  marginTop: "12px",
-                  lineHeight: "1.8"
-                }}
-              >
-                <li>
-                  Take database backup before
-                  financial year closing.
-                </li>
-
-                <li>
-                  Ensure all vouchers are entered
-                  properly.
-                </li>
-
-                <li>
-                  Do not close financial year while
-                  multiple users are working.
-                </li>
-
-                <li>
-                  Voucher numbering will reset after
-                  closing.
-                </li>
-
-                <li>
-                  Previous year reports will remain
-                  accessible through date filters.
-                </li>
-              </ul>
-
-            </div>
-
-            {/* ===================================== */}
-            {/* Execute */}
-            {/* ===================================== */}
-
-            <div className="inventory-btns">
-
-              <button
-  className="btn-submit small"
-  onClick={executeClosing}
-  disabled={loading}
->
-  {
-    loading
-      ? "Processing..."
-      : "Close Financial Year"
-  }
-</button>
-
-            </div>
-
-          </>
-        )}
+        </div>
 
       </div>
 
-      {/* ========================================= */}
-      {/* Modal */}
-      {/* ========================================= */}
+      {/* ================================================= */}
+      {/* Confirmation Dialog */}
+      {/* ================================================= */}
 
-      {modal.show && (
+      {
+        confirmDialog && (
 
-        <div className="modal-overlay">
+          <div className="modal-overlay">
 
-          <div className="modal-box">
+            <div className="modal-box">
 
-            <p>{modal.message}</p>
+              <h3>
+                Financial Year Closing
+              </h3>
 
-            <div className="modal-actions">
-
-              <button
-                className="modal-btn ok"
-                onClick={() =>
-                  setModal({
-                    show: false,
-                    message: ""
-                  })
-                }
+              <p
+                style={{
+                  marginTop: "20px",
+                  lineHeight: "1.8"
+                }}
               >
-                OK
-              </button>
+
+                Current Financial Year
+
+                <br /><br />
+
+                <b>
+                  {companyInfo?.CurrentFinancialYearStart}
+                  {" "}
+                  to
+                  {" "}
+                  {companyInfo?.CurrentFinancialYearEnd}
+                </b>
+
+                <br /><br />
+
+                will be closed.
+
+                <br /><br />
+
+                Next Financial Year
+
+                <br /><br />
+
+                <b>
+                  {companyInfo?.NextFinancialYearStart}
+                  {" "}
+                  to
+                  {" "}
+                  {companyInfo?.NextFinancialYearEnd}
+                </b>
+
+                <br /><br />
+
+                will become active.
+
+                <br /><br />
+
+                Voucher numbering will be reset.
+
+                <br /><br />
+
+                Do you want to continue?
+
+              </p>
+
+              <div className="modal-actions">
+
+                <button
+                  className="modal-btn ok"
+                  onClick={executeYearClosing}
+                >
+                  Yes
+                </button>
+
+                <button
+                  className="modal-btn cancel"
+                  onClick={() =>
+                    setConfirmDialog(false)
+                  }
+                >
+                  No
+                </button>
+
+              </div>
 
             </div>
 
           </div>
 
-        </div>
-      )}
+        )
+      }
+
+      {/* ================================================= */}
+      {/* Message Modal */}
+      {/* ================================================= */}
+
+      {
+        modal.show && (
+
+          <div className="modal-overlay">
+
+            <div className="modal-box">
+
+              <p>{modal.message}</p>
+
+              <div className="modal-actions">
+
+                <button
+                  className="modal-btn ok"
+                  onClick={() =>
+                    setModal({
+                      show: false,
+                      message: ""
+                    })
+                  }
+                >
+                  OK
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        )
+      }
 
     </div>
+
   );
+
 };
 
 export default YearClosing;

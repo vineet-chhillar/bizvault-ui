@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useRef } from "react";
 import CreateItem from "./components/Item/CreateItem";
 import HsnMaster from "./components/Item/HsnMaster";
 import UnitMaster from "./components/Item/UnitMaster";
@@ -59,6 +60,7 @@ import AccessSettings from "./utils/AccessSettings";
 import { hasPermission } from "./utils/Permissions";
 import { PERMISSIONS } from "./utils/PermissionKeys";
 import YearClosing from "./utils/YearClosing";
+import BackupSettings from "./utils/BackupSettings";
 
 
 
@@ -130,6 +132,8 @@ function TopNavbar({
   onCreateUser,
   forceChangePassword
 }) {
+  const menuRef = useRef(null);
+  const [showReports, setShowReports] = useState(false);
 const [showUtilities, setShowUtilities]
   = useState(false);
   const navigate = useNavigate();
@@ -137,6 +141,35 @@ const [showUtilities, setShowUtilities]
   // label for the header toggle button
   const buttonLabel = isMobile ? "☰" : collapsed ? "▶" : "◀";
 console.log("USER AT MENU:", user);
+const openReport = (path) => {
+
+    setShowReports(false);
+    setShowSettings(false);
+    setShowUtilities(false);
+
+    navigate(path);
+};
+useEffect(() => {
+
+    const handleClickOutside = (event) => {
+
+        if (
+            menuRef.current &&
+            !menuRef.current.contains(event.target)
+        ) {
+           setShowReports(false);
+            setShowSettings(false);
+            setShowUtilities(false);
+        }
+    };
+
+   document.addEventListener("click", handleClickOutside);
+
+    return () => {
+        document.removeEventListener("click",handleClickOutside);
+    };
+
+}, []);
 const openYearClosing = () => {
 
   setShowUtilities(false);
@@ -145,14 +178,14 @@ const openYearClosing = () => {
   navigate("./utils/YearClosing");
 };
 
-const backupDatabase = () => {
+const openBackupSettings = () => {
 
   setShowUtilities(false);
 
   // Temporary placeholder
-  alert("Backup feature coming soon.");
+  navigate("./utils/BackupSettings");
 };
-
+const [showSettings, setShowSettings] = useState(false);
   return (
     <header className="top-navbar">
       <button
@@ -171,50 +204,187 @@ const backupDatabase = () => {
     <FaBell />
   </button>
 
-  <button className="icon-btn" title="Settings">
+<div className="user-menu-wrapper">
+
+  <button
+    className="reports-btn"
+    title="Reports"
+    onClick={(e) => {
+      e.stopPropagation();
+
+      setShowReports(prev => !prev);
+      setShowSettings(false);
+      setShowUtilities(false);
+    }}
+  >
+    <FaChartLine />
+    <span>Reports</span>
+  </button>
+
+  {showReports && (
+
+    <div
+      className="reports-dropdown"
+      onClick={(e) => e.stopPropagation()}
+    >
+
+      <div className="report-group">
+        BOOKS
+      </div>
+
+      <button className="user-menu-item" onClick={() => openReport("/Reports/DayBookReport")}>
+        Day Book
+      </button>
+
+      <button className="user-menu-item" onClick={() => openReport("/Reports/VoucherReport")}>
+        Voucher Report
+      </button>
+
+      <button className="user-menu-item" onClick={() => openReport("/Reports/CashBookReport")}>
+        Cash Book
+      </button>
+
+      <button className="user-menu-item" onClick={() => openReport("/Reports/BankBookReport")}>
+        Bank Book
+      </button>
+
+      <div className="report-group">
+        FINANCIAL
+      </div>
+
+      <button className="user-menu-item" onClick={() => openReport("/Reports/TrialBalance")}>
+        Trial Balance
+      </button>
+
+      <button className="user-menu-item" onClick={() => openReport("/Reports/LedgerReport")}>
+        Account Statement
+      </button>
+
+      <button className="user-menu-item" onClick={() => openReport("/Reports/OutstandingReport")}>
+        Outstanding Report
+      </button>
+
+      <button className="user-menu-item" onClick={() => openReport("/Reports/ProfitLossReport")}>
+        Profit &amp; Loss
+      </button>
+
+      <button className="user-menu-item" onClick={() => openReport("/Reports/BalanceSheet")}>
+        Balance Sheet
+      </button>
+
+      <div className="report-group">
+        INVENTORY
+      </div>
+
+      <button className="user-menu-item" onClick={() => openReport("/Reports/StockSummary")}>
+        Stock Summary
+      </button>
+
+      <button className="user-menu-item" onClick={() => openReport("/Reports/BatchWiseStockReport")}>
+        Batch Wise Stock
+      </button>
+
+      <button className="user-menu-item" onClick={() => openReport("/Reports/StockValuationFIFO")}>
+        Stock Valuation
+      </button>
+
+      <div className="report-group">
+        SALES
+      </div>
+
+      <button className="user-menu-item" onClick={() => openReport("/Reports/InvoiceReport")}>
+        Invoice Report
+      </button>
+
+      <button className="user-menu-item" onClick={() => openReport("/Reports/ReturnGainLossReport")}>
+        Return Gain / Loss
+      </button>
+
+    </div>
+
+  )}
+
+</div>
+
+  <div className="user-menu-wrapper">
+
+  {/* Settings */}
+
+  <button
+    className="icon-btn"
+    title="Settings"
+    onClick={(e) => {
+      e.stopPropagation();
+      setShowUtilities(false);
+      setShowSettings(prev => !prev);
+    }}
+  >
     <FaCog />
   </button>
 
-  <div className="user-menu-container">
+  {showSettings && (
 
-    <button
-      className="icon-btn"
-      title="Utilities"
-      onClick={() =>
-        setShowUtilities(
-          !showUtilities
-        )
-      }
+    <div
+      className="user-menu-dropdown"
+      onClick={(e) => e.stopPropagation()}
     >
-      <FaTools />
-    </button>
 
-    {
-      showUtilities && (
+      <button
+        className="user-menu-item"
+        onClick={() => {
+          setShowSettings(false);
+          openBackupSettings();
+        }}
+      >
+        <FaDatabase className="menu-icon" />
+        <span>Backup Settings</span>
+      </button>
 
-        <div className="user-menu-dropdown">
+    </div>
 
-  <button
-    className="user-menu-item"
-    onClick={openYearClosing}
-  >
-    <FaCalendarCheck className="menu-icon" />
-    <span>Financial Year Closing</span>
-  </button>
-
-  <button
-    className="user-menu-item"
-    onClick={backupDatabase}
-  >
-    <FaDatabase className="menu-icon" />
-    <span>Backup Database</span>
-  </button>
+  )}
 
 </div>
-      )
-    }
 
-  </div>
+<div className="user-menu-wrapper">
+
+  {/* Utilities */}
+
+  <button
+    className="icon-btn"
+    title="Utilities"
+    onClick={(e) => {
+      e.stopPropagation();
+      setShowSettings(false);
+      setShowUtilities(prev => !prev);
+    }}
+  >
+    <FaTools />
+  </button>
+
+  {showUtilities && (
+
+    <div
+      className="user-menu-dropdown"
+      onClick={(e) => e.stopPropagation()}
+    >
+
+      <button
+        className="user-menu-item"
+        onClick={() => {
+          setShowUtilities(false);
+          openYearClosing();
+        }}
+      >
+        <FaCalendarCheck className="menu-icon" />
+        <span>Financial Year Closing</span>
+      </button>
+
+    </div>
+
+  )}
+
+</div>
 
   <UserMenu
     user={user}
@@ -831,177 +1001,7 @@ useEffect(() => {
   </div>
   </div>
 {/* ---Reports (Grouped Tab Style) --- */}
- {hasPermission(user, PERMISSIONS.REPORTS) && (
-<div className="nav-section">
-  {/* Parent Link */}
-  <div
-    className="nav-link item-parent"
-    onClick={() => setIsReportsOpen(!isReportsOpen)}
-    style={{ cursor: "pointer" }}
-  >
-    <span className="icon"><FaChartLine /></span>
-    <span className="label">Reports</span>
-    <span className="arrow">{isReportsOpen ? "▲" : "▼"}</span>
-  </div>
-
-  {/* Collapsible Children */}
-  <div className={`nav-children-tabs ${isReportsOpen ? "open" : ""}`}>
-
-<NavLink
-      to="/Reports/DayBookReport"
-      onClick={() => isMobile && setMobileOpen(false)}
-      className={({ isActive }) =>
-        "nav-tab-link" + (isActive ? " active" : "")
-      }
-    >
-      Day Book
-    </NavLink>
-
-<NavLink
-      to="/Reports/VoucherReport"
-      onClick={() => isMobile && setMobileOpen(false)}
-      className={({ isActive }) =>
-        "nav-tab-link" + (isActive ? " active" : "")
-      }
-    >
-      Voucher Report
-    </NavLink>
-
-    <NavLink
-      to="/Reports/CashBookReport"
-      onClick={() => isMobile && setMobileOpen(false)}
-      className={({ isActive }) =>
-        "nav-tab-link" + (isActive ? " active" : "")
-      }
-    >
-      Cash Book Report
-    </NavLink>
-
-    <NavLink
-      to="/Reports/BankBookReport"
-      onClick={() => isMobile && setMobileOpen(false)}
-      className={({ isActive }) =>
-        "nav-tab-link" + (isActive ? " active" : "")
-      }
-    >
-      Bank Book Report
-    </NavLink>
-
-    <NavLink
-  to="/Reports/TrialBalance"
-  onClick={() => isMobile && setMobileOpen(false)}
-  className={({ isActive }) =>
-    "nav-tab-link" + (isActive ? " active" : "")
-  }
->
-  <span className="label">
-    Trial Balance
-    {shortcutMap["/Reports/TrialBalance"] && (
-      <span className="shortcut">
-        {shortcutMap["/Reports/TrialBalance"]}
-      </span>
-    )}
-  </span>
-</NavLink>
-
-    <NavLink
-      to="/Reports/LedgerReport"
-      onClick={() => isMobile && setMobileOpen(false)}
-      className={({ isActive }) =>
-        "nav-tab-link" + (isActive ? " active" : "")
-      }
-    >
-      Account Statement Report
-    </NavLink>
-
-    <NavLink
-      to="/Reports/OutstandingReport"
-      onClick={() => isMobile && setMobileOpen(false)}
-      className={({ isActive }) =>
-        "nav-tab-link" + (isActive ? " active" : "")
-      }
-    >
-      Outstanding Report
-    </NavLink>
-
-      <NavLink
-      to="/Reports/ProfitLossReport"
-      onClick={() => isMobile && setMobileOpen(false)}
-      className={({ isActive }) =>
-        "nav-tab-link" + (isActive ? " active" : "")
-      }
-    >
-      Profit & Loss Report
-    </NavLink>
-
-    <NavLink
-  to="/Reports/BalanceSheet"
-  onClick={() => isMobile && setMobileOpen(false)}
-  className={({ isActive }) =>
-    "nav-tab-link" + (isActive ? " active" : "")
-  }
->
-  <span className="label">
-    Balance sheet
-    {shortcutMap["/Reports/BalanceSheet"] && (
-      <span className="shortcut">
-        {shortcutMap["/Reports/BalanceSheet"]}
-      </span>
-    )}
-  </span>
-</NavLink>
-
-<NavLink
-      to="/Reports/StockValuationFIFO"
-      onClick={() => isMobile && setMobileOpen(false)}
-      className={({ isActive }) =>
-        "nav-tab-link" + (isActive ? " active" : "")
-      }
-    >
-      Stock Valuation
-    </NavLink>
-    
-    <NavLink
-      to="/Reports/StockSummary"
-      onClick={() => isMobile && setMobileOpen(false)}
-      className={({ isActive }) =>
-        "nav-tab-link" + (isActive ? " active" : "")
-      }
-    >
-      Stock Summary
-    </NavLink>
-
-<NavLink
-      to="/Reports/InvoiceReport"
-      onClick={() => isMobile && setMobileOpen(false)}
-      className={({ isActive }) =>
-        "nav-tab-link" + (isActive ? " active" : "")
-      }
-    >
-      Invoice Report
-    </NavLink>
-    <NavLink
-      to="/Reports/ReturnGainLossReport"
-      onClick={() => isMobile && setMobileOpen(false)}
-      className={({ isActive }) =>
-        "nav-tab-link" + (isActive ? " active" : "")
-      }
-    >
-      Return Gain / Loss Report
-    </NavLink>
-
-    <NavLink
-      to="/Reports/BatchWiseStockReport"
-      onClick={() => isMobile && setMobileOpen(false)}
-      className={({ isActive }) =>
-        "nav-tab-link" + (isActive ? " active" : "")
-      }
-    >
-      Batch Wise Stock Report
-    </NavLink>
-  </div>
-</div>
- )}
+ 
 
 
 
@@ -1323,8 +1323,8 @@ useEffect(() => {
 <Route path="/" element={<Navigate to="/Item/Dashboard" replace />} />
  <Route path="/Item/Dashboard" element={<Dashboard user={user} />} />
  
- <Route path="/utils/YearClosing"  element={<YearClosing />}
-/>
+ <Route path="/utils/YearClosing"  element={<YearClosing />}/>
+ <Route path="/utils/BackupSettings"  element={<BackupSettings />}/>
 
 
 

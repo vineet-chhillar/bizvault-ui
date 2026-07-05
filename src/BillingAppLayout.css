@@ -560,3 +560,65 @@ html, body {
   color: #4e1d7c;
   font-size: 14px;
 }
+.reports-btn{
+
+    display:flex;
+    align-items:center;
+    gap:8px;
+
+    background:transparent;
+    border:none;
+
+    color:white;
+
+    font-size:15px;
+    font-weight:600;
+
+    cursor:pointer;
+
+    padding:8px 12px;
+}
+
+.reports-btn:hover{
+
+    color:#d7c6ff;
+
+}
+
+.reports-dropdown{
+
+    position:absolute;
+
+    top:42px;
+
+    right:0;
+
+    width:280px;
+
+    background:white;
+
+    border-radius:8px;
+
+    box-shadow:0 8px 25px rgba(0,0,0,.15);
+
+    overflow:hidden;
+
+    z-index:1000;
+
+}
+
+.report-group{
+
+    background:#f4f4f4;
+
+    color:#666;
+
+    font-size:11px;
+
+    font-weight:bold;
+
+    padding:8px 15px;
+
+    letter-spacing:1px;
+
+}
