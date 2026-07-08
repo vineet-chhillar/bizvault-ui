@@ -134,8 +134,7 @@ function TopNavbar({
 }) {
   const menuRef = useRef(null);
   const [showReports, setShowReports] = useState(false);
-const [showUtilities, setShowUtilities]
-  = useState(false);
+const [showUtilities, setShowUtilities] = useState(false);
   const navigate = useNavigate();
   {/*const title = usePageTitle();*/}
   // label for the header toggle button
@@ -198,7 +197,7 @@ const [showSettings, setShowSettings] = useState(false);
 
       <h1 className="app-title">{}</h1>
 
-      <div className="navbar-actions">
+      <div className="navbar-actions" ref={menuRef}>
 
   <button className="icon-btn" title="Notifications">
     <FaBell />
@@ -361,14 +360,11 @@ const [showSettings, setShowSettings] = useState(false);
   >
     <FaTools />
   </button>
-
   {showUtilities && (
-
     <div
       className="user-menu-dropdown"
       onClick={(e) => e.stopPropagation()}
     >
-
       <button
         className="user-menu-item"
         onClick={() => {
@@ -379,11 +375,8 @@ const [showSettings, setShowSettings] = useState(false);
         <FaCalendarCheck className="menu-icon" />
         <span>Financial Year Closing</span>
       </button>
-
     </div>
-
   )}
-
 </div>
 
   <UserMenu
