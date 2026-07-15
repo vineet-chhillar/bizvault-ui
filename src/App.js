@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import LoginPage from "./LoginPage";
 import { session } from "./utils/Session";
 import { HashRouter as Router } from "react-router-dom";
+import { encryptObject } from "./utils/CryptoHelper";
 export default function App() {
   const [user, setUser] = useState(null);
   const [lastAction, setLastAction] = useState(null);
@@ -102,7 +103,17 @@ case "CreateUser":
   }, []);
 
   const sendToCSharp = (action, payload) => {
-  console.log("📤 Sending to C#:", action, payload);
+
+  // Encrypt only sensitive actions
+  if (
+    action === "Login" ||
+    action === "CreateUser" ||
+    action === "ChangePassword"
+  ) {
+    payload = encryptObject(payload);
+  }
+
+  console.log("📤 Sending to C#:", action);
 
   if (window.chrome?.webview) {
     window.chrome.webview.postMessage({

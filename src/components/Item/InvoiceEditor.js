@@ -158,8 +158,8 @@ const INDIAN_STATES = [
   "Kerala","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram",
   "Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana",
   "Tripura","Uttar Pradesh","Uttarakhand","West Bengal","Delhi","Jammu & Kashmir",
-  "Ladakh","Puducherry","Andaman & Nicobar","Chandigarh","Dadra & Nagar Haveli",
-  "Daman & Diu","Lakshadweep"
+  "Ladakh","Puducherry","Andaman & Nicobar","Chandigarh","Dadra and Nagar Haveli and Daman and Diu",
+  "Lakshadweep"
 ];
 
 const blockInvalidNumberKeys = (e) => {
