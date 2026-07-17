@@ -45,11 +45,7 @@ useLayoutEffect(() => {
   const containers = document.querySelectorAll(".app-container, .main-layout, .main-content, .form-container, .inventory-form");
   containers.forEach((el) => {
     const styles = window.getComputedStyle(el);
-    console.log("📦", el.className, {
-      height: el.clientHeight,
-      overflow: styles.overflow,
-      overflowY: styles.overflowY,
-    });
+    
   });
 }, []);
 
@@ -89,7 +85,7 @@ const handleChange = (e) => {
 
   // 🔹 Frontend validation (non-blocking)
   const itemErrors = validateItemForm(itemData);
-console.log("🔍 front Validation errors: ", itemErrors);
+
   if (itemErrors.length > 0) {
     const map = {};
     itemErrors.forEach(e => (map[e.field] = e.message));
@@ -156,12 +152,12 @@ useEffect(() => {
       try {
         msg = JSON.parse(msg);
       } catch {
-        console.warn("Invalid JSON:", msg);
+        
         return;
       }
     }
 
-    console.log("📩 Unified Message:", msg);
+    
 
     switch (msg.Type) {
 
@@ -271,9 +267,9 @@ hsncode: "",
         Payload: payload,
       });
 
-      console.log("📤 Sent to C#: GetCategoryById", payload);
+      
     } else {
-      console.warn("⚠️ WebView bridge not available");
+      
     }
   };
   // ✅ Listen for C# response
@@ -295,11 +291,11 @@ hsncode: "",
         if (typeof msg === "string") msg = JSON.parse(msg);
 
         if (msg.action === "getActiveCategoryListResult" && msg.success) {
-           console.log("📩 Received category:", msg.Data);
+           
           setCategories(msg.data || []);
         }
       } catch (err) {
-        console.error("Error parsing message:", err);
+        
       }
     };
 
@@ -322,11 +318,11 @@ hsncode: "",
         if (typeof msg === "string") msg = JSON.parse(msg);
 
         if (msg.action === "getActiveUnitListResult" && msg.success) {
-           console.log("📩 Received Units:", msg.data);
+           
           setUnits(msg.data || []);
         }
       } catch (err) {
-        console.error("Error parsing message:", err);
+        
       }
     };
 
@@ -345,9 +341,9 @@ hsncode: "",
         Payload: payload,
       });
 
-      console.log("📤 Sent to C#: GetUnitNameById", payload);
+      
     } else {
-      console.warn("⚠️ WebView bridge not available");
+      
     }
   };
   // ✅ Listen for C# response
@@ -358,11 +354,11 @@ hsncode: "",
         if (typeof msg === "string") msg = JSON.parse(msg);
 
         if (msg.Type === "GetUnitNameById" && msg.Status === "Success") {
-          console.log("📩 Received Units:", msg.Data);
+          
           setUnit(msg.Data);
         }
       } catch (err) {
-        console.error("Error parsing message:", err);
+        
       }
     };
 

@@ -92,9 +92,7 @@ const exportPdf = () => {
   useEffect(() => {
     const handler = (e) => {
       const msg = e.data;
-  console.log(msg);
-console.log(msg.rows);
-console.log(Array.isArray(msg.rows));
+  
       if (msg.action === "getTrialBalanceResult") {
 
     

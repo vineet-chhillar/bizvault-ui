@@ -203,9 +203,9 @@ useEffect(() => {
 
 
 
-useEffect(() => {
+{/*useEffect(() => {
   console.log("showPaymentModal =", showPaymentModal);
-}, [showPaymentModal]);
+}, [showPaymentModal]);*/}
 
 
 useEffect(() => {
@@ -951,7 +951,7 @@ Number(customerInfo?.Balance || 0) > 0 && (
 
           <div className="form-group">
             <label>Amount</label>
-            {console.log(paymentForm.Amount)}
+            
             <input
               type="number"
               min="1"
@@ -987,11 +987,7 @@ Number(customerInfo?.Balance || 0) > 0 && (
   const balance = Number(customerInfo.Balance) || 0;
   const finalValue = Math.min(v, balance);
 
-  console.log({
-    typed: v,
-    balance,
-    finalValue
-  });
+  
 
   setPaymentForm(p => ({
     ...p,

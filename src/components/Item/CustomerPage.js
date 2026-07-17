@@ -72,7 +72,8 @@ const [modal, setModal] = useState({
     window.chrome.webview.removeEventListener("message", handler);
 
     if (msg.success) setCustomers(msg.data || []);
-    else console.error(msg.error);
+    
+      
 
     setLoading(false);
   };

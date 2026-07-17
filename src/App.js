@@ -39,7 +39,7 @@ const [loginError, setLoginError] = useState("");
       permissionVersion: msg.Data.PermissionVersion
     };
 
-    console.log("Session user set:", session.user);
+    
 
     // 🔐 FORCE PASSWORD CHANGE CHECK
     if (msg.Data.MustChangePassword) {
@@ -92,7 +92,7 @@ case "CreateUser":
             break;
 
           default:
-            console.log("Unknown:", msg);
+            console.log("Unknown:", "Unhandled message from C#:");
         }
       };
 
@@ -113,7 +113,7 @@ case "CreateUser":
     payload = encryptObject(payload);
   }
 
-  console.log("📤 Sending to C#:", action);
+  
 
   if (window.chrome?.webview) {
     window.chrome.webview.postMessage({

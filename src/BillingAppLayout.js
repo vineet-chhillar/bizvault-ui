@@ -11,7 +11,12 @@ import PurchaseInvoiceEditor from "./components/Item/PurchaseInvoiceEditor";
 import EditPurchaseInvoice from "./components/Item/EditPurchaseInvoice";
 import EditSalesInvoice from "./components/Item/EditSalesInvoice";
 import InvoiceEditor from "./components/Item/InvoiceEditor";
+import ShortcutModal from "./components/Help/ShortcutModal";
 
+
+
+
+import AboutModal from "./components/Help/AboutModal";
 import MakePurchasePayment from "./components/Item/MakePurchasePayment";
 import MakeSalesPayment from "./components/Item/MakeSalesPayment";
 
@@ -93,8 +98,9 @@ import {
   FaSignOutAlt,
   FaTools,
   FaDatabase,
-  FaCalendarCheck
-} from "react-icons/fa";
+  FaCalendarCheck,
+   FaQuestionCircle,
+   } from "react-icons/fa";
 
 
 
@@ -130,22 +136,38 @@ function TopNavbar({
   user,
   onChangePassword,
   onCreateUser,
-  forceChangePassword
+  forceChangePassword,
+   onShowShortcut,
+  onShowAbout
 }) {
   const menuRef = useRef(null);
   const [showReports, setShowReports] = useState(false);
 const [showUtilities, setShowUtilities] = useState(false);
+const [showHelp, setShowHelp] = useState(false);
+
+const [showShortcutModal, setShowShortcutModal] = useState(false);
+const [showAboutModal, setShowAboutModal] = useState(false);
+
   const navigate = useNavigate();
+  const openQuickStartGuide = () => {
+
+    setShowHelp(false);
+
+    window.chrome?.webview?.postMessage({
+        Action: "OpenQuickStartGuide"
+    });
+
+};
   {/*const title = usePageTitle();*/}
   // label for the header toggle button
   const buttonLabel = isMobile ? "☰" : collapsed ? "▶" : "◀";
-console.log("USER AT MENU:", user);
+
 const openReport = (path) => {
 
     setShowReports(false);
     setShowSettings(false);
     setShowUtilities(false);
-
+setShowHelp(false);
     navigate(path);
 };
 useEffect(() => {
@@ -159,6 +181,7 @@ useEffect(() => {
            setShowReports(false);
             setShowSettings(false);
             setShowUtilities(false);
+            setShowHelp(false);
         }
     };
 
@@ -214,6 +237,7 @@ const [showSettings, setShowSettings] = useState(false);
       setShowReports(prev => !prev);
       setShowSettings(false);
       setShowUtilities(false);
+      setShowHelp(false);
     }}
   >
     <FaChartLine />
@@ -315,6 +339,8 @@ const [showSettings, setShowSettings] = useState(false);
     onClick={(e) => {
       e.stopPropagation();
       setShowUtilities(false);
+      setShowHelp(false);
+      setShowReports(false);
       setShowSettings(prev => !prev);
     }}
   >
@@ -355,6 +381,8 @@ const [showSettings, setShowSettings] = useState(false);
     onClick={(e) => {
       e.stopPropagation();
       setShowSettings(false);
+      setShowHelp(false);
+      setShowReports(false);
       setShowUtilities(prev => !prev);
     }}
   >
@@ -378,6 +406,87 @@ const [showSettings, setShowSettings] = useState(false);
     </div>
   )}
 </div>
+<div className="user-menu-wrapper">
+
+<button
+
+    className="reports-btn"
+
+    onClick={(e)=>{
+
+        e.stopPropagation();
+
+        setShowReports(false);
+        setShowSettings(false);
+        setShowUtilities(false);
+
+        setShowHelp(prev=>!prev);
+
+    }}
+
+>
+
+<FaQuestionCircle/>
+
+<span>Help</span>
+
+</button>
+
+{showHelp && (
+
+<div className="user-menu-dropdown">
+
+<button
+
+className="user-menu-item"
+
+onClick={openQuickStartGuide}
+
+>
+
+📖
+
+<span>Quick Start Guide</span>
+
+</button>
+
+<button
+className="user-menu-item"
+onClick={()=>{
+
+setShowHelp(false);
+onShowShortcut();
+}}
+>
+⌨
+<span>Keyboard Shortcuts</span>
+</button>
+
+<button
+
+className="user-menu-item"
+
+onClick={()=>{
+
+setShowHelp(false);
+
+onShowAbout();
+
+}}
+
+>
+
+ℹ
+
+<span>About DhanSutra</span>
+
+</button>
+
+</div>
+
+)}
+
+</div>
 
   <UserMenu
     user={user}
@@ -388,12 +497,18 @@ const [showSettings, setShowSettings] = useState(false);
   />
 
 </div>
+
     </header>
+    
   );
+  
 }
 
  export default function BillingAppLayout({ user, onLogout, sendToCSharp, lastAction, forceChangePassword,  clearForceChangePassword, clearLastAction }) {
   const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showShortcutModal, setShowShortcutModal] = useState(false);
+
+const [showAboutModal, setShowAboutModal] = useState(false);
   const [showCreateUser, setShowCreateUser] = useState(false);
 const [changePasswordSuccess, setChangePasswordSuccess] = useState(false);
 
@@ -431,7 +546,7 @@ const shortcutMap = Object.fromEntries(
   ])
 );
 
-  console.log("shortcutMap:", shortcutMap);
+  
 
 useEffect(() => {
   
@@ -1046,11 +1161,13 @@ useEffect(() => {
 
         <div className="main-layout">
          <TopNavbar
-  user={user}
-  onLogout={onLogout}
-  onChangePassword={() => setShowChangePassword(true)}
-  onCreateUser={() => setShowCreateUser(true)}
-   forceChangePassword={forceChangePassword}
+    user={user}
+    onLogout={onLogout}
+    onChangePassword={() => setShowChangePassword(true)}
+    onCreateUser={() => setShowCreateUser(true)}
+    forceChangePassword={forceChangePassword}
+    onShowShortcut={() => setShowShortcutModal(true)}
+    onShowAbout={() => setShowAboutModal(true)}
 />
 
 
@@ -1349,6 +1466,18 @@ useEffect(() => {
     onClose={() => setShowCreateUser(false)}
   />
 )}
+{showShortcutModal && (
+    <ShortcutModal
+        shortcuts={shortcuts}
+        onClose={() => setShowShortcutModal(false)}
+    />
+)}
+
+{showAboutModal && (
+    <AboutModal
+        onClose={() => setShowAboutModal(false)}
+    />
+)}
 {forceChangePassword && (
   <div className="force-password-overlay">
     You must change your password to continue.
@@ -1359,6 +1488,7 @@ useEffect(() => {
 
          
         </div>
+        
       </div>
     
   );

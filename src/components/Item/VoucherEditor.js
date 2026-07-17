@@ -53,12 +53,7 @@ const loadOutstandingInvoices = (
   rowIndex,
   accountId
 ) => {
-console.log(
-  "loadOutstandingInvoices",
-  voucherType,
-  rowIndex,
-  accountId
-);
+
   if (!accountId)
     return;
 
@@ -274,10 +269,7 @@ setModal({
   msg.action ===
   "GetOutstandingSalesInvoicesResponse"
 ) {
- console.log(
-    "Sales invoices response",
-    msg
-  );
+ 
   setLines(prev => {
 
     const copy = [...prev];
@@ -706,14 +698,7 @@ else {
   accounts.find(
     a => a.AccountId === accountId
   );
-console.log(
-  "IsCustomer:",
-  selectedAccount?.IsCustomer
-);
-console.log(
-  "IsSupplier:",
-  selectedAccount?.IsSupplier
-);
+
 if (
   voucherType === "RV" &&
   selectedAccount?.IsCustomer
