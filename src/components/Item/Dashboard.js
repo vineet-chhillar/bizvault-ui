@@ -43,9 +43,7 @@ useEffect(() => {
     Action: "getDashboardStockAlerts"
   });
 }, []);
-useEffect(() => {
-  console.log("📦 Full dashboard payload:", dashboard);
-}, [dashboard]);
+
 
 useEffect(() => {
   window.chrome.webview.postMessage({
@@ -56,7 +54,7 @@ useEffect(() => {
     const msg = e.data;
     if (msg.action === "getDashboardSummaryResult") {
       setDashboard(msg.data);
-      console.log("📊 Chart data:", dashboard?.SalesPurchaseChart);
+      
 
     }
     if (msg.action === "GetDashboardOutstandingResult") {

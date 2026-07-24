@@ -286,7 +286,7 @@ tax += t;
 
  // helper to recompute one line given seller & buyer states
 const recomputeLineForState = (line, sellerState, buyerState) => {
-  console.log("📤 states are:", sellerState,buyerState);
+  
   const qty = Number(line.Qty) || 0;
   const rate = Number(line.Rate) || 0;
   const discountPct = Number(line.Discount) || 0;
@@ -490,7 +490,7 @@ if (!customer.CustomerId) {
 // CASH / BANK → customer optional (no validation)
 
 
-console.log("📤 Sending invoice save payload:");
+
 if (!paymentMode) {
   setModal({
   show: true,
@@ -589,7 +589,7 @@ BalanceBatchRate: Number(l.RateBatchWise) || 0,
 
 }));
 
-console.log(getCreatedBy);
+
   const payload = {
     Action: "CreateInvoice",
     Payload: {
@@ -807,7 +807,7 @@ if (msg.action === "GetItemBalanceBatchWiseResponse") {
   const idx = msg.lineIndex;
   const balbatchwise = msg.balance;
 
-console.log("📥 Batch-wise balance for line", idx, "is", balbatchwise);
+
   setLines(prev => {
     const copy = [...prev];
     if (copy[idx]) copy[idx].BalanceBatchWise = balbatchwise;
@@ -819,7 +819,7 @@ if (msg.action === "getPurchaseNetRateResult") {
   const idx = msg.lineIndex;
   const ratebatchwise = msg.netRate;
 
-console.log("📥 Batch-wise Net Purchase Rate for line", idx, "is", ratebatchwise);
+
   setLines(prev => {
     const copy = [...prev];
     if (copy[idx]) copy[idx].RateBatchWise = ratebatchwise;
@@ -1261,7 +1261,7 @@ className={paymentMode !== "Credit" ? "input-disabled" : ""}
       style={{ width: "520px" }}
     >
 
-    {console.log("ITEM LIST LENGTH", itemList.length)}
+    {/* {console.log("ITEM LIST LENGTH", itemList.length)} */}
       {(l.ItemName?.trim()
         ? itemList.filter(it => {
 

@@ -78,14 +78,14 @@ if (msg.action === "LoadPurchaseInvoiceForViewResult") {
     );
 }, []);
 useEffect(() => {
-  console.log("Invoice Type Changed:", invoiceType);
+  
 
   setSelectedInvoiceId("");
 
   if (!from || !to) return;
 
   if (invoiceType === "SALE") {
-    console.log("Loading Sales Invoices");
+    
 
     window.chrome.webview.postMessage({
       action: "getInvoiceNumbersByDateRange",
@@ -95,7 +95,7 @@ useEffect(() => {
       }
     });
   } else {
-    console.log("Loading Purchase Invoices");
+    
 
     window.chrome.webview.postMessage({
       action: "GetPurchaseInvoiceNumbersByDateRange",

@@ -357,7 +357,7 @@ return;
 });
 return;
   }
-console.log(getCreatedBy);
+
   window.chrome.webview.postMessage({
     Action: "UpdateSalesInvoice",
     Payload: {

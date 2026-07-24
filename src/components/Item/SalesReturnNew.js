@@ -428,7 +428,7 @@ if (msg.action === "GetCustomerByIdResult") {
         // Expecting [{ Id, InvoiceNo }] etc.
         
         setInvoiceList(msg.data || []);
-        console.log(invoiceList);
+        
       }
 
       // Load Sales Invoice

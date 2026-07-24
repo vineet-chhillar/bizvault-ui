@@ -511,8 +511,7 @@ setValidationErrors({});
   Dimension: l.dimension,
   Notes: l.Notes || ""
 }));
-console.log("supplierId =", supplierId);
-console.log("supplierInfo =", supplierInfo);
+
 // ---------------- STORE PAYLOAD ----------------
   pendingSavePayloadRef.current = {
     SupplierId: supplierId ? Number(supplierId) : 0,

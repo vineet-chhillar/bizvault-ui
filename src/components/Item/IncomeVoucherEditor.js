@@ -270,7 +270,7 @@ useEffect(() => {
 
   /* ---------------- SAVE INCOME ---------------- */
   const handleSave = () => {
-    console.log(localStorage);
+    
     if (saving) return;
 
     const validLines = lines.filter(

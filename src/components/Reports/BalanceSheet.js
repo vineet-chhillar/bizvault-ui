@@ -105,7 +105,7 @@ showToast("Opening Excel…");
   useEffect(() => {
     
     const handler = (e) => {
-      console.log("📩 BalanceSheet message:", e.data);
+      
 
       
       const msg = e.data;
@@ -146,7 +146,7 @@ showToast("Opening Excel…");
         }
       }
 if (msg.action === "exportBalanceSheetExcelResponse" && msg.success) {
-  console.log("Excel exported at:", msg.path);
+  
   hideToast();
 }
     };
