@@ -8,8 +8,7 @@ export default function CategoryMaster() {
     id: 0,
     categoryName: "",
     description: "",
-    defaultHsnId: "",
-    defaultGstId: "",
+   
     isActive: 1,
     createdBy: "",
     updatedBy: ""
@@ -18,8 +17,7 @@ export default function CategoryMaster() {
   const [form, setForm] = useState(initialFormState);
   const [errors, setErrors] = useState({});
   const [categories, setCategories] = useState([]);
-  const [hsnList, setHsnList] = useState([]);
-  const [gstList, setGstList] = useState([]);
+  
 const [searchText, setSearchText] = useState("");
 const filteredCategories = categories.filter(c =>
   (c.categoryName || c.CategoryName || "")
@@ -30,19 +28,28 @@ const filteredCategories = categories.filter(c =>
   const resetForm = () => {
     setForm(initialFormState);
     setErrors({});
+      setSearchText("");
   };
 const [modal, setModal] = useState({
   show: false,
   message: ""
 });
   // ✍️ Handle change
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({
+ const handleChange = (e) => {
+  const { name, value } = e.target;
+
+  setForm(prev => ({
+    ...prev,
+    [name]: value
+  }));
+
+  if (errors[name]) {
+    setErrors(prev => ({
       ...prev,
-      [name]: value
+      [name]: ""
     }));
-  };
+  }
+};
 
   // 💾 Save Category
   const handleSubmit = (e) => {
@@ -60,13 +67,9 @@ const [modal, setModal] = useState({
 
   const payload = {
     category: {
-      ...form,
-      defaultHsnId: form.defaultHsnId
-        ? parseInt(form.defaultHsnId)
-        : null,
-      defaultGstId: form.defaultGstId
-        ? parseInt(form.defaultGstId)
-        : null,
+    ...form,
+    categoryName: form.categoryName.trim(),
+    description: form.description.trim(),
       createdBy: form.id === 0 ? user : undefined,
       updatedBy: form.id !== 0 ? user : undefined
     }
@@ -93,8 +96,6 @@ const [modal, setModal] = useState({
       id: c.id ?? c.Id,
       categoryName: c.categoryName ?? c.CategoryName,
       description: c.description ?? c.Description ?? "",
-      defaultHsnId: c.defaultHsnId ?? c.DefaultHsnId ?? "",
-      defaultGstId: c.defaultGstId ?? c.DefaultGstId ?? "",
       isActive: c.isActive ?? c.IsActive,
       createdBy: "",
       updatedBy: ""
@@ -125,22 +126,14 @@ const [modal, setModal] = useState({
         setCategories(msg.data || []);
       }
 
-      if (msg.action === "getActiveHsnListResult" && msg.success) {
-        setHsnList(msg.data || []);
-      }
-
-      if (msg.action === "getActiveGstListResult" && msg.success) {
-        setGstList(msg.data || []);
-      }
+      
     };
 
     window.chrome?.webview?.addEventListener("message", handler);
 
     // initial loads
     loadCategories();
-    window.chrome?.webview?.postMessage({ Action: "getActiveHsnList" });
-    window.chrome?.webview?.postMessage({ Action: "getActiveGstList" });
-
+    
     return () =>
       window.chrome?.webview?.removeEventListener("message", handler);
   }, []);
@@ -156,7 +149,7 @@ const [modal, setModal] = useState({
           <h2 className="category-title">Category Master</h2>
           <span
             className="category-help"
-            title="Category with default HSN and GST"
+            title="Create business categories for organizing items"
           >
             ℹ️
           </span>
@@ -177,6 +170,7 @@ const [modal, setModal] = useState({
                 onChange={handleChange}
                 className={errors.CategoryName ? "error-input" : ""}
                 placeholder="Enter category name"
+                maxLength={100}
               />
               {errors.CategoryName && (
                 <div className="error">{errors.CategoryName}</div>
@@ -191,48 +185,15 @@ const [modal, setModal] = useState({
                 value={form.description}
                 onChange={handleChange}
                 placeholder="Optional description"
+                maxLength={200}
               />
             </div>
 
             {/* DEFAULT HSN */}
-            <div className="form-group">
-              <label>Default HSN</label>
-              <select
-                name="defaultHsnId"
-                value={form.defaultHsnId}
-                onChange={handleChange}
-              >
-                <option value="">-- Select HSN --</option>
-                {hsnList.map((h) => (
-                  <option key={h.Id} value={h.Id}>
-                    {h.HsnCode}
-                  </option>
-                ))}
-              </select>
-              {errors.DefaultHsnId && (
-                <div className="error">{errors.DefaultHsnId}</div>
-              )}
-            </div>
+            
 
             {/* DEFAULT GST */}
-            <div className="form-group">
-              <label>Default GST (%)</label>
-              <select
-                name="defaultGstId"
-                value={form.defaultGstId}
-                onChange={handleChange}
-              >
-                <option value="">-- Select GST --</option>
-                {gstList.map((g) => (
-                  <option key={g.Id} value={g.Id}>
-                    {g.GstPercent}
-                  </option>
-                ))}
-              </select>
-              {errors.DefaultGstId && (
-                <div className="error">{errors.DefaultGstId}</div>
-              )}
-            </div>
+            
 
             {/* ACTIVE */}
             <div className="form-group checkbox-group">
@@ -292,8 +253,7 @@ const [modal, setModal] = useState({
     <tr>
       <th>#</th> {/* ✅ Serial No */}
       <th>Category</th>
-      <th>HSN</th>
-      <th>GST %</th>
+      <th>Description</th>
       <th>Status</th>
       <th>Edit</th>
     </tr>
@@ -306,8 +266,7 @@ const [modal, setModal] = useState({
         <td>{index + 1}</td>
 
         <td>{c.categoryName ?? c.CategoryName}</td>
-        <td>{c.DefaultHsnCode ?? "-"}</td>
-        <td>{c.DefaultGstPercent ?? "-"}</td>
+       <td>{c.description ?? c.Description ?? "-"}</td>
         <td>
           {(c.isActive ?? c.IsActive) === 1 ? "Active" : "Inactive"}
         </td>
@@ -348,7 +307,10 @@ const [modal, setModal] = useState({
       <div className="modal-actions">
         <button
           className="modal-btn ok"
-          onClick={() => setModal({ show: false })}
+          onClick={() => setModal({
+    show: false,
+    message: ""
+})}
         >
           OK
         </button>

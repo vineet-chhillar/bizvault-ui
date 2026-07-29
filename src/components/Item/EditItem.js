@@ -10,7 +10,7 @@ const EditItem = () => {
 
   const [categories, setCategories] = useState([]);
   const [units, setUnits] = useState([]);
-
+const [hsnList, setHsnList] = useState([]);
   const [errors, setErrors] = useState({});
 const [searchTerm, setSearchTerm] = useState("");
   // -----------------------------------------------------------
@@ -26,14 +26,7 @@ const [searchTerm, setSearchTerm] = useState("");
   // -----------------------------------------------------------
   // Auto-fill HSN + GST on selecting category
   // -----------------------------------------------------------
-  const getCategoryById = (id) => {
-    if (window.chrome?.webview) {
-      window.chrome.webview.postMessage({
-        Action: "GetCategoryById",
-        Payload: { Id: parseInt(id) },
-      });
-    }
-  };
+  
 const [modal, setModal] = useState({
   show: false,
   message: "",
@@ -59,21 +52,7 @@ const [modal, setModal] = useState({
       }
 
       // Auto-fill on category selection
-      if (data.Type === "GetCategoryById" && data.Status === "Success") {
-        const c = data.Data;
-
-       setFormData((prev) => ({
-  ...prev,
-
-  CategoryId: c.Id,
-
-  HsnId: c.DefaultHsnId,
-  HsnCode: c.DefaultHsn,
-
-  GstId: c.DefaultGstId,
-  GstPercent: c.DefaultGstPercent,
-}));
-      }
+      
 
       // Update response
       // NEW ✅
@@ -131,6 +110,11 @@ if (data.Type === "UpdateItemResult") {
       if (data.Type === "GetAllUnits" && data.Status === "Success") {
         setUnits(data.Data || []);
       }
+      if (data.action === "getActiveHsnListResult" && data.success) 
+        {
+            setHsnList(data.data || []);
+        }
+
     };
 
     // Add listener
@@ -140,7 +124,7 @@ if (data.Type === "UpdateItemResult") {
       // Fetch masters
       window.chrome.webview.postMessage({ Action: "GetCategoryList", Payload: {} });
       window.chrome.webview.postMessage({ Action: "GetAllUnitsList", Payload: {} });
-
+      window.chrome.webview.postMessage({Action: "getActiveHsnList", Payload: {}});
       // Load items
       handleSearch("");
     }
@@ -149,7 +133,38 @@ if (data.Type === "UpdateItemResult") {
       window.chrome?.webview?.removeEventListener("message", handleMessage);
     };
   }, []);
+const handleHsnChange = (e) => {
+  const value = e.target.value;
 
+  if (!value) {
+    setFormData(prev => ({
+  ...prev,
+  HsnId: id,
+  HsnCode: hsn?.HsnCode || "",
+  GstId: hsn?.GstId ?? "",
+  GstPercent: hsn?.GstPercent ?? ""
+}));
+
+    return;
+  }
+
+  const id = parseInt(value, 10);
+  const hsn = hsnList.find(h => h.Id === id);
+
+  setFormData(prev => ({
+    ...prev,
+    HsnId: id,
+    HsnCode: hsn?.HsnCode || "",
+    GstId: hsn?.GstId || "",
+    GstPercent: hsn?.GstPercent || ""
+  }));
+
+  setErrors(prev => {
+    const copy = { ...prev };
+    delete copy.HsnId;
+    return copy;
+  });
+};
   // -----------------------------------------------------------
   // Search items
   // -----------------------------------------------------------
@@ -216,7 +231,7 @@ if (data.Type === "UpdateItemResult") {
           date: formData.Date,
           description: formData.Description,
           unitid: formData.UnitId,
-          gstid: formData.GstId,
+          gstid: Number(formData.GstId),
           reorderlevel: Number(formData.ReorderLevel),
           isactive: Number(formData.IsActive),   // 🔥 ADD THIS
           updatedby: getCreatedBy(),
@@ -310,13 +325,14 @@ const filteredItems = items.filter((i) =>
             onClick={() =>
               setFormData({
                 ...i,
-                IsActive: Number(i.IsActive),
-                CategoryId: String(i.CategoryId),
-                UnitId: String(i.UnitId),
-                GstId: String(i.GstId),
-                GstPercent: i.GstPercent,
-                Date: formatDateForInput(i.Date),
-                ReorderLevel: i.ReorderLevel || "",
+                 HsnId: Number(i.HsnId),
+    IsActive: Number(i.IsActive),
+    CategoryId: String(i.CategoryId),
+    UnitId: String(i.UnitId),
+    GstId: i.GstId,
+    GstPercent: i.GstPercent,
+    Date: formatDateForInput(i.Date),
+    ReorderLevel: i.ReorderLevel ?? 0,
               })
             }
           >
@@ -365,15 +381,28 @@ const filteredItems = items.filter((i) =>
             </div>
 
             {/* HSN */}
-            <div className="form-group">
-              <label>HSN</label>
-              <input
-                name="HsnCode"
-                value={formData.HsnCode || ""}
-                readOnly
-              />
-            </div>
+           <div className="form-group">
+  <label>HSN</label>
 
+  <select
+    name="HsnId"
+    value={formData.HsnId || ""}
+    onChange={handleHsnChange}
+    className={errors.HsnId ? "error-input" : ""}
+  >
+    <option value="">-- Select HSN --</option>
+
+    {hsnList.map((h) => (
+      <option key={h.Id} value={h.Id}>
+        {h.HsnCode} - {h.Description}
+      </option>
+    ))}
+  </select>
+
+  {errors.HsnId && (
+    <div className="error">{errors.HsnId}</div>
+  )}
+</div>
             {/* Category */}
             <div className="form-group">
               <label>Category</label>
@@ -382,7 +411,7 @@ const filteredItems = items.filter((i) =>
                 value={formData.CategoryId || ""}
                 onChange={(e) => {
                   handleChange(e);
-                  getCategoryById(e.target.value);
+                  
                 }}
               >
                 <option value="">-- Select --</option>
@@ -440,6 +469,7 @@ const filteredItems = items.filter((i) =>
                 value={formData.GstPercent || ""}
                 readOnly
                 className="readonly-input"
+                placeholder="Auto-filled from HSN"
               />
             </div>
 

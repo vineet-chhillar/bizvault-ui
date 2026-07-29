@@ -5,38 +5,38 @@ import { getCreatedBy } from "../../utils/authHelper";
 import { User } from "lucide-react";
 
 import { validateItemForm } from "../../utils/validateItemForm";
-
-
-
 export default function CreateItem() {
-  const [itemData, setItemData] = useState({
-    name: "",
-    itemcode: "",
-    hsnid: "",
-hsncode: "",
-    categoryid: "",
-    categoryname:"",
-    date: new Date().toISOString().split("T")[0],
-    description: "",
-     unitid: 7,
+ const initialItemData = {
+  name: "",
+  itemcode: "",
+  hsnid: "",
+  hsncode: "",
+  categoryid: "",
+  categoryname: "",
+  date: new Date().toISOString().split("T")[0],
+  description: "",
+  unitid: 7,
   unitname: "Number",
-    gstid: "",
-    gstpercent: "",
-    createdby: "",
-    createdat: "",
-     reorderlevel: 5,  // ⭐ NEW FIELD
-      isactive: true,
-  });
+  gstid: "",
+  gstpercent: "",
+  createdby: "",
+  createdat: "",
+  reorderlevel: 5,
+  isactive: true
+};
+
+const [itemData, setItemData] = useState(initialItemData);
   const [searchTerm, setSearchTerm] = useState("");
   const [errors, setErrors] = useState({});
   const [items, setItems] = useState([]);
+  const [hsnList, setHsnList] = useState([]);
   const [modal, setModal] = useState({
   show: false,
   message: "",
   onClose: null
 });
 {/*const [categoryId, setCategoryId] = useState("");*/}
-  const [category, setCategory] = useState(null);
+  
 const [categories, setCategories] = useState([]);
   const [unit, setUnit] = useState(null);
 const [units, setUnits] = useState([]);
@@ -69,12 +69,22 @@ useLayoutEffect(() => {
 const handleChange = (e) => {
   const { name, value } = e.target;
 
-  setItemData((prev) => ({
+  let newValue = value;
+
+  if (name === "reorderlevel") {
+    newValue = Math.max(0, parseInt(value || "0", 10));
+  }
+
+  if (name === "categoryid" || name === "unitid") {
+    newValue = value ? parseInt(value, 10) : "";
+  }
+  setItemData(prev => ({
     ...prev,
-    [name]:
-      name === "categoryid" || name === "unitid" || name === "gstid"
-        ? parseInt(value)
-        : value,
+    [name]: newValue
+  }));
+  setErrors(prev => ({
+    ...prev,
+    [name]: ""
   }));
 };
 
@@ -92,24 +102,7 @@ const handleChange = (e) => {
     setErrors(map);
      return;
   }
-const handleChange = (e) => {
-  const { name, value } = e.target;
 
-  if (name === "reorderlevel") {
-    const num = parseInt(value || "0", 10);
-
-    setItemData((prev) => ({
-      ...prev,
-      [name]: Math.max(0, num),
-    }));
-    return;
-  }
-
-  setItemData((prev) => ({
-    ...prev,
-    [name]: value,
-  }));
-};
   const now = new Date();
   const timePart =
     String(now.getHours()).padStart(2, "0") + ":" +
@@ -128,8 +121,7 @@ const handleChange = (e) => {
     Description: itemData.description?.trim(),
     UnitId: parseInt(itemData.unitid),
     UnitName: itemData.unitname,
-    GstId: parseInt(itemData.gstid),
-    GstPercent: itemData.gstpercent,
+     GstId: Number(itemData.gstid),
     CreatedBy: getCreatedBy(),
     CreatedAt: new Date().toISOString(),
     ReorderLevel: Number(itemData.reorderlevel),
@@ -141,6 +133,38 @@ const handleChange = (e) => {
       Payload: payload
     });
   }
+};
+const handleHsnChange = (e) => {
+  const value = e.target.value;
+
+  if (!value) {
+    setItemData(prev => ({
+      ...prev,
+      hsnid: "",
+      hsncode: "",
+      gstid: "",
+      gstpercent: ""
+    }));
+
+    return;
+  }
+
+  const id = parseInt(value, 10);
+  const hsn = hsnList.find(x => x.Id === id);
+
+  setItemData(prev => ({
+    ...prev,
+    hsnid: id,
+    hsncode: hsn?.HsnCode || "",
+    gstid: hsn?.GstId || "",
+    gstpercent: hsn?.GstPercent || ""
+  }));
+
+  setErrors(prev => ({
+    ...prev,
+    hsnid: "",
+    HsnId: ""
+  }));
 };
 useEffect(() => {
   fetchItems();
@@ -185,21 +209,9 @@ useEffect(() => {
             message: msg.Message || "Item saved successfully",
             type: "success",
             onClose: () => {
-              setItemData({
-                name: "",
-                itemcode: "",
-              hsnid: "",
-hsncode: "",
-                categoryid: "",
-                date: new Date().toISOString().split("T")[0],
-                description: "",
-                unitid: "",
-                gstid: "",
-                reorderlevel: "",
-              });
-
-              fetchItems();
-            }
+  setItemData(initialItemData);
+  fetchItems();
+}
           });
         }
         break;
@@ -212,7 +224,7 @@ hsncode: "",
         break;
 
       // 🔴 CATEGORY DETAILS
-      case "GetCategoryById":
+      {/*case "GetCategoryById":
         if (msg.Status === "Success") {
           const c = msg.Data;
           setCategory(c);
@@ -228,7 +240,7 @@ hsncode: "",
     gstid: c.DefaultGstId,
     gstpercent: c.DefaultGstPercent
 }));
-        }
+        }*/}
         break;
 
       default:
@@ -250,58 +262,76 @@ hsncode: "",
     window.chrome.webview.removeEventListener("message", handler);
   };
 }, []);
-  
+// ------------------ HSN
+useEffect(() => {
+  if (window.chrome?.webview) {
+    window.chrome.webview.postMessage({
+      Action: "getActiveHsnList",
+      Payload: {}
+    });
+  }
 
-  
+  const handler = (event) => {
+    try {
+      let msg = event.data;
 
+      if (typeof msg === "string") {
+        msg = JSON.parse(msg);
+      }
 
-//---------------------category
-
-// ✅ Function to call C# method
-  const getCategoryById = (id) => {
-    if (window.chrome?.webview) {
-      const payload = { Id: parseInt(id) };
-
-      window.chrome.webview.postMessage({
-        Action: "GetCategoryById",
-        Payload: payload,
-      });
-
-      
-    } else {
-      
+      if (msg.action === "getActiveHsnListResult" && msg.success) {
+        setHsnList(msg.data || []);
+      }
+    } catch (err) {
+      console.error("Error loading HSN list:", err);
     }
   };
+
+  window.chrome?.webview?.addEventListener("message", handler);
+
+  return () => {
+    window.chrome?.webview?.removeEventListener("message", handler);
+  };
+}, []);
+  //---------------------category
+
+// ✅ Function to call C# method
+ 
   // ✅ Listen for C# response
   
 
 // ✅ Fetch categories from C# on load
-  useEffect(() => {
-    if (window.chrome?.webview) {
-      window.chrome.webview.postMessage({
-  Action: "getActiveCategoryList",
-  Payload: {},
-});
+  // ------------------ CATEGORY
+useEffect(() => {
+  if (window.chrome?.webview) {
+    window.chrome.webview.postMessage({
+      Action: "getActiveCategoryList",
+      Payload: {}
+    });
+  }
 
-    }
+  const handler = (event) => {
+    try {
+      let msg = event.data;
 
-    const handler = (event) => {
-      try {
-        let msg = event.data;
-        if (typeof msg === "string") msg = JSON.parse(msg);
-
-        if (msg.action === "getActiveCategoryListResult" && msg.success) {
-           
-          setCategories(msg.data || []);
-        }
-      } catch (err) {
-        
+      if (typeof msg === "string") {
+        msg = JSON.parse(msg);
       }
-    };
 
-    window.chrome?.webview?.addEventListener("message", handler);
-    return () => window.chrome?.webview?.removeEventListener("message", handler);
-  }, []);
+      if (msg.action === "getActiveCategoryListResult" && msg.success) {
+        setCategories(msg.data || []);
+      }
+    } catch (err) {
+      console.error("Error loading categories:", err);
+    }
+  };
+
+  window.chrome?.webview?.addEventListener("message", handler);
+
+  return () => {
+    window.chrome?.webview?.removeEventListener("message", handler);
+  };
+}, []);
 //------------------units
 // ✅ Fetch units from C# on load
   useEffect(() => {
@@ -374,14 +404,6 @@ hsncode: "",
   // ✅ Listen for C# response
 
 
-// ✅ Function to call C# DeleteItemIfNoInventory
-  {/*const deleteItem = (itemId) => {
-    window.chrome.webview.postMessage({
-      action: "deleteItem",
-      Payload: { Item_Id: itemId }
-      
-    });
-  };*/}
 const filteredItems = items.filter((i) =>
   i.Name?.toLowerCase().includes(searchTerm.toLowerCase())
 );
@@ -408,8 +430,7 @@ const filteredItems = items.filter((i) =>
   value={itemData.categoryid}
   onChange={(e) => {
     handleChange(e);
-    getCategoryById(e.target.value); // ⬅ Fetch defaults from C#
-  }}
+      }}
 >
     <option value="">-- Select Category --</option>
     {categories.map((cat) => (
@@ -449,15 +470,30 @@ const filteredItems = items.filter((i) =>
 
 
 {/* HSN CODE */}
+{/* HSN CODE */}
 <div className="form-group">
   <label>HSN Code</label>
-  <input
-    name="hsncode"
-    value={itemData.hsncode}
-    readOnly
-    className="readonly-input"
-    placeholder="Auto-filled from category"
-  />
+
+  <select
+    name="hsnid"
+    value={itemData.hsnid}
+    onChange={handleHsnChange}
+    className={errors.hsnid || errors.HsnId ? "error-input" : ""}
+  >
+    <option value="">-- Select HSN --</option>
+
+    {hsnList.map((h) => (
+      <option key={h.Id} value={h.Id}>
+        {h.HsnCode} - {h.Description}
+      </option>
+    ))}
+  </select>
+
+  {(errors.hsnid || errors.HsnId) && (
+    <div className="error">
+      {errors.hsnid || errors.HsnId}
+    </div>
+  )}
 </div>
 
 
@@ -517,7 +553,7 @@ const filteredItems = items.filter((i) =>
     value={itemData.gstpercent}
     readOnly
     className="readonly-input"
-    placeholder="Auto-filled from category"
+    placeholder="Auto-filled from HSN"
   />
 </div>
 
@@ -612,13 +648,6 @@ const filteredItems = items.filter((i) =>
     </tbody>
   </table>
 </div>
-
-
-      
-
-
-
-
 
     </div>
     {modal.show && (

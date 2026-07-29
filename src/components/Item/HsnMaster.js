@@ -11,7 +11,8 @@ export default function HsnMaster() {
     description: "",
     isActive: true,
     createdBy: "",
-    updatedBy: ""
+    updatedBy: "",
+    gstId: "",
   });
 const resetForm = () => {
   setForm({
@@ -20,9 +21,16 @@ const resetForm = () => {
     description: "",
     isActive: true,
     createdBy: "",
-    updatedBy: ""
+    updatedBy: "",
+    gstId: "",
   });
   setErrors({});
+};
+const [gstList, setGstList] = useState([]);
+const loadGstList = () => {
+  window.chrome?.webview?.postMessage({
+    Action: "getGstMasters"
+  });
 };
 const [modal, setModal] = useState({
   show: false,
@@ -39,34 +47,68 @@ const filteredHsnList = hsnList.filter(h =>
 );
   // 🔹 Handle input change
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+  const { name, value, type, checked } = e.target;
 
-    setForm((prev) => ({
+  setForm(prev => ({
+    ...prev,
+    [name]: type === "checkbox" ? checked : value
+  }));
+
+  if (errors[name]) {
+    setErrors(prev => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value
+      [name]: ""
     }));
-  };
+  }
+};
+const validateForm = () => {
+  const newErrors = {};
 
+  // HSN Code
+  if (!form.hsnCode.trim()) {
+    newErrors.HsnCode = "HSN Code is required.";
+  } else if (!/^\d{8}$/.test(form.hsnCode)) {
+    newErrors.HsnCode = "HSN Code must be exactly 8 digits.";
+  }
+
+  // Description
+  if (!form.description.trim()) {
+    newErrors.Description = "Description is required.";
+  } else if (form.description.trim().length > 200) {
+    newErrors.Description = "Description cannot exceed 200 characters.";
+  }
+
+  // GST
+  if (!form.gstId) {
+    newErrors.GstId = "Please select a GST Rate.";
+  }
+
+  setErrors(newErrors);
+
+  return Object.keys(newErrors).length === 0;
+};
   // 🔹 Submit (Create / Update)
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setErrors({});
+ const handleSubmit = (e) => {
+  e.preventDefault();
 
-    const user = getCreatedBy();
+  if (!validateForm())
+    return;
 
-    const payload = {
-      hsn: {
-        ...form,
-        createdBy: form.id === 0 ? user : undefined,
-        updatedBy: form.id !== 0 ? user : undefined
-      }
-    };
+  const user = getCreatedBy();
 
-    window.chrome?.webview?.postMessage({
-      Action: "saveHsn",
-      Payload: payload
-    });
+  const payload = {
+    hsn: {
+      ...form,
+      createdBy: form.id === 0 ? user : undefined,
+      updatedBy: form.id !== 0 ? user : undefined
+    }
   };
+
+  window.chrome?.webview?.postMessage({
+    Action: "saveHsn",
+    Payload: payload
+  });
+};
 
   // 🔹 Load list
   const loadHsnList = () => {
@@ -82,6 +124,7 @@ const filteredHsnList = hsnList.filter(h =>
     id: hsn.Id,
     hsnCode: hsn.HsnCode,
     description: hsn.Description,
+     gstId: hsn.GstId ?? "",
     isActive: hsn.IsActive,
     createdBy: "",
     updatedBy: ""
@@ -105,15 +148,19 @@ const filteredHsnList = hsnList.filter(h =>
   onClose: () => {
     resetForm();
     loadHsnList();
+    loadGstList();
   }
 });
           resetForm(); 
           loadHsnList();
+          loadGstList();
         } else {
           setErrors(msg.errors || {});
         }
       }
-
+if (msg.action === "getGstMastersResult" && msg.success) {
+    setGstList(msg.data || []);
+}
       // ✅ Search response
       if (msg.action === "searchHsnResult" && msg.success) {
         setHsnList(msg.data || []);
@@ -122,6 +169,7 @@ const filteredHsnList = hsnList.filter(h =>
 
     window.chrome?.webview?.addEventListener("message", handler);
     loadHsnList();
+    loadGstList();
 
     return () =>
       window.chrome?.webview?.removeEventListener("message", handler);
@@ -136,7 +184,7 @@ const filteredHsnList = hsnList.filter(h =>
     <h2 className="hsn-title">HSN Master</h2>
     <span
       className="hsn-help"
-      title="Harmonized System of Nomenclature (6 digit code)"
+      title="Harmonized System of Nomenclature (8 digit code)"
     >
       ℹ️
     </span>
@@ -151,25 +199,44 @@ const filteredHsnList = hsnList.filter(h =>
 
             {/* HSN CODE */}
             <div className="form-group">
-              <label>HSN Code (6 digits)</label>
-              <input
-                name="hsnCode"
-                value={form.hsnCode}
-                onChange={handleChange}
-                maxLength={6}
-                className={errors.HsnCode ? "error-input" : ""}
-                placeholder="Enter 6 digit HSN"
-              />
-              {errors.HsnCode && <div className="error">{errors.HsnCode}</div>}
-            </div>
+  <label>HSN Code</label>
 
+  <input
+    name="hsnCode"
+    value={form.hsnCode}
+    onChange={(e) => {
+  const value = e.target.value.replace(/\D/g, "").slice(0, 8);
+
+  setForm(prev => ({
+    ...prev,
+    hsnCode: value
+  }));
+
+  if (errors.HsnCode) {
+    setErrors(prev => ({
+      ...prev,
+      HsnCode: ""
+    }));
+  }
+}}
+    maxLength={8}
+    className={errors.HsnCode ? "error-input" : ""}
+    placeholder="Enter 8 digit HSN"
+  />
+
+  {errors.HsnCode && (
+    <div className="error">{errors.HsnCode}</div>
+  )}
+</div>
             {/* DESCRIPTION */}
             <div className="form-group">
               <label>Description</label>
               <input
                 name="description"
                 value={form.description}
-                onChange={handleChange}
+                onChange={(e) => {
+  handleChange(e);
+}}
                 className={errors.Description ? "error-input" : ""}
                 placeholder="Enter description"
               />
@@ -177,7 +244,30 @@ const filteredHsnList = hsnList.filter(h =>
                 <div className="error">{errors.Description}</div>
               )}
             </div>
+<div className="form-group">
+  <label>GST Rate</label>
 
+  <select
+    name="gstId"
+    value={form.gstId}
+    onChange={(e) => {
+  handleChange(e);
+}}
+    className={errors.GstId ? "error-input" : ""}
+  >
+    <option value="">Select GST</option>
+
+    {gstList.map(g => (
+      <option key={g.Id} value={g.Id}>
+        {g.GstPercent}
+      </option>
+    ))}
+  </select>
+
+  {errors.GstId && (
+    <div className="error">{errors.GstId}</div>
+  )}
+</div>
             {/* ACTIVE */}
             <div className="form-group checkbox-group">
               <label>
@@ -233,6 +323,7 @@ const filteredHsnList = hsnList.filter(h =>
       <th>#</th> {/* ✅ Serial No */}
       <th>HSN Code</th>
       <th>Description</th>
+      <th>GST</th>
       <th>Status</th>
       <th>Edit</th>
     </tr>
@@ -246,6 +337,7 @@ const filteredHsnList = hsnList.filter(h =>
 
         <td>{h.HsnCode}</td>
         <td>{h.Description}</td>
+        <td>{h.GstPercent}%</td>
         <td>{h.IsActive ? "Active" : "Inactive"}</td>
         <td>
           <button
