@@ -36,7 +36,7 @@ const [itemData, setItemData] = useState(initialItemData);
   onClose: null
 });
 {/*const [categoryId, setCategoryId] = useState("");*/}
-  
+  const [gstList, setGstList] = useState([]);
 const [categories, setCategories] = useState([]);
   const [unit, setUnit] = useState(null);
 const [units, setUnits] = useState([]);
@@ -166,6 +166,37 @@ const handleHsnChange = (e) => {
     HsnId: ""
   }));
 };
+// ------------------ GST
+useEffect(() => {
+  if (window.chrome?.webview) {
+    window.chrome.webview.postMessage({
+      Action: "getActiveGstList",
+      Payload: {}
+    });
+  }
+
+  const handler = (event) => {
+    try {
+      let msg = event.data;
+
+      if (typeof msg === "string") {
+        msg = JSON.parse(msg);
+      }
+
+      if (msg.action === "getActiveGstListResult" && msg.success) {
+        setGstList(msg.data || []);
+      }
+    } catch (err) {
+      console.error("Error loading GST list:", err);
+    }
+  };
+
+  window.chrome?.webview?.addEventListener("message", handler);
+
+  return () => {
+    window.chrome?.webview?.removeEventListener("message", handler);
+  };
+}, []);
 useEffect(() => {
   fetchItems();
   const handler = (event) => {
@@ -546,15 +577,64 @@ const filteredItems = items.filter((i) =>
 
 {/* GST */}
 {/* GST (Read-only) */}
+{/* GST */}
 <div className="form-group">
   <label>GST (%)</label>
-  <input
-    name="gstpercent"
-    value={itemData.gstpercent}
-    readOnly
-    className="readonly-input"
-    placeholder="Auto-filled from HSN"
-  />
+
+  <select
+    name="gstid"
+    value={itemData.gstid}
+    onChange={(e) => {
+      const value = e.target.value;
+
+      if (!value) {
+        setItemData(prev => ({
+          ...prev,
+          gstid: "",
+          gstpercent: ""
+        }));
+
+        return;
+      }
+
+      const gstId = parseInt(value, 10);
+
+      const gst = gstList.find(
+        x => Number(x.Id) === gstId
+      );
+
+      setItemData(prev => ({
+        ...prev,
+        gstid: gstId,
+        gstpercent: gst?.GstPercent || ""
+      }));
+
+      setErrors(prev => ({
+        ...prev,
+        gstid: "",
+        GstId: ""
+      }));
+    }}
+    className={
+      errors.gstid || errors.GstId
+        ? "error-input"
+        : ""
+    }
+  >
+    <option value="">-- Select GST --</option>
+
+    {gstList.map((gst) => (
+      <option key={gst.Id} value={gst.Id}>
+        {gst.GstPercent}%
+      </option>
+    ))}
+  </select>
+
+  {(errors.gstid || errors.GstId) && (
+    <div className="error">
+      {errors.gstid || errors.GstId}
+    </div>
+  )}
 </div>
 
 

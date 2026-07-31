@@ -66,10 +66,10 @@ const validateForm = () => {
 
   // HSN Code
   if (!form.hsnCode.trim()) {
-    newErrors.HsnCode = "HSN Code is required.";
-  } else if (!/^\d{8}$/.test(form.hsnCode)) {
-    newErrors.HsnCode = "HSN Code must be exactly 8 digits.";
-  }
+  newErrors.HsnCode = "HSN Code is required.";
+} else if (!/^(\d{4}|\d{6}|\d{8})$/.test(form.hsnCode.trim())) {
+  newErrors.HsnCode = "HSN Code must be 4, 6, or 8 digits.";
+}
 
   // Description
   if (!form.description.trim()) {
@@ -205,23 +205,25 @@ if (msg.action === "getGstMastersResult" && msg.success) {
     name="hsnCode"
     value={form.hsnCode}
     onChange={(e) => {
-  const value = e.target.value.replace(/\D/g, "").slice(0, 8);
+      const value = e.target.value
+        .replace(/\D/g, "")
+        .slice(0, 8);
 
-  setForm(prev => ({
-    ...prev,
-    hsnCode: value
-  }));
+      setForm(prev => ({
+        ...prev,
+        hsnCode: value
+      }));
 
-  if (errors.HsnCode) {
-    setErrors(prev => ({
-      ...prev,
-      HsnCode: ""
-    }));
-  }
-}}
+      if (errors.HsnCode) {
+        setErrors(prev => ({
+          ...prev,
+          HsnCode: ""
+        }));
+      }
+    }}
     maxLength={8}
     className={errors.HsnCode ? "error-input" : ""}
-    placeholder="Enter 8 digit HSN"
+    placeholder="Enter 4, 6, or 8 digit HSN"
   />
 
   {errors.HsnCode && (
